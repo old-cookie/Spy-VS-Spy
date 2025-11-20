@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Animator))]
+[RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
 {
     [SerializeField]
@@ -44,6 +45,20 @@ public class PlayerController : MonoBehaviour
     [SerializeField]
     private float pickLockDuration = 1.3f;
 
+    [Header("Use Settings")]
+    [SerializeField, Range(1f, 5f)]
+    private float speedBoostMultiplier = 2f;
+
+    [SerializeField, Min(0f)]
+    private float speedBoostDuration = 5f;
+
+    [Header("Fall Reset Settings")]
+    [SerializeField]
+    private float fallResetThreshold = -20f;
+
+    [SerializeField]
+    private float floorSnapHeightOffset = 2f;
+
     private InputSystem_Actions inputActions;
     private Vector2 lastLoggedInput = Vector2.zero;
     public Animator animator;
@@ -60,6 +75,12 @@ public class PlayerController : MonoBehaviour
     private float pickLockTimer;
     private bool shouldRestoreFacingAfterPick;
     private bool wasFacingRightBeforePick;
+    private bool canPickChest;
+    private ChestController currentChest;
+    private Item heldItem;
+    private string heldItemType;
+    private float speedBoostTimer;
+    private float currentSpeedMultiplier = 1f;
 
     private void Awake()
     {
@@ -100,12 +121,13 @@ public class PlayerController : MonoBehaviour
 
         UpdateGroundStatus();
         UpdatePickLockTimer();
+        UpdateSpeedBoostTimer();
+        CheckFallReset();
 
         var inputValue = inputActions.Player.Move.ReadValue<Vector2>();
 
         if (HasSignificantInputChange(inputValue))
         {
-            Debug.Log($"Move input: {inputValue}", this);
             lastLoggedInput = inputValue;
         }
 
@@ -121,11 +143,13 @@ public class PlayerController : MonoBehaviour
 
         HandleJumpInput();
         HandleInteractInput();
+        HandleUseInput();
 
         if (hasMovement)
         {
             TryStepClimb(Mathf.Sign(horizontal));
-            var delta = playerSpeed * Time.deltaTime * new Vector3(horizontal, 0f, 0f);
+            var moveSpeed = playerSpeed * currentSpeedMultiplier;
+            var delta = moveSpeed * Time.deltaTime * new Vector3(horizontal, 0f, 0f);
             transform.Translate(delta, Space.World);
         }
 
@@ -150,11 +174,6 @@ public class PlayerController : MonoBehaviour
         if (playerRigidbody == null)
         {
             playerRigidbody = GetComponent<Rigidbody>();
-        }
-
-        if (playerRigidbody == null)
-        {
-            Debug.LogWarning("PlayerController requires a Rigidbody component to jump properly.", this);
         }
     }
 
@@ -227,6 +246,16 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        if (!canPickChest)
+        {
+            return;
+        }
+
+        if (heldItem != null)
+        {
+            return;
+        }
+
         CacheAnimatorReference();
 
         if (animator != null)
@@ -235,6 +264,18 @@ public class PlayerController : MonoBehaviour
         }
         
         StartPickLock();
+        var newItem = currentChest?.HandlePickStarted(transform);
+        RegisterHeldItem(newItem);
+    }
+
+    private void HandleUseInput()
+    {
+        if (!inputActions.Player.Use.WasPressedThisFrame())
+        {
+            return;
+        }
+
+        TryConsumeHeldItem();
     }
 
     private void TryJump()
@@ -360,6 +401,127 @@ public class PlayerController : MonoBehaviour
         return pickLockTimer > 0f;
     }
 
+    private void RegisterHeldItem(Item newItem)
+    {
+        if (newItem == null)
+        {
+            return;
+        }
+
+        if (heldItem != null && heldItem != newItem)
+        {
+            heldItem.Discard();
+            heldItem = null;
+            heldItemType = null;
+        }
+
+        heldItem = newItem;
+        heldItemType = newItem.ItemType;
+    }
+
+    private void TryConsumeHeldItem()
+    {
+        if (heldItem == null)
+        {
+            return;
+        }
+
+        var consumedType = heldItemType;
+        heldItem.Consume();
+        heldItem = null;
+        heldItemType = null;
+
+        ApplyItemEffect(consumedType);
+    }
+
+    private void ApplyItemEffect(string itemType)
+    {
+        if (string.IsNullOrEmpty(itemType))
+        {
+            return;
+        }
+
+        switch (itemType)
+        {
+            case "cookie":
+                ApplySpeedBoost();
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void UpdateSpeedBoostTimer()
+    {
+        if (speedBoostTimer <= 0f)
+        {
+            return;
+        }
+
+        speedBoostTimer = Mathf.Max(0f, speedBoostTimer - Time.deltaTime);
+
+        if (speedBoostTimer <= 0f)
+        {
+            currentSpeedMultiplier = 1f;
+        }
+    }
+
+    private void ApplySpeedBoost()
+    {
+        currentSpeedMultiplier = speedBoostMultiplier;
+        speedBoostTimer = speedBoostDuration;
+    }
+
+    private void CheckFallReset()
+    {
+        if (transform.position.y >= fallResetThreshold)
+        {
+            return;
+        }
+
+        var floor = FindNearestFloor();
+        if (floor == null)
+        {
+            return;
+        }
+
+        var floorPosition = floor.transform.position;
+        var targetPosition = new Vector3(floorPosition.x, floorPosition.y + floorSnapHeightOffset, floorPosition.z);
+        transform.position = targetPosition;
+
+        if (playerRigidbody != null)
+        {
+            playerRigidbody.linearVelocity = Vector3.zero;
+        }
+    }
+
+    private GameObject FindNearestFloor()
+    {
+        var floors = GameObject.FindGameObjectsWithTag("Floor");
+        if (floors == null || floors.Length == 0)
+        {
+            return null;
+        }
+
+        var currentPosition = transform.position;
+        GameObject nearestFloor = null;
+        var bestDistanceSquared = float.MaxValue;
+
+        foreach (var floor in floors)
+        {
+            var delta = floor.transform.position - currentPosition;
+            var sqrDistance = delta.sqrMagnitude;
+
+            if (sqrDistance < bestDistanceSquared)
+            {
+                bestDistanceSquared = sqrDistance;
+                nearestFloor = floor;
+            }
+        }
+
+        return nearestFloor;
+    }
+
     private void SetGrounded(bool grounded)
     {
         if (isLand == grounded)
@@ -372,6 +534,33 @@ public class PlayerController : MonoBehaviour
         if (animator != null)
         {
             animator.SetBool("isLand", grounded);
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!other.CompareTag("Chest"))
+        {
+            return;
+        }
+
+        canPickChest = true;
+        currentChest = other.GetComponentInParent<ChestController>() ?? other.GetComponent<ChestController>() ?? currentChest;
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (!other.CompareTag("Chest"))
+        {
+            return;
+        }
+
+        canPickChest = false;
+
+        var chest = other.GetComponentInParent<ChestController>() ?? other.GetComponent<ChestController>();
+        if (chest != null && chest == currentChest)
+        {
+            currentChest = null;
         }
     }
 
