@@ -99,6 +99,8 @@ GameObject:
   - component: {fileID: 278466524226572448}
   - component: {fileID: 7609972057393303912}
   - component: {fileID: 8551704366064155973}
+  - component: {fileID: -8834612061558087597}
+  - component: {fileID: 1196150841207223854}
   m_Layer: 0
   m_Name: 'Chest A '
   m_TagString: Chest
@@ -197,6 +199,49 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 1.3995655
   m_Center: {x: -0.0009868145, y: 0.46602568, z: 0.049610555}
+--- !u!114 &-8834612061558087597
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1318005759483055872}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 2865328609
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &1196150841207223854
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1318005759483055872}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d39a30628b222d43a6de6f99df09b11, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  payloadPrefabs:
+  - {fileID: 8832418608165538874, guid: 8f2f0a77a22acb74f84d3cbd0c2f3029, type: 3}
+  payloadFollowHeight: 3
+  payloadMoveDuration: 0.75
+  payloadFollowSmoothSpeed: 8
 --- !u!1 &6596392729624759029
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,10 +1,12 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using Unity.Netcode;
 
-public class ChestController : MonoBehaviour
+public class ChestController : NetworkBehaviour
 {
     [SerializeField]
-    private GameObject payloadPrefab;
+    private List<GameObject> payloadPrefabs;
 
     [SerializeField]
     private float payloadFollowHeight = 3f;
@@ -25,13 +27,28 @@ public class ChestController : MonoBehaviour
             return null;
         }
 
-        var payload = CreatePayload();
+        if (!IsServer)
+        {
+            return null;
+        }
+
+        var randomIndex = GetRandomPayloadIndex();
+        if (randomIndex < 0)
+        {
+            return null;
+        }
+
+        var payload = CreateAndSpawnPayload(randomIndex);
         if (payload == null)
         {
             return null;
         }
 
-        var itemComponent = payload.GetComponent<Item>() ?? payload.AddComponent<Item>();
+        var itemComponent = payload.GetComponent<Item>();
+        if (itemComponent == null)
+        {
+            itemComponent = payload.AddComponent<Item>();
+        }
         itemComponent.Initialize(this);
 
         if (payloadRoutine != null)
@@ -45,25 +62,39 @@ public class ChestController : MonoBehaviour
         return itemComponent;
     }
 
-    private GameObject CreatePayload()
+    private int GetRandomPayloadIndex()
+    {
+        if (payloadPrefabs == null || payloadPrefabs.Count == 0)
+        {
+            return -1;
+        }
+        return Random.Range(0, payloadPrefabs.Count);
+    }
+
+    private GameObject CreateAndSpawnPayload(int prefabIndex)
     {
         var payloadPosition = GetChestCenter();
-        GameObject payload;
-
         var payloadRotation = Quaternion.Euler(-45f, 0f, 0f);
 
-        if (payloadPrefab != null)
+        if (prefabIndex < 0 || prefabIndex >= payloadPrefabs.Count)
         {
-            payload = Instantiate(payloadPrefab, payloadPosition, payloadRotation);
-        }
-        else
-        {
-            payload = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            payload.transform.rotation = payloadRotation;
+            return null;
         }
 
+        var selectedPrefab = payloadPrefabs[prefabIndex];
+        if (selectedPrefab == null)
+        {
+            return null;
+        }
+
+        var payload = Instantiate(selectedPrefab, payloadPosition, payloadRotation);
         payload.name = $"ChestPayload_{name}";
-        payload.transform.position = payloadPosition;
+
+        var networkObject = payload.GetComponent<NetworkObject>();
+        if (networkObject != null)
+        {
+            networkObject.Spawn();
+        }
 
         return payload;
     }
