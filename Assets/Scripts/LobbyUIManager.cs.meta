@@ -1,2 +1,17 @@
 fileFormatVersion: 2
 guid: 86358d51998e1374282f5983555d81e8
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - ipInput: {instanceID: 0}
+  - startPanel: {instanceID: 0}
+  - waitingPanel: {instanceID: 0}
+  - startButton: {instanceID: 0}
+  - gameScene: {fileID: 102900000, guid: ef6947665274e494f9510e28a9a551c7, type: 3}
+  - playerNumText: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -1,58 +1,122 @@
 using UnityEngine;
 using Unity.Netcode;
 
+/// <summary>
+/// Controls player movement, jumping, facing direction, item interaction, and chest picking.
+/// </summary>
 [RequireComponent(typeof(Animator))]
 [RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(ItemEffectHandler))]
 public class PlayerController : NetworkBehaviour
 {
+    /// <summary>
+    /// Base movement speed of the player.
+    /// </summary>
     [SerializeField]
     private float playerSpeed = 5f;
 
-    [SerializeField, Range(0f, 1f)]
-    private float inputDeadZone = 0.3f;
-
-    [SerializeField, Range(0f, 1f)]
-    private float logChangeThreshold = 0.5f;
-
+    /// <summary>
+    /// Force applied when the player jumps.
+    /// </summary>
     [Header("Jump Settings")]
     [SerializeField]
     private float jumpForce = 6f;
 
+    /// <summary>
+    /// The renderers to apply team materials to (supports multiple body parts).
+    /// </summary>
+    [Header("Team Settings")]
+    [SerializeField]
+    private SkinnedMeshRenderer[] playerRenderers;
+
+    /// <summary>
+    /// Material for blue team players.
+    /// </summary>
+    [SerializeField]
+    private Material blueTeamMaterial;
+
+    /// <summary>
+    /// Material for red team players.
+    /// </summary>
+    [SerializeField]
+    private Material redTeamMaterial;
+
+    /// <summary>
+    /// Transform position used for ground detection.
     [Header("Ground Check Settings")]
     public Transform groundCheckPos;
+
+    /// <summary>
+    /// Layer mask for ground detection.
+    /// </summary>
     public LayerMask groundMask;
+
+    /// <summary>
+    /// Radius for ground check sphere.
+    /// </summary>
     public float groundDistance = 0.4f;
+
+    /// <summary>
+    /// Whether the player is currently touching ground.
+    /// </summary>
     public bool isGround = false;
 
+    /// <summary>
+    /// Maximum height of steps the player can climb.
+    /// </summary>
     [Header("Step Settings")]
     [SerializeField, Range(0.05f, 1f)]
     private float stepHeight = 0.5f;
 
+    /// <summary>
+    /// Distance to check for steps in front of the player.
+    /// </summary>
     [SerializeField, Range(0.05f, 1f)]
     private float stepCheckDistance = 0.3f;
 
+    /// <summary>
+    /// Speed at which the player smoothly climbs steps.
+    /// </summary>
     [SerializeField, Range(0.5f, 10f)]
     private float stepSmoothSpeed = 10f;
 
+    /// <summary>
+    /// Speed at which the player rotates to face a new direction.
+    /// </summary>
     [Header("Facing Settings")]
     [SerializeField, Range(0.1f, 20f)]
     private float rotationSmoothSpeed = 10f;
-    
+
+    /// <summary>
+    /// Duration in seconds that the player is locked during the pick animation.
+    /// </summary>
     [Header("Pick Settings")]
     [SerializeField]
     private float pickLockDuration = 1.3f;
 
+    /// <summary>
+    /// Y position threshold below which the player is reset to the nearest floor.
+    /// </summary>
     [Header("Fall Reset Settings")]
     [SerializeField]
     private float fallResetThreshold = -20f;
 
+    /// <summary>
+    /// Height offset above the floor when resetting player position after falling.
+    /// </summary>
     [SerializeField]
     private float floorSnapHeightOffset = 2f;
 
-    private Vector2 lastLoggedInput = Vector2.zero;
+    /// <summary>
+    /// Reference to the player's Animator component.
+    /// </summary>
     public Animator animator;
+
     private Rigidbody playerRigidbody;
 
+    /// <summary>
+    /// Whether the player is currently landed (grounded).
+    /// </summary>
     [SerializeField]
     private bool isLand = true;
 
@@ -69,6 +133,9 @@ public class PlayerController : NetworkBehaviour
     private Item heldItem;
     private string heldItemType;
     private ItemEffectHandler itemEffectHandler;
+    private bool canPickFlag;
+    private FlagTrigger currentFlag;
+    private TeamMember teamMember;
 
     private void Awake()
     {
@@ -82,8 +149,20 @@ public class PlayerController : NetworkBehaviour
         base.OnNetworkSpawn();
         CacheFacingRotations();
         IgnorePlayerCollisions();
+        CacheTeamMember();
+        SubscribeToTeamChanges();
+        ApplyTeamMaterial(teamMember != null ? teamMember.CurrentTeam : Team.None);
     }
 
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+        UnsubscribeFromTeamChanges();
+    }
+
+    /// <summary>
+    /// Ignores collisions between this player and all other players in the scene.
+    /// </summary>
     private void IgnorePlayerCollisions()
     {
         var players = GameObject.FindGameObjectsWithTag("Player");
@@ -123,16 +202,10 @@ public class PlayerController : NetworkBehaviour
 
         var inputValue = new Vector2(Input.GetAxis("Horizontal"), 0f);
 
-        if (HasSignificantInputChange(inputValue))
-        {
-            lastLoggedInput = inputValue;
-        }
-
-        var horizontalInput = Mathf.Abs(inputValue.x) < inputDeadZone ? 0f : inputValue.x;
         var pickLocked = IsPickLocked();
-        var horizontal = pickLocked ? 0f : horizontalInput;
+        var horizontal = pickLocked ? 0f : inputValue.x;
 
-        UpdateFacingDirection(horizontalInput);
+        UpdateFacingDirection(inputValue.x);
 
         var hasMovement = !Mathf.Approximately(horizontal, 0f);
 
@@ -154,11 +227,9 @@ public class PlayerController : NetworkBehaviour
         SmoothFacingRotation();
     }
 
-    private bool HasSignificantInputChange(Vector2 current)
-    {
-        return Vector2.Distance(current, lastLoggedInput) >= logChangeThreshold;
-    }
-
+    /// <summary>
+    /// Caches the Animator component reference.
+    /// </summary>
     private void CacheAnimatorReference()
     {
         if (animator == null)
@@ -167,6 +238,9 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Caches the Rigidbody component reference.
+    /// </summary>
     private void CacheRigidbodyReference()
     {
         if (playerRigidbody == null)
@@ -175,6 +249,9 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Caches the ItemEffectHandler component reference.
+    /// </summary>
     private void CacheItemEffectHandler()
     {
         if (itemEffectHandler == null)
@@ -183,6 +260,111 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Caches the TeamMember component reference.
+    /// </summary>
+    private void CacheTeamMember()
+    {
+        if (teamMember == null)
+        {
+            teamMember = GetComponent<TeamMember>();
+        }
+    }
+
+    /// <summary>
+    /// Subscribes to team change events from TeamMember.
+    /// </summary>
+    private void SubscribeToTeamChanges()
+    {
+        if (teamMember == null)
+        {
+            return;
+        }
+
+        // Use reflection to access the private NetworkVariable and subscribe
+        var teamField = typeof(TeamMember).GetField("team", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        if (teamField != null)
+        {
+            var networkVar = teamField.GetValue(teamMember) as NetworkVariable<Team>;
+            if (networkVar != null)
+            {
+                networkVar.OnValueChanged += OnTeamChanged;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Unsubscribes from team change events.
+    /// </summary>
+    private void UnsubscribeFromTeamChanges()
+    {
+        if (teamMember == null)
+        {
+            return;
+        }
+
+        var teamField = typeof(TeamMember).GetField("team", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        if (teamField != null)
+        {
+            var networkVar = teamField.GetValue(teamMember) as NetworkVariable<Team>;
+            if (networkVar != null)
+            {
+                networkVar.OnValueChanged -= OnTeamChanged;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Called when the player's team changes.
+    /// </summary>
+    /// <param name="oldTeam">The previous team.</param>
+    /// <param name="newTeam">The new team.</param>
+    private void OnTeamChanged(Team oldTeam, Team newTeam)
+    {
+        ApplyTeamMaterial(newTeam);
+    }
+
+    /// <summary>
+    /// Applies the appropriate material based on the player's team.
+    /// </summary>
+    /// <param name="team">The team to apply material for.</param>
+    private void ApplyTeamMaterial(Team team)
+    {
+        if (playerRenderers == null || playerRenderers.Length == 0)
+        {
+            return;
+        }
+
+        Material materialToApply = null;
+        switch (team)
+        {
+            case Team.Blue:
+                materialToApply = blueTeamMaterial;
+                break;
+            case Team.Red:
+                materialToApply = redTeamMaterial;
+                break;
+            default:
+                return;
+        }
+
+        if (materialToApply == null)
+        {
+            return;
+        }
+
+        foreach (var renderer in playerRenderers)
+        {
+            if (renderer != null)
+            {
+                renderer.material = materialToApply;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Caches the rotation quaternions for different facing directions.
+    /// </summary>
     private void CacheFacingRotations()
     {
         rightFacingRotation = transform.localRotation;
@@ -191,6 +373,10 @@ public class PlayerController : NetworkBehaviour
         targetFacingRotation = transform.localRotation;
     }
 
+    /// <summary>
+    /// Updates the player's facing direction based on horizontal input.
+    /// </summary>
+    /// <param name="horizontal">Horizontal input value.</param>
     private void UpdateFacingDirection(float horizontal)
     {
         if (IsPickLocked())
@@ -208,18 +394,28 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Sets the target rotation to face right.
+    /// </summary>
     private void FaceRight()
     {
         targetFacingRotation = rightFacingRotation;
         isFacingRight = true;
     }
 
+    /// <summary>
+    /// Sets the target rotation to face left.
+    /// </summary>
     private void FaceLeft()
     {
         targetFacingRotation = leftFacingRotation;
         isFacingRight = false;
     }
 
+    /// <summary>
+    /// Sets the running animation state.
+    /// </summary>
+    /// <param name="isRunning">Whether the player is running.</param>
     private void SetRunningAnimation(bool isRunning)
     {
         CacheAnimatorReference();
@@ -232,6 +428,9 @@ public class PlayerController : NetworkBehaviour
         animator.SetBool("isRunning", isRunning);
     }
 
+    /// <summary>
+    /// Handles jump input from the player.
+    /// </summary>
     private void HandleJumpInput()
     {
         if (Input.GetKeyDown(KeyCode.Space))
@@ -245,6 +444,9 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Handles interact input (E key) for picking chests or flags.
+    /// </summary>
     private void HandleInteractInput()
     {
         if (!Input.GetKeyDown(KeyCode.E))
@@ -252,6 +454,14 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
+        // Try to pick flag first
+        if (canPickFlag && currentFlag != null)
+        {
+            HandleFlagPickup();
+            return;
+        }
+
+        // Then try to pick chest
         if (!canPickChest)
         {
             return;
@@ -279,6 +489,59 @@ public class PlayerController : NetworkBehaviour
         RegisterHeldItem(newItem);
     }
 
+    /// <summary>
+    /// Handles the flag pickup with animation and rotation.
+    /// </summary>
+    private void HandleFlagPickup()
+    {
+        if (IsPickLocked())
+        {
+            return;
+        }
+
+        // Check if player already has a flag
+        var teamMember = GetComponent<TeamMember>();
+        if (teamMember != null && teamMember.HasFlag)
+        {
+            return;
+        }
+
+        CacheAnimatorReference();
+
+        if (animator != null)
+        {
+            animator.SetTrigger("Pick");
+        }
+
+        StartPickLock();
+
+        if (currentFlag != null)
+        {
+            currentFlag.PerformPickup();
+        }
+    }
+
+    /// <summary>
+    /// Sets the current flag that can be picked up.
+    /// </summary>
+    /// <param name="flag">The flag trigger to set, or null to clear.</param>
+    public void SetCurrentFlag(FlagTrigger flag)
+    {
+        if (flag != null)
+        {
+            canPickFlag = true;
+            currentFlag = flag;
+        }
+        else
+        {
+            canPickFlag = false;
+            currentFlag = null;
+        }
+    }
+
+    /// <summary>
+    /// Handles use input (Q key) for consuming held items.
+    /// </summary>
     private void HandleUseInput()
     {
         if (!Input.GetKeyDown(KeyCode.Q))
@@ -289,6 +552,9 @@ public class PlayerController : NetworkBehaviour
         TryConsumeHeldItem();
     }
 
+    /// <summary>
+    /// Attempts to make the player jump if grounded and not pick-locked.
+    /// </summary>
     private void TryJump()
     {
         if (playerRigidbody == null || IsPickLocked())
@@ -311,12 +577,18 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Updates the grounded status and animator.
+    /// </summary>
     private void UpdateGroundStatus()
     {
         CheckGround();
         SetGrounded(isGround);
     }
-    
+
+    /// <summary>
+    /// Updates the pick lock timer and restores facing direction when complete.
+    /// </summary>
     private void UpdatePickLockTimer()
     {
         if (pickLockTimer <= 0f)
@@ -332,6 +604,9 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Starts the pick lock timer and faces the player forward.
+    /// </summary>
     private void StartPickLock()
     {
         if (!IsPickLocked())
@@ -344,6 +619,9 @@ public class PlayerController : NetworkBehaviour
         FaceForwardForPick();
     }
 
+    /// <summary>
+    /// Restores the player's facing direction after picking is complete.
+    /// </summary>
     private void RestoreFacingAfterPick()
     {
         if (!shouldRestoreFacingAfterPick)
@@ -363,11 +641,18 @@ public class PlayerController : NetworkBehaviour
         shouldRestoreFacingAfterPick = false;
     }
 
+    /// <summary>
+    /// Sets the target rotation to face forward (toward camera) for picking.
+    /// </summary>
     private void FaceForwardForPick()
     {
         targetFacingRotation = frontFacingRotation;
     }
 
+    /// <summary>
+    /// Attempts to climb a step if there is one in front of the player.
+    /// </summary>
+    /// <param name="horizontalInputSign">Direction of horizontal movement (-1 or 1).</param>
     private void TryStepClimb(float horizontalInputSign)
     {
         if (Mathf.Approximately(horizontalInputSign, 0f))
@@ -379,6 +664,7 @@ public class PlayerController : NetworkBehaviour
         var origin = transform.position;
         var lowerOrigin = origin + Vector3.up * 0.05f;
 
+        // Check if there's an obstacle at foot level
         if (!Physics.Raycast(lowerOrigin, moveDirection, stepCheckDistance, groundMask, QueryTriggerInteraction.Ignore))
         {
             return;
@@ -386,6 +672,7 @@ public class PlayerController : NetworkBehaviour
 
         var upperOrigin = lowerOrigin + Vector3.up * stepHeight;
 
+        // Check if there's no obstacle at step height (can step over)
         if (Physics.Raycast(upperOrigin, moveDirection, stepCheckDistance, groundMask, QueryTriggerInteraction.Ignore))
         {
             return;
@@ -395,6 +682,9 @@ public class PlayerController : NetworkBehaviour
         transform.position += Vector3.up * stepDelta;
     }
 
+    /// <summary>
+    /// Smoothly interpolates the player's rotation toward the target facing direction.
+    /// </summary>
     private void SmoothFacingRotation()
     {
         if (rotationSmoothSpeed <= 0f)
@@ -407,11 +697,19 @@ public class PlayerController : NetworkBehaviour
         transform.localRotation = Quaternion.Slerp(transform.localRotation, targetFacingRotation, t);
     }
 
+    /// <summary>
+    /// Checks if the player is currently locked due to picking animation.
+    /// </summary>
+    /// <returns>True if pick-locked, false otherwise.</returns>
     private bool IsPickLocked()
     {
         return pickLockTimer > 0f;
     }
 
+    /// <summary>
+    /// Registers a new held item, discarding the previous one if necessary.
+    /// </summary>
+    /// <param name="newItem">The new item to hold.</param>
     private void RegisterHeldItem(Item newItem)
     {
         if (newItem == null)
@@ -430,6 +728,18 @@ public class PlayerController : NetworkBehaviour
         heldItemType = newItem.ItemType;
     }
 
+    /// <summary>
+    /// Registers a held item received from network (for non-host clients).
+    /// </summary>
+    /// <param name="newItem">The item to register.</param>
+    public void RegisterHeldItemFromNetwork(Item newItem)
+    {
+        RegisterHeldItem(newItem);
+    }
+
+    /// <summary>
+    /// Attempts to consume the currently held item.
+    /// </summary>
     private void TryConsumeHeldItem()
     {
         if (heldItem == null)
@@ -445,6 +755,10 @@ public class PlayerController : NetworkBehaviour
         ApplyItemEffect(consumedType);
     }
 
+    /// <summary>
+    /// Applies the effect of a consumed item through the ItemEffectHandler.
+    /// </summary>
+    /// <param name="itemType">The type of item consumed.</param>
     private void ApplyItemEffect(string itemType)
     {
         if (itemEffectHandler != null)
@@ -453,6 +767,9 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Checks if the player has fallen below the threshold and resets position if needed.
+    /// </summary>
     private void CheckFallReset()
     {
         if (transform.position.y >= fallResetThreshold)
@@ -476,6 +793,10 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Finds the nearest floor object tagged as "Floor".
+    /// </summary>
+    /// <returns>The nearest floor GameObject, or null if none found.</returns>
     private GameObject FindNearestFloor()
     {
         var floors = GameObject.FindGameObjectsWithTag("Floor");
@@ -503,6 +824,10 @@ public class PlayerController : NetworkBehaviour
         return nearestFloor;
     }
 
+    /// <summary>
+    /// Sets the grounded state and updates the animator.
+    /// </summary>
+    /// <param name="grounded">Whether the player is grounded.</param>
     private void SetGrounded(bool grounded)
     {
         if (isLand == grounded)
@@ -518,6 +843,10 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Called when the player enters a trigger collider. Enables chest interaction.
+    /// </summary>
+    /// <param name="other">The collider that was entered.</param>
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("Chest"))
@@ -537,6 +866,10 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Called when the player exits a trigger collider. Disables chest interaction.
+    /// </summary>
+    /// <param name="other">The collider that was exited.</param>
     private void OnTriggerExit(Collider other)
     {
         if (!other.CompareTag("Chest"))
@@ -557,6 +890,9 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Checks if the player is touching the ground using a sphere check.
+    /// </summary>
     void CheckGround()
     {
         isGround = Physics.CheckSphere(groundCheckPos.position, groundDistance, groundMask);

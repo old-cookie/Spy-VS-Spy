@@ -1,19 +1,34 @@
 using UnityEngine;
 using Unity.Netcode;
 
+/// <summary>
+/// Handles item effects applied to the player, such as speed boosts and slow downs.
+/// </summary>
 public class ItemEffectHandler : NetworkBehaviour
 {
+    /// <summary>
+    /// Multiplier applied to player speed when a cookie is consumed.
+    /// </summary>
     [Header("Speed Boost Settings (Cookie)")]
     [SerializeField, Range(1f, 5f)]
     private float speedBoostMultiplier = 2f;
 
+    /// <summary>
+    /// Duration in seconds for the speed boost effect.
+    /// </summary>
     [SerializeField, Min(0f)]
     private float speedBoostDuration = 5f;
 
+    /// <summary>
+    /// Multiplier applied to slow down other players when a banana is used.
+    /// </summary>
     [Header("Slow Down Settings (Banana)")]
     [SerializeField, Range(0.1f, 1f)]
     private float slowDownMultiplier = 0.5f;
 
+    /// <summary>
+    /// Duration in seconds for the slow down effect.
+    /// </summary>
     [SerializeField, Min(0f)]
     private float slowDownDuration = 3f;
 
@@ -22,6 +37,9 @@ public class ItemEffectHandler : NetworkBehaviour
     private float activeBoostMultiplier = 1f;
     private float activeSlowMultiplier = 1f;
 
+    /// <summary>
+    /// Gets the current combined speed multiplier from all active effects.
+    /// </summary>
     public float CurrentSpeedMultiplier => activeBoostMultiplier * activeSlowMultiplier;
 
     private void Update()
@@ -29,6 +47,10 @@ public class ItemEffectHandler : NetworkBehaviour
         UpdateEffectTimers();
     }
 
+    /// <summary>
+    /// Applies an effect based on the consumed item type.
+    /// </summary>
+    /// <param name="itemType">The type identifier of the consumed item.</param>
     public void ApplyEffect(string itemType)
     {
         if (string.IsNullOrEmpty(itemType))
@@ -49,6 +71,9 @@ public class ItemEffectHandler : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Updates the effect timers and resets multipliers when effects expire.
+    /// </summary>
     private void UpdateEffectTimers()
     {
         if (speedBoostTimer > 0f)
@@ -70,12 +95,18 @@ public class ItemEffectHandler : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Applies the speed boost effect to this player.
+    /// </summary>
     private void ApplySpeedBoost()
     {
         activeBoostMultiplier = speedBoostMultiplier;
         speedBoostTimer = speedBoostDuration;
     }
 
+    /// <summary>
+    /// Server RPC to apply slow down effect to all other players.
+    /// </summary>
     [ServerRpc]
     private void ApplySlowDownToOthersServerRpc()
     {
@@ -90,6 +121,9 @@ public class ItemEffectHandler : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Client RPC to receive and apply the slow down effect on the local player.
+    /// </summary>
     [ClientRpc]
     public void ApplySlowDownClientRpc()
     {
@@ -101,6 +135,9 @@ public class ItemEffectHandler : NetworkBehaviour
         ApplySlowDown();
     }
 
+    /// <summary>
+    /// Applies the slow down effect to this player.
+    /// </summary>
     private void ApplySlowDown()
     {
         activeSlowMultiplier = slowDownMultiplier;

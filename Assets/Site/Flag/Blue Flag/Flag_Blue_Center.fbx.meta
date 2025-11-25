@@ -1,19 +1,14 @@
 fileFormatVersion: 2
-guid: b7a71da8e9f2d4d4ea4b85a7f195d662
+guid: 78f1d5949b9b1864ca7f9414ea13a9a9
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: prototype_texture
-    second: {fileID: 2100000, guid: 280b86c6501c91e44817f440ee1ac1f4, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
-    materialName: 1
-    materialSearch: 2
-    materialLocation: 0
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
   animations:
     legacyGenerateAnimations: 4
     bakeSimulation: 0
