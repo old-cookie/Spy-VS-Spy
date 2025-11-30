@@ -65,15 +65,15 @@ public class Item : NetworkBehaviour
         }
         else
         {
-            RequestDespawnServerRpc();
+            RequestDespawnRpc();
         }
     }
 
     /// <summary>
     /// Server RPC to request the host to despawn this item.
     /// </summary>
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestDespawnServerRpc()
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestDespawnRpc()
     {
         var networkObject = GetComponent<NetworkObject>();
         if (networkObject != null && networkObject.IsSpawned)

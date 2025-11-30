@@ -59,7 +59,7 @@ public class ChestController : NetworkBehaviour
         }
         else
         {
-            RequestPickItemServerRpc(networkObject.OwnerClientId);
+            RequestPickItemRpc(networkObject.OwnerClientId);
             return null;
         }
     }
@@ -68,8 +68,8 @@ public class ChestController : NetworkBehaviour
     /// Server RPC to request item spawning from a non-host client.
     /// </summary>
     /// <param name="requestingClientId">The client ID of the player requesting the item.</param>
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestPickItemServerRpc(ulong requestingClientId)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestPickItemRpc(ulong requestingClientId)
     {
         if (!NetworkManager.Singleton.ConnectedClients.ContainsKey(requestingClientId))
         {
