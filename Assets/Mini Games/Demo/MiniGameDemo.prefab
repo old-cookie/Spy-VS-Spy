@@ -238,7 +238,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 38db07aa914deb848bd2f4674dec5c08, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  miniGameName: Mini Game
+  miniGameName: Demo
   timeLimit: 10
   miniGameCanvas: {fileID: 8574420239403947679}
   txtTitle: {fileID: 105063441749537342}
