@@ -136,6 +136,7 @@ public class PlayerController : NetworkBehaviour
     private bool canPickFlag;
     private FlagTrigger currentFlag;
     private TeamMember teamMember;
+    private bool isPlayingMiniGame;
 
     private void Awake()
     {
@@ -191,6 +192,15 @@ public class PlayerController : NetworkBehaviour
     private void Update()
     {
         if (!IsLocalPlayer)
+        {
+            return;
+        }
+
+        // Handle ESC key for mini game exit
+        HandleMiniGameEscapeInput();
+
+        // Block all input while playing mini game
+        if (isPlayingMiniGame)
         {
             return;
         }
@@ -822,6 +832,66 @@ public class PlayerController : NetworkBehaviour
         }
 
         return nearestFloor;
+    }
+
+    /// <summary>
+    /// Handles ESC key input to exit mini game.
+    /// </summary>
+    private void HandleMiniGameEscapeInput()
+    {
+        if (!isPlayingMiniGame)
+        {
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (MiniGameManager.Instance != null)
+            {
+                MiniGameManager.Instance.ExitCurrentMiniGame();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Sets whether the player is currently playing a mini game.
+    /// </summary>
+    /// <param name="playing">True if playing mini game, false otherwise.</param>
+    public void SetPlayingMiniGame(bool playing)
+    {
+        isPlayingMiniGame = playing;
+
+        // Stop any movement when entering mini game
+        if (playing)
+        {
+            SetRunningAnimation(false);
+            if (playerRigidbody != null)
+            {
+                playerRigidbody.linearVelocity = Vector3.zero;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets whether the player is currently playing a mini game.
+    /// </summary>
+    /// <returns>True if playing mini game, false otherwise.</returns>
+    public bool IsPlayingMiniGame()
+    {
+        return isPlayingMiniGame;
+    }
+
+    /// <summary>
+    /// Called when a mini game ends with a result.
+    /// </summary>
+    /// <param name="result">1 = completed, -1 = failed, 0 = exited via ESC</param>
+    public void OnMiniGameResult(int result)
+    {
+        // Handle mini game result here
+        // 1 = player completed the game successfully
+        // -1 = player failed the game
+        // 0 = player exited via ESC
+        Debug.Log($"[PlayerController] Mini game ended with result: {result}");
     }
 
     /// <summary>

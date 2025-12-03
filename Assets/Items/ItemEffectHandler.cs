@@ -36,11 +36,28 @@ public class ItemEffectHandler : NetworkBehaviour
     private float slowDownTimer;
     private float activeBoostMultiplier = 1f;
     private float activeSlowMultiplier = 1f;
+    private PlayerController playerController;
 
     /// <summary>
     /// Gets the current combined speed multiplier from all active effects.
     /// </summary>
     public float CurrentSpeedMultiplier => activeBoostMultiplier * activeSlowMultiplier;
+
+    private void Awake()
+    {
+        CachePlayerController();
+    }
+
+    /// <summary>
+    /// Caches the PlayerController component reference.
+    /// </summary>
+    private void CachePlayerController()
+    {
+        if (playerController == null)
+        {
+            playerController = GetComponent<PlayerController>();
+        }
+    }
 
     private void Update()
     {
@@ -58,6 +75,12 @@ public class ItemEffectHandler : NetworkBehaviour
             return;
         }
 
+        // Cannot apply effects while playing mini game
+        if (IsPlayingMiniGame())
+        {
+            return;
+        }
+
         switch (itemType)
         {
             case "cookie":
@@ -69,6 +92,16 @@ public class ItemEffectHandler : NetworkBehaviour
             default:
                 break;
         }
+    }
+
+    /// <summary>
+    /// Checks if the player is currently playing a mini game.
+    /// </summary>
+    /// <returns>True if playing mini game, false otherwise.</returns>
+    private bool IsPlayingMiniGame()
+    {
+        CachePlayerController();
+        return playerController != null && playerController.IsPlayingMiniGame();
     }
 
     /// <summary>
@@ -128,6 +161,12 @@ public class ItemEffectHandler : NetworkBehaviour
     public void ApplySlowDownClientRpc()
     {
         if (!IsLocalPlayer)
+        {
+            return;
+        }
+
+        // Cannot be affected by effects while playing mini game
+        if (IsPlayingMiniGame())
         {
             return;
         }

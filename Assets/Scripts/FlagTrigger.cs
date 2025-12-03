@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Netcode;
 
 /// <summary>
 /// Trigger zone for team flags. When a player from the matching team enters and presses E, they pick up the flag.
@@ -23,6 +24,7 @@ public class FlagTrigger : MonoBehaviour
 
     /// <summary>
     /// Performs the actual flag pickup. Called by PlayerController after animation starts.
+    /// Only starts mini game for the local player.
     /// </summary>
     public void PerformPickup()
     {
@@ -31,7 +33,43 @@ public class FlagTrigger : MonoBehaviour
             return;
         }
 
-        currentTeamMember.PickUpFlagRpc();
+        if (currentPlayerController == null)
+        {
+            return;
+        }
+
+        // Check if this is the local player
+        var networkObject = currentPlayerController.GetComponent<NetworkObject>();
+        var isLocalPlayer = networkObject != null && networkObject.IsLocalPlayer;
+
+        if (isLocalPlayer)
+        {
+            // Start a random mini game for the local player
+            if (MiniGameManager.Instance != null)
+            {
+                // Capture reference for the callback
+                var teamMember = currentTeamMember;
+                
+                // Only pick up flag if mini game is completed successfully (result = 1)
+                MiniGameManager.Instance.StartRandomMiniGame(currentPlayerController, () =>
+                {
+                    if (teamMember != null)
+                    {
+                        teamMember.PickUpFlagRpc();
+                    }
+                });
+            }
+            else
+            {
+                Debug.LogWarning("[FlagTrigger] MiniGameManager not found. Proceeding without mini game.");
+                currentTeamMember.PickUpFlagRpc();
+            }
+        }
+        else
+        {
+            // Non-local players just pick up the flag directly
+            currentTeamMember.PickUpFlagRpc();
+        }
     }
 
     private void OnTriggerEnter(Collider other)
