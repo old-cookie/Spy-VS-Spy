@@ -3,34 +3,87 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Collections;
 
+/// <summary>
+/// A mini game where players must follow a sequence of directional inputs (Up, Down, Left, Right).
+/// Players have a time limit to achieve the target score by completing sequences correctly.
+/// </summary>
 [RequireComponent(typeof(AudioSource))]
 public class UPDownLeftRight : MiniGame
 {
     private static readonly WaitForSeconds _waitForSeconds0_2 = new(0.2f);
     private static readonly WaitForSeconds _waitForSeconds1_5 = new(1.5f);
-    public Text[] directionTexts;        // Four hint texts
-    public Text scoreText;               // UI score text
-    public Text endText;                 // End text (shows Finish/Fail)
-    public Text timeText;                // Time display text
+    
+    /// <summary>
+    /// Four hint texts displaying the directional arrows.
+    /// </summary>
+    public Text[] directionTexts;
+    
+    /// <summary>
+    /// UI text displaying the current score.
+    /// </summary>
+    public Text scoreText;
+    
+    /// <summary>
+    /// End text displaying "Finish" or "Fail" at game conclusion.
+    /// </summary>
+    public Text endText;
+    
+    /// <summary>
+    /// Timer component for managing countdown.
+    /// </summary>
+    public MiniGameTimer gameTimer;
     
     [Header("Game Settings")]
-    public float timeLimit = 30f;        // Time limit in seconds
+    /// <summary>
+    /// Time limit for completing the game in seconds.
+    /// </summary>
+    public float timeLimit = 30f;
 
     [Header("Audio")]
-    public AudioClip bgMusic;              // Background music
-    public AudioClip correctDirectionSfx;  // Per-direction hit sfx
-    public AudioClip completeSequenceSfx;  // Sequence completed sfx
-    public AudioClip wrongDirectionSfx;    // Wrong direction sfx
+    /// <summary>
+    /// Background music clip.
+    /// </summary>
+    public AudioClip bgMusic;
+    
+    /// <summary>
+    /// Sound effect for each correct directional input.
+    /// </summary>
+    public AudioClip correctDirectionSfx;
+    
+    /// <summary>
+    /// Sound effect when a full sequence is completed.
+    /// </summary>
+    public AudioClip completeSequenceSfx;
+    
+    /// <summary>
+    /// Sound effect for incorrect directional input.
+    /// </summary>
+    public AudioClip wrongDirectionSfx;
 
     [Header("Audio Volume")]
-    public float bgMusicVolume = 0.3f;     // Background music volume (0.3 = 30%)
-    public float correctVolume = 1.0f;     // Correct direction volume
-    public float completeVolume = 1.0f;    // Sequence complete volume
-    public float wrongVolume = 1.5f;       // Wrong direction volume
+    /// <summary>
+    /// Background music volume (0.3 = 30%).
+    /// </summary>
+    public float bgMusicVolume = 0.3f;
+    
+    /// <summary>
+    /// Correct direction sound effect volume.
+    /// </summary>
+    public float correctVolume = 1.0f;
+    
+    /// <summary>
+    /// Sequence complete sound effect volume.
+    /// </summary>
+    public float completeVolume = 1.0f;
+    
+    /// <summary>
+    /// Wrong direction sound effect volume.
+    /// </summary>
+    public float wrongVolume = 1.5f;
 
     private AudioSource audioSource;
     
-    private List<int> sequence = new();
+    private readonly List<int> sequence = new();
     private int playerIndex = 0;
     private int score = 0;
 
@@ -40,17 +93,20 @@ public class UPDownLeftRight : MiniGame
 
     private readonly string[] arrowSymbols = { "⇑", "⇓", "⇐", "⇒" };
 
-    private bool gameEnded = false;  // Game finished flag
-    private float remainingTime;     // Remaining time in seconds
+    /// <summary>
+    /// Whether the game has finished.
+    /// </summary>
+    private bool gameEnded = false;
 
+    /// <summary>
+    /// Called when the game starts. Initializes game state and UI.
+    /// </summary>
     protected override void OnGameStart()
     {
         gameEnded = false;
         playerIndex = 0;
         score = 0;
-        remainingTime = timeLimit;
         UpdateScore();
-        UpdateTime();
         GenerateSequence();
 
         if (scoreText != null)
@@ -58,17 +114,22 @@ public class UPDownLeftRight : MiniGame
             scoreText.gameObject.SetActive(true);
         }
 
-        if (timeText != null)
-        {
-            timeText.gameObject.SetActive(true);
-        }
-
         if (endText != null)
         {
             endText.gameObject.SetActive(false);
         }
+
+        if (gameTimer != null)
+        {
+            gameTimer.SetDisplayVisible(true);
+            gameTimer.StartTimer(timeLimit);
+            gameTimer.OnTimeUp += TriggerFail;
+        }
     }
 
+    /// <summary>
+    /// Unity Start method. Initializes audio and starts the game.
+    /// </summary>
     void Start()
     {
         audioSource = GetComponent<AudioSource>();
@@ -91,33 +152,17 @@ public class UPDownLeftRight : MiniGame
             endText.gameObject.SetActive(false);
         }
 
-        if (timeText != null)
-        {
-            timeText.gameObject.SetActive(true);
-        }
-
-        remainingTime = timeLimit;
         UpdateScore();
-        UpdateTime();
         GenerateSequence();
     }
 
-
-
+    /// <summary>
+    /// Update is called once per frame. Handles timer countdown and input detection.
+    /// </summary>
     protected override void Update()
     {
         if (gameEnded)
             return;
-
-        // Update timer
-        remainingTime -= Time.deltaTime;
-        UpdateTime();
-
-        if (remainingTime <= 0f)
-        {
-            TriggerFail();
-            return;
-        }
 
         if (Input.GetKeyDown(KeyCode.UpArrow))        CheckInput(0);
         else if (Input.GetKeyDown(KeyCode.DownArrow)) CheckInput(1);
@@ -125,6 +170,9 @@ public class UPDownLeftRight : MiniGame
         else if (Input.GetKeyDown(KeyCode.RightArrow))CheckInput(3);
     }
 
+    /// <summary>
+    /// Generates a new random sequence of four directions and displays them.
+    /// </summary>
     void GenerateSequence()
     {
         if (directionTexts == null || directionTexts.Length < 4)
@@ -151,6 +199,10 @@ public class UPDownLeftRight : MiniGame
 
     }
 
+    /// <summary>
+    /// Checks if the player's input matches the expected direction in the sequence.
+    /// </summary>
+    /// <param name="input">The directional input (0=Up, 1=Down, 2=Left, 3=Right).</param>
     void CheckInput(int input)
     {
         int correctAnswer = sequence[playerIndex];
@@ -193,6 +245,11 @@ public class UPDownLeftRight : MiniGame
         }
     }
 
+    /// <summary>
+    /// Plays a sound effect with the specified volume.
+    /// </summary>
+    /// <param name="clip">The audio clip to play.</param>
+    /// <param name="volume">The volume level (default is 1.0).</param>
     void PlaySfx(AudioClip clip, float volume = 1.0f)
     {
         if (clip != null && audioSource != null)
@@ -201,6 +258,11 @@ public class UPDownLeftRight : MiniGame
         }
     }
 
+    /// <summary>
+    /// Coroutine that flashes a text element to a specified color briefly.
+    /// </summary>
+    /// <param name="txt">The text element to flash.</param>
+    /// <param name="flashColor">The color to flash.</param>
     IEnumerator FlashColor(Text txt, Color flashColor)
     {
         txt.color = flashColor;
@@ -208,6 +270,9 @@ public class UPDownLeftRight : MiniGame
         txt.color = normalColor;
     }
 
+    /// <summary>
+    /// Updates the score display text.
+    /// </summary>
     void UpdateScore()
     {
         if (scoreText != null)
@@ -216,27 +281,36 @@ public class UPDownLeftRight : MiniGame
         }
     }
 
-    void UpdateTime()
-    {
-        if (timeText != null)
-        {
-            timeText.text = "Time: " + Mathf.CeilToInt(remainingTime) + "s";
-        }
-    }
-
+    /// <summary>
+    /// Triggers the finish state for the game.
+    /// </summary>
     public void TriggerFinish()
     {
         StartCoroutine(ShowEndThenComplete("Finish"));
     }
 
+    /// <summary>
+    /// Triggers the fail state for the game.
+    /// </summary>
     public void TriggerFail()
     {
         StartCoroutine(ShowEndThenComplete("Fail"));
     }
 
+    /// <summary>
+    /// Coroutine that displays the end message and then completes or fails the game.
+    /// </summary>
+    /// <param name="message">The message to display ("Finish" or "Fail").</param>
     IEnumerator ShowEndThenComplete(string message)
     {
         gameEnded = true;
+
+        if (gameTimer != null)
+        {
+            gameTimer.StopTimer();
+            gameTimer.SetDisplayVisible(false);
+            gameTimer.OnTimeUp -= TriggerFail;
+        }
 
         // Hide direction texts
         if (directionTexts != null)
@@ -253,11 +327,6 @@ public class UPDownLeftRight : MiniGame
         if (scoreText != null)
         {
             scoreText.gameObject.SetActive(false);
-        }
-
-        if (timeText != null)
-        {
-            timeText.gameObject.SetActive(false);
         }
 
         if (endText != null)
