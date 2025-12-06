@@ -1,137 +1,128 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 using System.Collections;
 using System.Collections.Generic;
 
-public class WhackAMoleGame : MonoBehaviour
+/// <summary>
+/// Controls the whack-a-mole mini-game lifecycle, spawning moles and tracking score/time.
+/// </summary>
+[RequireComponent(typeof(AudioSource))]
+public class WhackAMole : MiniGame
 {
+    private static readonly WaitForSeconds WaitResult = new(1.5f);
+
     [Header("UI Elements")]
-    public TMP_Text scoreText;
-    public Button[] holeBtns;
-    public Image[] moleImages;
-    public Button finishBtn;
+    /// <summary>Displays the current score.</summary>
+    public Text scoreText;
+    /// <summary>Displays the remaining time.</summary>
+    public Text timerText;
+    /// <summary>Displays the final result.</summary>
+    public Text resultText;
+    /// <summary>Button prefab used as a mole hole.</summary>
+    public Button holePrefab;
+    /// <summary>Optional parent for spawned holes.</summary>
+    public RectTransform holeParent;
+    /// <summary>Panel used as the spawn area and visibility toggle.</summary>
     public Image gamePanel;
 
     [Header("Mole Sprites")]
+    /// <summary>Sprite used for good moles.</summary>
     public Sprite goodMoleSprite;
+    /// <summary>Sprite used for bad moles.</summary>
     public Sprite badMoleSprite;
 
-    [Header("Colors")]
-    public Color emptyHoleColor = new Color(0.6f, 0.4f, 0.2f);
-
     [Header("Game Settings")]
-    public float moleAppearInterval = 0.5f; // ✅ 改为 0.5 秒
-    public int molesToSpawnPerTurn = 3; // ✅ 新增：每次出现多少个地鼠
+    /// <summary>Seconds between spawn cycles.</summary>
+    public float moleAppearInterval = 0.5f;
+    /// <summary>How many moles appear each spawn cycle.</summary>
+    public int molesToSpawnPerTurn = 3;
+    /// <summary>Minimum spacing between spawned holes.</summary>
+    public float minHoleSpacing = 120f;
+    /// <summary>Padding inside the spawn area to avoid edges.</summary>
+    public Vector2 spawnPadding = new Vector2(40f, 40f);
+    /// <summary>Score required to finish with success.</summary>
     public int targetScore = 30;
+    /// <summary>Time limit for the round in seconds.</summary>
+    public float timeLimit = 30f;
+    /// <summary>Sound played when hitting a good mole.</summary>
     public AudioClip goodSfx;
+    /// <summary>Sound played when hitting a bad mole.</summary>
     public AudioClip badSfx;
+    /// <summary>Sound played when the round completes.</summary>
     public AudioClip completeSfx;
 
     private int currentScore = 0;
-    private HashSet<int> activeMoleIds = new HashSet<int>(); // ✅ 改为 HashSet 存储多个地鼠
+    private float remainingTime = 0f;
     private bool gameRunning = false;
     private bool gameFinished = false;
     private Coroutine moleSpawnerCoroutine;
     private AudioSource audioSource;
 
-    private enum MoleType { Good, Bad, None }
-    private MoleType[] moleTypes;
+    private class ActiveHole
+    {
+        public int id;
+        public Button button;
+        public MoleType type;
+        public RectTransform rect;
+    }
 
+    private readonly Dictionary<int, ActiveHole> activeHoles = new();
+    private int nextHoleId = 0;
+
+    private enum MoleType { Good, Bad }
+
+    /// <summary>
+    /// Initializes audio and UI state when the component is created.
+    /// </summary>
     void Start()
     {
-        // 初始化 AudioSource
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
         {
             audioSource = gameObject.AddComponent<AudioSource>();
         }
 
-        // ✅ 验证数组长度
-        if (holeBtns == null || holeBtns.Length == 0)
+        if (holePrefab == null)
         {
-            Debug.LogError("[ERROR] holeBtns 数组为空！请在 Inspector 中配置 8 个按钮！");
             return;
-        }
-
-        if (moleImages == null || moleImages.Length == 0)
-        {
-            Debug.LogError("[ERROR] moleImages 数组为空！请在 Inspector 中配置 8 个 Image！");
-            return;
-        }
-
-        if (holeBtns.Length != moleImages.Length)
-        {
-            Debug.LogError($"[ERROR] holeBtns 数量 ({holeBtns.Length}) 和 moleImages 数量 ({moleImages.Length}) 不相等！");
-            return;
-        }
-
-        Debug.Log($"[SUCCESS] 检测到 {holeBtns.Length} 个地洞和 {moleImages.Length} 个地鼠图片");
-
-        // 初始化地鼠类型数组
-        moleTypes = new MoleType[holeBtns.Length];
-        for (int i = 0; i < moleTypes.Length; i++)
-        {
-            moleTypes[i] = MoleType.None;
-        }
-
-        // 绑定按钮事件
-        for (int i = 0; i < holeBtns.Length; i++)
-        {
-            int id = i;
-            holeBtns[i].onClick.AddListener(() => OnMoleClicked(id));
-            
-            Image holeImage = holeBtns[i].GetComponent<Image>();
-            if (holeImage != null)
-            {
-                holeImage.color = emptyHoleColor;
-            }
-            
-            moleImages[i].enabled = false;
-        }
-
-        if (finishBtn != null)
-        {
-            finishBtn.onClick.AddListener(FinishGame);
         }
 
         UpdateScoreDisplay();
-        if (finishBtn != null)
-        {
-            finishBtn.gameObject.SetActive(false);
-        }
-
-        Debug.Log("[WhackAMole] 游戏初始化完成");
-        StartGameAutomatically();
+        UpdateTimerDisplay();
+        ShowResult("");
     }
 
+    /// <summary>
+    /// Cleans up spawned holes when the object is destroyed.
+    /// </summary>
     void OnDestroy()
     {
-        if (holeBtns == null) return;
-        
-        for (int i = 0; i < holeBtns.Length; i++)
-        {
-            holeBtns[i].onClick.RemoveAllListeners();
-        }
-        if (finishBtn != null)
-        {
-            finishBtn.onClick.RemoveAllListeners();
-        }
+        ClearActiveHoles();
     }
 
-    void StartGameAutomatically()
+    /// <summary>
+    /// Resets state and starts the spawn loop when the game begins.
+    /// </summary>
+    protected override void OnGameStart()
     {
         currentScore = 0;
+        remainingTime = timeLimit;
         gameRunning = true;
         gameFinished = false;
-        activeMoleIds.Clear();
+        ClearActiveHoles();
         UpdateScoreDisplay();
-        if (finishBtn != null)
+        UpdateTimerDisplay();
+        ShowResult("");
+
+        if (timerText != null)
         {
-            finishBtn.gameObject.SetActive(false);
+            timerText.gameObject.SetActive(true);
         }
 
-        Debug.Log("[WhackAMole] 游戏自动开始");
+        if (gamePanel != null)
+        {
+            gamePanel.gameObject.SetActive(true);
+        }
 
         if (moleSpawnerCoroutine != null)
         {
@@ -140,6 +131,9 @@ public class WhackAMoleGame : MonoBehaviour
         moleSpawnerCoroutine = StartCoroutine(MoleSpawner());
     }
 
+    /// <summary>
+    /// Coroutine that periodically spawns moles while the game is running.
+    /// </summary>
     IEnumerator MoleSpawner()
     {
         while (gameRunning && !gameFinished)
@@ -148,98 +142,185 @@ public class WhackAMoleGame : MonoBehaviour
 
             if (!gameRunning || gameFinished) break;
 
-            // ✅ 隐藏所有当前的地鼠
-            List<int> molesToHide = new List<int>(activeMoleIds);
-            foreach (int moleId in molesToHide)
-            {
-                HideMole(moleId);
-            }
-
-            // ✅ 随机生成多个地鼠
-            int molesToSpawn = Mathf.Min(molesToSpawnPerTurn, holeBtns.Length);
-            List<int> availableHoles = new List<int>();
-            for (int i = 0; i < holeBtns.Length; i++)
-            {
-                availableHoles.Add(i);
-            }
-
-            // 随机打乱顺序
-            for (int i = availableHoles.Count - 1; i > 0; i--)
-            {
-                int randomIndex = Random.Range(0, i + 1);
-                int temp = availableHoles[i];
-                availableHoles[i] = availableHoles[randomIndex];
-                availableHoles[randomIndex] = temp;
-            }
-
-            // 选择前 molesToSpawn 个地洞生成地鼠
-            for (int i = 0; i < molesToSpawn; i++)
-            {
-                int holeId = availableHoles[i];
-                MoleType type = Random.value < 0.5f ? MoleType.Good : MoleType.Bad;
-                ShowMole(holeId, type);
-            }
-
-            Debug.Log($"[WhackAMole] 本轮生成了 {molesToSpawn} 个地鼠");
+            SpawnHolesForTurn();
         }
     }
 
-    void ShowMole(int holeId, MoleType type)
+    /// <summary>
+    /// Updates the countdown timer and completes the game when time elapses.
+    /// </summary>
+    protected override void Update()
     {
-        // ✅ 添加边界检查
-        if (holeId < 0 || holeId >= moleImages.Length)
+        if (!gameRunning || gameFinished || !IsActive)
         {
-            Debug.LogError($"[ERROR] holeId {holeId} 超出范围！moleImages 长度: {moleImages.Length}");
             return;
         }
 
-        activeMoleIds.Add(holeId);
-        moleTypes[holeId] = type;
-
-        if (moleImages[holeId] != null)
+        remainingTime -= Time.deltaTime;
+        if (remainingTime < 0f)
         {
-            if (type == MoleType.Good)
-            {
-                moleImages[holeId].sprite = goodMoleSprite;
-            }
-            else if (type == MoleType.Bad)
-            {
-                moleImages[holeId].sprite = badMoleSprite;
-            }
-
-            moleImages[holeId].enabled = true;
+            remainingTime = 0f;
         }
+        UpdateTimerDisplay();
 
-        Debug.Log($"[WhackAMole] 地鼠出现在地洞 {holeId}，类型: {type}");
+        if (remainingTime <= 0f)
+        {
+            CompleteGame(false);
+        }
     }
 
-    void HideMole(int holeId)
+    /// <summary>
+    /// Spawns a set of holes for the current turn within the allowed area.
+    /// </summary>
+    void SpawnHolesForTurn()
     {
-        if (holeId < 0 || holeId >= holeBtns.Length) return;
+        ClearActiveHoles();
 
-        moleTypes[holeId] = MoleType.None;
-        if (moleImages[holeId] != null)
+        RectTransform parent = holeParent != null ? holeParent : (gamePanel != null ? gamePanel.rectTransform : transform as RectTransform);
+        if (parent == null)
         {
-            moleImages[holeId].enabled = false;
+            return;
         }
 
-        activeMoleIds.Remove(holeId);
+        Rect rect = parent.rect;
+        RectTransform prefabRect = holePrefab.GetComponent<RectTransform>();
+        float sizeX = prefabRect != null ? prefabRect.sizeDelta.x : minHoleSpacing;
+        float sizeY = prefabRect != null ? prefabRect.sizeDelta.y : minHoleSpacing;
+        float halfX = sizeX * 0.5f;
+        float halfY = sizeY * 0.5f;
+        float spacing = Mathf.Max(minHoleSpacing, Mathf.Max(sizeX, sizeY));
+
+        float minX = rect.xMin + spawnPadding.x + halfX;
+        float maxX = rect.xMax - spawnPadding.x - halfX;
+        float minY = rect.yMin + spawnPadding.y + halfY;
+        float maxY = rect.yMax - spawnPadding.y - halfY;
+
+        if (minX > maxX)
+        {
+            float center = (rect.xMin + rect.xMax) * 0.5f;
+            minX = maxX = center;
+        }
+        if (minY > maxY)
+        {
+            float center = (rect.yMin + rect.yMax) * 0.5f;
+            minY = maxY = center;
+        }
+
+        List<Vector2> placedPositions = new List<Vector2>();
+        int spawnCount = Mathf.Max(1, molesToSpawnPerTurn);
+
+        for (int i = 0; i < spawnCount; i++)
+        {
+            bool placed = false;
+            Vector2 pos = Vector2.zero;
+
+            for (int attempt = 0; attempt < 30; attempt++)
+            {
+                float x = Random.Range(minX, maxX);
+                float y = Random.Range(minY, maxY);
+                pos = new Vector2(x, y);
+
+                bool overlaps = false;
+                for (int p = 0; p < placedPositions.Count; p++)
+                {
+                    if (Vector2.Distance(pos, placedPositions[p]) < spacing)
+                    {
+                        overlaps = true;
+                        break;
+                    }
+                }
+
+                if (!overlaps)
+                {
+                    placed = true;
+                    break;
+                }
+            }
+
+            if (!placed)
+            {
+                continue;
+            }
+
+            MoleType type = Random.value < 0.5f ? MoleType.Good : MoleType.Bad;
+            CreateHole(type, pos, parent);
+            placedPositions.Add(pos);
+        }
     }
 
+    /// <summary>
+    /// Instantiates a hole button and registers it as active.
+    /// </summary>
+    void CreateHole(MoleType type, Vector2 anchoredPos, RectTransform parent)
+    {
+        Button btn = Instantiate(holePrefab, parent);
+        btn.interactable = true;
+        int holeId = nextHoleId++;
+        btn.onClick.AddListener(() => OnMoleClicked(holeId));
+
+        Image img = btn.image;
+        if (img != null)
+        {
+            img.raycastTarget = true;
+            img.sprite = type == MoleType.Good ? goodMoleSprite : badMoleSprite;
+            img.color = Color.white;
+        }
+
+        if (btn.TryGetComponent<RectTransform>(out var rect))
+        {
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = anchoredPos;
+            rect.localScale = Vector3.one;
+        }
+
+        activeHoles[holeId] = new ActiveHole
+        {
+            id = holeId,
+            button = btn,
+            type = type,
+            rect = rect
+        };
+    }
+
+    /// <summary>
+    /// Destroys all active hole instances and clears the registry.
+    /// </summary>
+    void ClearActiveHoles()
+    {
+        foreach (var kv in activeHoles)
+        {
+            if (kv.Value != null && kv.Value.button != null)
+            {
+                Destroy(kv.Value.button.gameObject);
+            }
+        }
+        activeHoles.Clear();
+    }
+
+    /// <summary>
+    /// Handles player clicks on a mole, updating score and completion state.
+    /// </summary>
     void OnMoleClicked(int holeId)
     {
-        if (!gameRunning || gameFinished) return;
-        if (moleTypes[holeId] == MoleType.None) return;
+        if (!gameRunning || gameFinished)
+        {
+            return;
+        }
+        if (!activeHoles.TryGetValue(holeId, out var hole))
+        {
+            return;
+        }
 
         int points = 0;
         AudioClip sfx = null;
 
-        if (moleTypes[holeId] == MoleType.Good)
+        if (hole.type == MoleType.Good)
         {
             points = 10;
             sfx = goodSfx;
         }
-        else if (moleTypes[holeId] == MoleType.Bad)
+        else if (hole.type == MoleType.Bad)
         {
             points = -10;
             sfx = badSfx;
@@ -248,37 +329,35 @@ public class WhackAMoleGame : MonoBehaviour
         currentScore += points;
         currentScore = Mathf.Max(0, currentScore);
 
-        Debug.Log($"[WhackAMole] 点击地洞 {holeId}，得分: {points}，总分: {currentScore}");
-
         if (sfx != null && audioSource != null)
         {
             audioSource.PlayOneShot(sfx);
         }
 
-        HideMole(holeId);
+        if (hole.button != null)
+        {
+            Destroy(hole.button.gameObject);
+        }
+        activeHoles.Remove(holeId);
         UpdateScoreDisplay();
 
         if (currentScore >= targetScore)
         {
-            CompleteGame();
+            CompleteGame(true);
         }
     }
 
-    void CompleteGame()
+    /// <summary>
+    /// Ends the round, stops spawning, and shows the result.
+    /// </summary>
+    void CompleteGame(bool success)
     {
         gameRunning = false;
         gameFinished = true;
 
-        Debug.Log($"[WhackAMole] 游戏完成！最终分数: {currentScore}");
-
         if (moleSpawnerCoroutine != null)
         {
             StopCoroutine(moleSpawnerCoroutine);
-        }
-
-        for (int i = 0; i < holeBtns.Length; i++)
-        {
-            HideMole(i);
         }
 
         if (completeSfx != null && audioSource != null)
@@ -286,22 +365,65 @@ public class WhackAMoleGame : MonoBehaviour
             audioSource.PlayOneShot(completeSfx);
         }
 
-        if (finishBtn != null)
+        ClearActiveHoles();
+
+        if (gamePanel != null)
         {
-            finishBtn.gameObject.SetActive(true);
+            gamePanel.gameObject.SetActive(false);
         }
+
+        ShowResult(success ? "Finished" : "Failed");
+
+        if (timerText != null)
+        {
+            timerText.gameObject.SetActive(false);
+        }
+
+        StartCoroutine(ResultAndEnd(success));
     }
 
-    void FinishGame()
-    {
-        Debug.Log("[WhackAMole] Finish 按钮被点击");
-    }
-
+    /// <summary>
+    /// Refreshes the score UI with the current value.
+    /// </summary>
     void UpdateScoreDisplay()
     {
         if (scoreText != null)
         {
             scoreText.text = "Score: " + currentScore;
         }
+    }
+
+    /// <summary>
+    /// Refreshes the timer UI with the remaining time.
+    /// </summary>
+    void UpdateTimerDisplay()
+    {
+        if (timerText != null)
+        {
+            timerText.text = "Time: " + Mathf.CeilToInt(remainingTime) + "s";
+        }
+    }
+
+    /// <summary>
+    /// Shows or hides the result text based on the provided message.
+    /// </summary>
+    void ShowResult(string message)
+    {
+        if (resultText != null)
+        {
+            resultText.gameObject.SetActive(!string.IsNullOrEmpty(message));
+            resultText.text = message;
+        }
+    }
+
+    /// <summary>
+    /// Waits briefly, then notifies the base class of the outcome.
+    /// </summary>
+    IEnumerator ResultAndEnd(bool success)
+    {
+        yield return WaitResult;
+
+        int result = success ? 1 : -1;
+        EndGame(result);
     }
 }
