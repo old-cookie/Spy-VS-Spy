@@ -146,8 +146,7 @@ public class ChestController : NetworkBehaviour
             return null;
         }
 
-        var itemComponent = payload.GetComponent<Item>();
-        if (itemComponent == null)
+        if (!payload.TryGetComponent<Item>(out var itemComponent))
         {
             itemComponent = payload.AddComponent<Item>();
         }
@@ -201,8 +200,7 @@ public class ChestController : NetworkBehaviour
         var payload = Instantiate(selectedPrefab, payloadPosition, payloadRotation);
         payload.name = $"ChestPayload_{name}";
 
-        var networkObject = payload.GetComponent<NetworkObject>();
-        if (networkObject != null)
+        if (payload.TryGetComponent<NetworkObject>(out var networkObject))
         {
             networkObject.Spawn();
         }

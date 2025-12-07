@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using System.Collections.Generic;
 using System.Collections;
 
@@ -98,6 +99,9 @@ public class UPDownLeftRight : MiniGame
     /// </summary>
     private bool gameEnded = false;
 
+    private InputSystem_Actions inputActions;
+    private InputAction directionAction;
+
     /// <summary>
     /// Called when the game starts. Initializes game state and UI.
     /// </summary>
@@ -154,6 +158,19 @@ public class UPDownLeftRight : MiniGame
 
         UpdateScore();
         GenerateSequence();
+
+        SetupInput();
+    }
+
+    private void OnEnable()
+    {
+        SetupInput();
+        EnableInput();
+    }
+
+    private void OnDisable()
+    {
+        DisableInput();
     }
 
     /// <summary>
@@ -163,11 +180,81 @@ public class UPDownLeftRight : MiniGame
     {
         if (gameEnded)
             return;
+    }
 
-        if (Input.GetKeyDown(KeyCode.UpArrow))        CheckInput(0);
-        else if (Input.GetKeyDown(KeyCode.DownArrow)) CheckInput(1);
-        else if (Input.GetKeyDown(KeyCode.LeftArrow)) CheckInput(2);
-        else if (Input.GetKeyDown(KeyCode.RightArrow))CheckInput(3);
+    private void SetupInput()
+    {
+        if (inputActions != null)
+        {
+            return;
+        }
+
+        inputActions = new InputSystem_Actions();
+        directionAction = inputActions.MiniGame.UPDownLeftRight;
+        directionAction.performed += OnDirectionPerformed;
+    }
+
+    private void EnableInput()
+    {
+        directionAction?.Enable();
+        inputActions?.MiniGame.Enable();
+    }
+
+    private void DisableInput()
+    {
+        if (directionAction != null)
+        {
+            directionAction.performed -= OnDirectionPerformed;
+            directionAction.Disable();
+        }
+
+        inputActions?.MiniGame.Disable();
+        inputActions?.Dispose();
+        inputActions = null;
+        directionAction = null;
+    }
+
+    private void OnDirectionPerformed(InputAction.CallbackContext context)
+    {
+        if (gameEnded)
+        {
+            return;
+        }
+
+        var controlPath = context.control?.path ?? string.Empty;
+
+        // First try to map by specific control path (works for arrows and d-pad part names)
+        switch (controlPath)
+        {
+            case "/Keyboard/upArrow":
+                CheckInput(0);
+                return;
+            case "/Keyboard/downArrow":
+                CheckInput(1);
+                return;
+            case "/Keyboard/leftArrow":
+                CheckInput(2);
+                return;
+            case "/Keyboard/rightArrow":
+                CheckInput(3);
+                return;
+        }
+
+        // Fallback: interpret a vector value (gamepad/joystick/XR primary 2D axis)
+        var dir = context.ReadValue<Vector2>();
+        if (dir == Vector2.zero)
+        {
+            return;
+        }
+
+        if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
+        {
+            CheckInput(dir.x > 0 ? 3 : 2);
+        }
+        else
+        {
+            CheckInput(dir.y > 0 ? 0 : 1);
+        }
     }
 
     /// <summary>

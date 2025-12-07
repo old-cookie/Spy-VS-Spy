@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using UnityEngine.InputSystem;
 
 /// <summary>
 /// Controls player movement, jumping, facing direction, item interaction, and chest picking.
@@ -7,6 +8,7 @@ using Unity.Netcode;
 [RequireComponent(typeof(Animator))]
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(ItemEffectHandler))]
+[RequireComponent(typeof(TeamMember))]
 public class PlayerController : NetworkBehaviour
 {
     /// <summary>
@@ -95,6 +97,18 @@ public class PlayerController : NetworkBehaviour
     private float pickLockDuration = 1.3f;
 
     /// <summary>
+    /// Fallback radius to detect chests when trigger events are missed.
+    /// </summary>
+    [SerializeField, Min(0.1f)]
+    private float chestPickupRadius = 1.25f;
+
+    /// <summary>
+    /// Fallback radius to detect flags when trigger events are missed.
+    /// </summary>
+    [SerializeField, Min(0.1f)]
+    private float flagPickupRadius = 1.25f;
+
+    /// <summary>
     /// Y position threshold below which the player is reset to the nearest floor.
     /// </summary>
     [Header("Fall Reset Settings")]
@@ -137,9 +151,15 @@ public class PlayerController : NetworkBehaviour
     private FlagTrigger currentFlag;
     private TeamMember teamMember;
     private bool isPlayingMiniGame;
+    private InputSystem_Actions inputActions;
+    private InputAction moveAction;
+    private InputAction jumpAction;
+    private InputAction pickAction;
+    private InputAction useAction;
 
     private void Awake()
     {
+        InitializeInputActions();
         CacheAnimatorReference();
         CacheRigidbodyReference();
         CacheItemEffectHandler();
@@ -153,12 +173,29 @@ public class PlayerController : NetworkBehaviour
         CacheTeamMember();
         SubscribeToTeamChanges();
         ApplyTeamMaterial(teamMember != null ? teamMember.CurrentTeam : Team.None);
+
+        if (IsLocalPlayer)
+        {
+            EnablePlayerInput();
+        }
     }
 
     public override void OnNetworkDespawn()
     {
         base.OnNetworkDespawn();
+        DisablePlayerInput();
         UnsubscribeFromTeamChanges();
+    }
+
+    private void OnDisable()
+    {
+        DisablePlayerInput();
+    }
+
+    public override void OnDestroy()
+    {
+        base.OnDestroy();
+        DisposeInputActions();
     }
 
     /// <summary>
@@ -210,20 +247,16 @@ public class PlayerController : NetworkBehaviour
         UpdatePickLockTimer();
         CheckFallReset();
 
-        var inputValue = new Vector2(Input.GetAxis("Horizontal"), 0f);
+        var moveInput = moveAction != null ? moveAction.ReadValue<Vector2>() : Vector2.zero;
 
         var pickLocked = IsPickLocked();
-        var horizontal = pickLocked ? 0f : inputValue.x;
+        var horizontal = pickLocked ? 0f : moveInput.x;
 
-        UpdateFacingDirection(inputValue.x);
+        UpdateFacingDirection(moveInput.x);
 
         var hasMovement = !Mathf.Approximately(horizontal, 0f);
 
         SetRunningAnimation(hasMovement);
-
-        HandleJumpInput();
-        HandleInteractInput();
-        HandleUseInput();
 
         if (hasMovement)
         {
@@ -443,15 +476,12 @@ public class PlayerController : NetworkBehaviour
     /// </summary>
     private void HandleJumpInput()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (IsPickLocked())
         {
-            if (IsPickLocked())
-            {
-                return;
-            }
-
-            TryJump();
+            return;
         }
+
+        TryJump();
     }
 
     /// <summary>
@@ -459,12 +489,13 @@ public class PlayerController : NetworkBehaviour
     /// </summary>
     private void HandleInteractInput()
     {
-        if (!Input.GetKeyDown(KeyCode.E))
+        if (IsPickLocked())
         {
             return;
         }
 
         // Try to pick flag first
+        TryFindNearbyFlag();
         if (canPickFlag && currentFlag != null)
         {
             HandleFlagPickup();
@@ -472,6 +503,7 @@ public class PlayerController : NetworkBehaviour
         }
 
         // Then try to pick chest
+        TryFindNearbyChest();
         if (!canPickChest)
         {
             return;
@@ -532,6 +564,66 @@ public class PlayerController : NetworkBehaviour
     }
 
     /// <summary>
+    /// Fallback detection for nearby chests when trigger callbacks are missed.
+    /// </summary>
+    private void TryFindNearbyChest()
+    {
+        if (canPickChest && currentChest != null)
+        {
+            return;
+        }
+
+        var hits = Physics.OverlapSphere(transform.position, chestPickupRadius, ~0, QueryTriggerInteraction.Collide);
+        foreach (var hit in hits)
+        {
+            var chest = hit.GetComponentInParent<ChestController>() ?? hit.GetComponent<ChestController>();
+            if (chest != null)
+            {
+                canPickChest = true;
+                currentChest = chest;
+                return;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Fallback detection for nearby flags when trigger callbacks are missed.
+    /// </summary>
+    private void TryFindNearbyFlag()
+    {
+        if (canPickFlag && currentFlag != null)
+        {
+            return;
+        }
+
+        var hits = Physics.OverlapSphere(transform.position, flagPickupRadius, ~0, QueryTriggerInteraction.Collide);
+        foreach (var hit in hits)
+        {
+            var flag = hit.GetComponentInParent<FlagTrigger>() ?? hit.GetComponent<FlagTrigger>();
+            if (flag == null)
+            {
+                continue;
+            }
+
+            var team = GetComponent<TeamMember>();
+            if (team == null || !team.IsOnTeam(flag.Team))
+            {
+                continue;
+            }
+
+            if (team.HasFlag)
+            {
+                continue;
+            }
+
+            canPickFlag = true;
+            currentFlag = flag;
+            return;
+        }
+    }
+
+
+    /// <summary>
     /// Sets the current flag that can be picked up.
     /// </summary>
     /// <param name="flag">The flag trigger to set, or null to clear.</param>
@@ -554,11 +646,6 @@ public class PlayerController : NetworkBehaviour
     /// </summary>
     private void HandleUseInput()
     {
-        if (!Input.GetKeyDown(KeyCode.Q))
-        {
-            return;
-        }
-
         TryConsumeHeldItem();
     }
 
@@ -844,7 +931,7 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
         {
             if (MiniGameManager.Instance != null)
             {
@@ -919,21 +1006,20 @@ public class PlayerController : NetworkBehaviour
     /// <param name="other">The collider that was entered.</param>
     private void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag("Chest"))
-        {
-            return;
-        }
-
-        canPickChest = true;
+        // Accept either a tagged chest or any collider under a ChestController to avoid tag mismatch issues
         var chest = other.GetComponentInParent<ChestController>();
         if (chest == null)
         {
             chest = other.GetComponent<ChestController>();
         }
-        if (chest != null)
+
+        if (chest == null)
         {
-            currentChest = chest;
+            return;
         }
+
+        canPickChest = true;
+        currentChest = chest;
     }
 
     /// <summary>
@@ -942,20 +1028,20 @@ public class PlayerController : NetworkBehaviour
     /// <param name="other">The collider that was exited.</param>
     private void OnTriggerExit(Collider other)
     {
-        if (!other.CompareTag("Chest"))
-        {
-            return;
-        }
-
-        canPickChest = false;
-
         var chest = other.GetComponentInParent<ChestController>();
         if (chest == null)
         {
             chest = other.GetComponent<ChestController>();
         }
-        if (chest != null && chest == currentChest)
+
+        if (chest == null)
         {
+            return;
+        }
+
+        if (chest == currentChest)
+        {
+            canPickChest = false;
             currentChest = null;
         }
     }
@@ -966,6 +1052,123 @@ public class PlayerController : NetworkBehaviour
     void CheckGround()
     {
         isGround = Physics.CheckSphere(groundCheckPos.position, groundDistance, groundMask);
+    }
+
+    /// <summary>
+    /// Sets up input actions and event subscriptions for the new Input System.
+    /// </summary>
+    private void InitializeInputActions()
+    {
+        if (inputActions != null)
+        {
+            return;
+        }
+
+        inputActions = new InputSystem_Actions();
+
+        moveAction = inputActions.Player.Move;
+        jumpAction = inputActions.Player.Jump;
+        pickAction = inputActions.Player.Pick;
+        useAction = inputActions.Player.Use;
+
+        if (jumpAction != null)
+        {
+            jumpAction.performed += OnJumpPerformed;
+        }
+
+        if (pickAction != null)
+        {
+            pickAction.performed += OnPickPerformed;
+        }
+
+        if (useAction != null)
+        {
+            useAction.performed += OnUsePerformed;
+        }
+    }
+
+    /// <summary>
+    /// Enables player input actions for the local player.
+    /// </summary>
+    private void EnablePlayerInput()
+    {
+        if (inputActions == null)
+        {
+            return;
+        }
+
+        inputActions.Player.Enable();
+    }
+
+    /// <summary>
+    /// Disables player input actions.
+    /// </summary>
+    private void DisablePlayerInput()
+    {
+        if (inputActions == null)
+        {
+            return;
+        }
+
+        inputActions.Player.Disable();
+    }
+
+    /// <summary>
+    /// Cleans up input action subscriptions and disposes the asset.
+    /// </summary>
+    private void DisposeInputActions()
+    {
+        if (jumpAction != null)
+        {
+            jumpAction.performed -= OnJumpPerformed;
+        }
+
+        if (pickAction != null)
+        {
+            pickAction.performed -= OnPickPerformed;
+        }
+
+        if (useAction != null)
+        {
+            useAction.performed -= OnUsePerformed;
+        }
+
+        inputActions?.Dispose();
+        inputActions = null;
+        moveAction = null;
+        jumpAction = null;
+        pickAction = null;
+        useAction = null;
+    }
+
+    private void OnJumpPerformed(InputAction.CallbackContext context)
+    {
+        if (!IsLocalPlayer || isPlayingMiniGame)
+        {
+            return;
+        }
+
+        HandleJumpInput();
+    }
+
+    private void OnPickPerformed(InputAction.CallbackContext context)
+    {
+        if (!IsLocalPlayer || isPlayingMiniGame)
+        {
+            return;
+        }
+
+        HandleInteractInput();
+    }
+
+    private void OnUsePerformed(InputAction.CallbackContext context)
+    {
+        if (!IsLocalPlayer || isPlayingMiniGame)
+        {
+            return;
+        }
+
+        HandleUseInput();
     }
 }
 

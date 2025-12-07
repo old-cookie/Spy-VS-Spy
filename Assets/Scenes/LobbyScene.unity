@@ -378,7 +378,7 @@ MonoBehaviour:
   waitingPanel: {fileID: 1358175161}
   startButton: {fileID: 399456351}
   gameScene: {fileID: 102900000, guid: ef6947665274e494f9510e28a9a551c7, type: 3}
-  gameSceneName: Demo
+  gameSceneName: GameScene
   playerNumText: {fileID: 954255864}
   isHost: 0
 --- !u!4 &100613783
@@ -1272,7 +1272,7 @@ Camera:
   m_GameObject: {fileID: 1426329669}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
+  m_ClearFlags: 4
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
@@ -1298,7 +1298,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 5
+  orthographic size: 4
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2

@@ -13,6 +13,11 @@ public class FlagTrigger : MonoBehaviour
     private Team flagTeam = Team.Blue;
 
     /// <summary>
+    /// The team allowed to pick this flag.
+    /// </summary>
+    public Team Team => flagTeam;
+
+    /// <summary>
     /// Reference to the TeamMember component of the player in the trigger zone.
     /// </summary>
     private TeamMember currentTeamMember;
