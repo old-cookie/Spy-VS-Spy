@@ -102,3 +102,4 @@ InitTestScene*.unity*
 ### VisualStudioCode ###
 **/.vscode/
 .vsconfig
+ProjectSettings/Packages/com.unity.testtools.codecoverage/Settings.json
