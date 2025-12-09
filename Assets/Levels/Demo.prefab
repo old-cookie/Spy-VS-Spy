@@ -366,10 +366,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 011aa76b5f3193a4091bd83679ac277e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AutomatedElevator
-  currentFloor: 0
-  maxFloor: 10
-  minFloor: 7
-  moveSpeed: 2
+  targetHeight: 5
+  moveTime: 2
   waitTime: 0
 --- !u!1 &919132149155446097
 GameObject:
@@ -632,10 +630,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 011aa76b5f3193a4091bd83679ac277e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AutomatedElevator
-  currentFloor: 0
-  maxFloor: 15
-  minFloor: 12
-  moveSpeed: 2
+  targetHeight: 5
+  moveTime: 2
   waitTime: 0
 --- !u!1 &2519636597758411805
 GameObject:
@@ -986,10 +982,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 011aa76b5f3193a4091bd83679ac277e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AutomatedElevator
-  currentFloor: 0
-  maxFloor: 7
-  minFloor: 7
-  moveSpeed: 2
+  targetHeight: 5
+  moveTime: 2
   waitTime: 2
 --- !u!1 &3577530284521574083
 GameObject:
@@ -1605,11 +1599,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 011aa76b5f3193a4091bd83679ac277e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AutomatedElevator
-  currentFloor: 0
-  maxFloor: 10
-  minFloor: 7
-  moveSpeed: 2
-  waitTime: 0
+  targetHeight: 5
+  moveTime: 2
+  waitTime: 3
 --- !u!1 &5484567103489160374
 GameObject:
   m_ObjectHideFlags: 0
@@ -1735,10 +1727,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 011aa76b5f3193a4091bd83679ac277e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AutomatedElevator
-  currentFloor: 0
-  maxFloor: 12
-  minFloor: 12
-  moveSpeed: 2
+  targetHeight: 5
+  moveTime: 2
   waitTime: 2
 --- !u!1 &5994544706457814738
 GameObject:
@@ -1999,11 +1989,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 011aa76b5f3193a4091bd83679ac277e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AutomatedElevator
-  currentFloor: 0
-  maxFloor: 12
-  minFloor: 7
-  moveSpeed: 4
-  waitTime: 0
+  targetHeight: 5
+  moveTime: 2
+  waitTime: 1
 --- !u!1 &6496589552635345749
 GameObject:
   m_ObjectHideFlags: 0
@@ -2620,6 +2608,7 @@ GameObject:
   - component: {fileID: 3668923733910107853}
   - component: {fileID: 4264394992540082167}
   - component: {fileID: 5748575373093726849}
+  - component: {fileID: 3825693525508303519}
   m_Layer: 3
   m_Name: Floor (3)
   m_TagString: Floor
@@ -2720,6 +2709,21 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 4, y: 0.5000001, z: 4}
   m_Center: {x: 0, y: 0.24999999, z: 0}
+--- !u!114 &3825693525508303519
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9145743237140562277}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 011aa76b5f3193a4091bd83679ac277e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AutomatedElevator
+  targetHeight: 5
+  moveTime: 3
+  waitTime: 3
 --- !u!1001 &649116688371704295
 PrefabInstance:
   m_ObjectHideFlags: 0
