@@ -45,6 +45,19 @@ public class ItemEffectHandler : NetworkBehaviour
     [SerializeField, Min(0f)]
     private float jumpBoostDuration = 4f;
 
+    /// <summary>
+    /// Multiplier applied to slow down other players when rust gear is used.
+    /// </summary>
+    [Header("Slow Down Settings (Rust Gear)")]
+    [SerializeField, Range(0.1f, 1f)]
+    private float rustGearSlowDownMultiplier = 0.2f;
+
+    /// <summary>
+    /// Duration in seconds for the rust gear slow down effect.
+    /// </summary>
+    [SerializeField, Min(0f)]
+    private float rustGearSlowDownDuration = 10f;
+
     private float speedBoostTimer;
     private float slowDownTimer;
     private float jumpBoostTimer;
@@ -111,6 +124,9 @@ public class ItemEffectHandler : NetworkBehaviour
                 break;
             case "super drink":
                 ApplyJumpBoost();
+                break;
+            case "rust gear":
+                ApplyRustGearSlowDownServerRpc();
                 break;
             default:
                 break;
@@ -222,5 +238,51 @@ public class ItemEffectHandler : NetworkBehaviour
     {
         activeJumpMultiplier = jumpBoostMultiplier;
         jumpBoostTimer = jumpBoostDuration;
+    }
+
+    /// <summary>
+    /// Server RPC to apply rust gear slow down effect to all other players.
+    /// </summary>
+    [ServerRpc]
+    private void ApplyRustGearSlowDownServerRpc()
+    {
+        var players = GameObject.FindGameObjectsWithTag("Player");
+        foreach (var player in players)
+        {
+            var handler = player.GetComponent<ItemEffectHandler>();
+            if (handler != null && handler != this)
+            {
+                handler.ApplyRustGearSlowDownClientRpc();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Client RPC to receive and apply the rust gear slow down effect on the local player.
+    /// </summary>
+    [ClientRpc]
+    public void ApplyRustGearSlowDownClientRpc()
+    {
+        if (!IsLocalPlayer)
+        {
+            return;
+        }
+
+        // Cannot be affected by effects while playing mini game
+        if (IsPlayingMiniGame())
+        {
+            return;
+        }
+
+        ApplyRustGearSlowDown();
+    }
+
+    /// <summary>
+    /// Applies the rust gear slow down effect to this player.
+    /// </summary>
+    private void ApplyRustGearSlowDown()
+    {
+        activeSlowMultiplier = rustGearSlowDownMultiplier;
+        slowDownTimer = rustGearSlowDownDuration;
     }
 }
