@@ -666,7 +666,13 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
-        playerRigidbody.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+        float finalJumpForce = jumpForce;
+        if (itemEffectHandler != null)
+        {
+            finalJumpForce *= itemEffectHandler.CurrentJumpMultiplier;
+        }
+
+        playerRigidbody.AddForce(Vector3.up * finalJumpForce, ForceMode.Impulse);
 
         if (animator != null)
         {
