@@ -378,7 +378,7 @@ MonoBehaviour:
   waitingPanel: {fileID: 1358175161}
   levelDropdown: {fileID: 1734093557}
   levelPrefabs:
-  - {fileID: 3786009117572631067, guid: bd891386d5740ac4db865a0b2d4548cf, type: 3}
+  - {fileID: 3786009117572631067, guid: 3f0bae4e2501e5048b1b5cb0253ae8db, type: 3}
   startButton: {fileID: 399456351}
   gameScene: {fileID: 102900000, guid: ef6947665274e494f9510e28a9a551c7, type: 3}
   gameSceneName: GameScene
