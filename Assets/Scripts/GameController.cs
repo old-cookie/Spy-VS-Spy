@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Unity.Netcode;
 using UnityEngine.SceneManagement;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -97,6 +98,25 @@ public class GameController : NetworkBehaviour
     private Transform redFlagPos;
     private bool flagsSpawned;
 
+    [Header("End Game UI")]
+    [SerializeField]
+    private Button btnEnd;
+
+    [SerializeField]
+    private Text btnEndLabel;
+
+    [SerializeField]
+    private float buttonRevealDelay = 3f;
+
+    [SerializeField]
+    private float autoQuitDelay = 30f;
+
+    [SerializeField]
+    private string lobbySceneName = "Lobby";
+
+    private Coroutine countdownRoutine;
+    private bool exitTriggered;
+
     private void Awake()
     {
         if (Instance == null)
@@ -106,6 +126,13 @@ public class GameController : NetworkBehaviour
         else
         {
             Destroy(gameObject);
+        }
+
+        // Hide btnEnd on awake
+        if (btnEnd != null)
+        {
+            btnEnd.gameObject.SetActive(false);
+            btnEnd.onClick.AddListener(OnBtnEndClicked);
         }
     }
 
@@ -122,6 +149,13 @@ public class GameController : NetworkBehaviour
         matchEnded = false;
         chestsSpawned = false;
         flagsSpawned = false;
+        exitTriggered = false;
+
+        // Ensure btnEnd is hidden on spawn
+        if (btnEnd != null)
+        {
+            btnEnd.gameObject.SetActive(false);
+        }
 
         UpdateScoreUI();
 
@@ -148,6 +182,13 @@ public class GameController : NetworkBehaviour
         matchEnded = false;
         chestsSpawned = false;
         flagsSpawned = false;
+        exitTriggered = false;
+
+        if (countdownRoutine != null)
+        {
+            StopCoroutine(countdownRoutine);
+            countdownRoutine = null;
+        }
     }
 
     /// <summary>
@@ -452,7 +493,7 @@ public class GameController : NetworkBehaviour
         {
             matchEnded = true;
             SetWinningTeam(team);
-            LoadEndScene();
+            PlayOutcomeAnimationsClientRpc(team);
         }
     }
 
@@ -468,25 +509,144 @@ public class GameController : NetworkBehaviour
         }
     }
 
+    [Header("Outcome Animation Settings")]
+    [SerializeField]
+    private string winTriggerName = "win";
+
+    [SerializeField]
+    private string loseTriggerName = "lose";
+
+    [SerializeField]
+    private string winStateName = "";
+
+    [SerializeField]
+    private string loseStateName = "";
+
+    [SerializeField]
+    private string idleStateName = "Idle";
+
     /// <summary>
-    /// Loads the configured end scene via Netcode's scene manager.
+    /// Plays win/lose animations on all players via ClientRpc.
     /// </summary>
-    private void LoadEndScene()
+    [ClientRpc]
+    private void PlayOutcomeAnimationsClientRpc(Team winningTeam)
     {
-        if (NetworkManager.Singleton == null || NetworkManager.Singleton.SceneManager == null)
+        var players = FindObjectsOfType<PlayerController>(true);
+        Debug.Log($"[GameController] Found {players.Length} players for outcome animations. Winning team: {winningTeam}");
+        
+        foreach (var player in players)
         {
-            Debug.LogWarning("[GameController] Cannot load end scene because NetworkManager or SceneManager is missing.");
+            var teamMember = player.GetComponent<TeamMember>();
+            Team playerTeam = teamMember != null ? teamMember.CurrentTeam : Team.None;
+            bool isWinner = playerTeam == winningTeam && winningTeam != Team.None;
+            
+            Debug.Log($"[GameController] Player {player.name}: Team={playerTeam}, IsWinner={isWinner}");
+            player.PlayOutcomeAnimation(isWinner, winTriggerName, loseTriggerName, winStateName, loseStateName, idleStateName);
+        }
+
+        Debug.Log($"[GameController] Match ended. Winner: {winningTeam}");
+
+        // Start the countdown to show btnEnd and auto-quit
+        StartEndGameCountdown();
+    }
+
+    /// <summary>
+    /// Starts the end game countdown: delay showing button, then countdown to auto-quit.
+    /// </summary>
+    private void StartEndGameCountdown()
+    {
+        if (countdownRoutine != null)
+        {
+            StopCoroutine(countdownRoutine);
+        }
+        countdownRoutine = StartCoroutine(EndGameCountdownRoutine());
+    }
+
+    /// <summary>
+    /// Coroutine that waits for button reveal delay, shows button, then counts down to auto-quit.
+    /// </summary>
+    private IEnumerator EndGameCountdownRoutine()
+    {
+        // Wait before showing the button
+        yield return new WaitForSeconds(buttonRevealDelay);
+
+        // Show the button
+        if (btnEnd != null)
+        {
+            btnEnd.gameObject.SetActive(true);
+        }
+
+        // Countdown and update label
+        float remaining = autoQuitDelay;
+        while (remaining > 0f && !exitTriggered)
+        {
+            UpdateBtnEndLabel(Mathf.CeilToInt(remaining));
+            yield return new WaitForSeconds(1f);
+            remaining -= 1f;
+        }
+
+        // Auto-quit if not already triggered
+        if (!exitTriggered)
+        {
+            OnBtnEndClicked();
+        }
+    }
+
+    /// <summary>
+    /// Updates the btnEnd label text with remaining seconds.
+    /// </summary>
+    private void UpdateBtnEndLabel(int secondsRemaining)
+    {
+        var label = btnEndLabel != null ? btnEndLabel : (btnEnd != null ? btnEnd.GetComponentInChildren<Text>() : null);
+        if (label != null)
+        {
+            label.text = $"Go back to lobby ({secondsRemaining}s)";
+        }
+    }
+
+    /// <summary>
+    /// Called when btnEnd is clicked. Shuts down network and loads lobby scene.
+    /// </summary>
+    private void OnBtnEndClicked()
+    {
+        if (exitTriggered)
+        {
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(endSceneName))
+        exitTriggered = true;
+
+        if (countdownRoutine != null)
         {
-            Debug.LogWarning("[GameController] End scene name is not set.");
-            return;
+            StopCoroutine(countdownRoutine);
+            countdownRoutine = null;
         }
 
-        DespawnAllPlayers();
-        NetworkManager.Singleton.SceneManager.LoadScene(endSceneName, LoadSceneMode.Single);
+        UpdateBtnEndLabel(0);
+
+        if (btnEnd != null)
+        {
+            btnEnd.interactable = false;
+        }
+
+        ShutdownNetworkAndLoadLobby();
+    }
+
+    /// <summary>
+    /// Shuts down the network and loads the lobby scene.
+    /// </summary>
+    private void ShutdownNetworkAndLoadLobby()
+    {
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.Shutdown();
+            Destroy(NetworkManager.Singleton.gameObject);
+        }
+
+        if (!string.IsNullOrWhiteSpace(lobbySceneName))
+        {
+            SceneManager.LoadScene(lobbySceneName);
+        }
     }
 
     /// <summary>

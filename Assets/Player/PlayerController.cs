@@ -1187,5 +1187,82 @@ public class PlayerController : NetworkBehaviour
 
         HandleUseInput();
     }
+
+    /// <summary>
+    /// Plays the outcome animation (win/lose) and disables movement.
+    /// </summary>
+    /// <param name="isWinner">Whether this player is the winner.</param>
+    /// <param name="winTrigger">Animator trigger name for win.</param>
+    /// <param name="loseTrigger">Animator trigger name for lose.</param>
+    /// <param name="winStateName">Animator state name for looping win animation.</param>
+    /// <param name="loseStateName">Animator state name for looping lose animation.</param>
+    /// <param name="idleStateName">Animator state name for idle fallback.</param>
+    public void PlayOutcomeAnimation(bool isWinner, string winTrigger, string loseTrigger, string winStateName, string loseStateName, string idleStateName)
+    {
+        CacheAnimatorReference();
+        CacheRigidbodyReference();
+
+        // Freeze rigidbody first (before disabling)
+        if (playerRigidbody != null)
+        {
+            playerRigidbody.linearVelocity = Vector3.zero;
+            playerRigidbody.angularVelocity = Vector3.zero;
+            playerRigidbody.isKinematic = true;
+            playerRigidbody.useGravity = false;
+        }
+
+        // Play animation before disabling to ensure animator is set up
+        if (animator != null)
+        {
+            // Try state name first (for looping)
+            string state = isWinner ? winStateName : loseStateName;
+            if (!string.IsNullOrWhiteSpace(state))
+            {
+                animator.Play(state, 0, 0f);
+                Debug.Log($"[PlayerController] Playing state '{state}' for {(isWinner ? "winner" : "loser")}");
+            }
+            else
+            {
+                // Then try trigger
+                string trigger = isWinner ? winTrigger : loseTrigger;
+                if (!string.IsNullOrWhiteSpace(trigger) && AnimatorHasTrigger(trigger))
+                {
+                    animator.SetTrigger(trigger);
+                    Debug.Log($"[PlayerController] Setting trigger '{trigger}' for {(isWinner ? "winner" : "loser")}");
+                }
+                else if (!string.IsNullOrWhiteSpace(idleStateName))
+                {
+                    // Fallback to idle
+                    animator.Play(idleStateName, 0, 0f);
+                    Debug.Log($"[PlayerController] Playing idle state '{idleStateName}' for {(isWinner ? "winner" : "loser")}");
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"[PlayerController] Animator is null, cannot play outcome animation");
+        }
+
+        // Disable input/movement (but keep component enabled so animator keeps updating)
+        DisablePlayerInput();
+    }
+
+    private bool AnimatorHasTrigger(string triggerName)
+    {
+        if (animator == null || string.IsNullOrWhiteSpace(triggerName))
+        {
+            return false;
+        }
+
+        foreach (var parameter in animator.parameters)
+        {
+            if (parameter.type == AnimatorControllerParameterType.Trigger && parameter.name == triggerName)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
 
