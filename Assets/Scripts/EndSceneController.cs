@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using Unity.Netcode;
+using System.Reflection;
 
 /// <summary>
 /// Spawns two showcase players in the end scene and plays win/lose animations based on the winning team.
@@ -23,6 +24,16 @@ public class EndSceneController : MonoBehaviour
 
     [SerializeField]
     private string loseTriggerName = "lose";
+
+    [Header("Team Visuals")]
+    [SerializeField]
+    private Material blueTeamMaterial;
+
+    [SerializeField]
+    private Material redTeamMaterial;
+
+    [SerializeField]
+    private SkinnedMeshRenderer[] showcaseRenderers;
 
     [Header("Lobby Exit UI")]
     [SerializeField]
@@ -72,6 +83,9 @@ public class EndSceneController : MonoBehaviour
         var winnerObj = Instantiate(playerPrefab, resolvedSpawns[0].position, resolvedSpawns[0].rotation);
         var loserObj = Instantiate(playerPrefab, resolvedSpawns[1].position, resolvedSpawns[1].rotation);
 
+        ApplyTeamMaterial(winnerObj, winner);
+        ApplyTeamMaterial(loserObj, GetOpposingTeam(winner));
+
         PlayOutcomeAnimation(winnerObj, true);
         PlayOutcomeAnimation(loserObj, false);
 
@@ -106,6 +120,16 @@ public class EndSceneController : MonoBehaviour
         }
 
         return LevelSelectionState.Instance.WinningTeam;
+    }
+
+    private Team GetOpposingTeam(Team team)
+    {
+        return team switch
+        {
+            Team.Blue => Team.Red,
+            Team.Red => Team.Blue,
+            _ => Team.Red
+        };
     }
 
     /// <summary>
@@ -191,6 +215,81 @@ public class EndSceneController : MonoBehaviour
         {
             animator.SetTrigger(trigger);
         }
+    }
+
+    private void ApplyTeamMaterial(GameObject obj, Team team)
+    {
+        if (obj == null)
+        {
+            return;
+        }
+
+        var material = ResolveTeamMaterial(team, obj);
+        if (material == null)
+        {
+            return;
+        }
+
+        var renderers = ResolveRenderers(obj);
+        foreach (var renderer in renderers)
+        {
+            if (renderer != null)
+            {
+                renderer.material = material;
+            }
+        }
+    }
+
+    private Material ResolveTeamMaterial(Team team, GameObject obj)
+    {
+        Material material = null;
+        switch (team)
+        {
+            case Team.Blue:
+                material = blueTeamMaterial;
+                break;
+            case Team.Red:
+                material = redTeamMaterial;
+                break;
+            default:
+                return null;
+        }
+
+        if (material != null)
+        {
+            return material;
+        }
+
+        var playerController = obj.GetComponent<PlayerController>();
+        if (playerController == null)
+        {
+            return null;
+        }
+
+        var materialFieldName = team == Team.Blue ? "blueTeamMaterial" : "redTeamMaterial";
+        var materialField = typeof(PlayerController).GetField(materialFieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+        return materialField?.GetValue(playerController) as Material;
+    }
+
+    private IEnumerable<SkinnedMeshRenderer> ResolveRenderers(GameObject obj)
+    {
+        if (showcaseRenderers != null && showcaseRenderers.Length > 0)
+        {
+            return showcaseRenderers;
+        }
+
+        var playerController = obj.GetComponent<PlayerController>();
+        if (playerController != null)
+        {
+            var renderersField = typeof(PlayerController).GetField("playerRenderers", BindingFlags.NonPublic | BindingFlags.Instance);
+            var renderersValue = renderersField?.GetValue(playerController) as SkinnedMeshRenderer[];
+            if (renderersValue != null && renderersValue.Length > 0)
+            {
+                return renderersValue;
+            }
+        }
+
+        return obj.GetComponentsInChildren<SkinnedMeshRenderer>(true);
     }
 
     private void UpdateQuitLabel(int secondsRemaining)

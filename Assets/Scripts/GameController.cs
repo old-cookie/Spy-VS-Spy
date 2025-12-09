@@ -485,7 +485,28 @@ public class GameController : NetworkBehaviour
             return;
         }
 
+        DespawnAllPlayers();
         NetworkManager.Singleton.SceneManager.LoadScene(endSceneName, LoadSceneMode.Single);
+    }
+
+    /// <summary>
+    /// Despawns all player objects before changing scenes.
+    /// </summary>
+    private void DespawnAllPlayers()
+    {
+        if (!IsServer || NetworkManager.Singleton == null)
+        {
+            return;
+        }
+
+        foreach (var clientPair in NetworkManager.Singleton.ConnectedClients)
+        {
+            var playerObject = clientPair.Value?.PlayerObject;
+            if (playerObject != null && playerObject.IsSpawned)
+            {
+                playerObject.Despawn(true);
+            }
+        }
     }
 
     /// <summary>

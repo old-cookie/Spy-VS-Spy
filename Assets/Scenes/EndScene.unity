@@ -338,7 +338,7 @@ Transform:
   m_GameObject: {fileID: 581725391}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2, y: 0, z: 2}
+  m_LocalPosition: {x: 2, y: 1, z: 2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -513,6 +513,10 @@ MonoBehaviour:
   spawnPositions: []
   winTriggerName: win
   loseTriggerName: lose
+  blueTeamMaterial: {fileID: 2100000, guid: fd090030d4db9c44589d8400e6cb5c95, type: 2}
+  redTeamMaterial: {fileID: 2100000, guid: 1ecc1fe2942d2ae4e83386fd56fba1b9, type: 2}
+  showcaseRenderers:
+  - {fileID: 0}
   quitToLobbyButton: {fileID: 760767229}
   quitButtonLabel: {fileID: 1964245236}
   buttonRevealDelay: 5
@@ -640,7 +644,7 @@ Transform:
   m_GameObject: {fileID: 1475345312}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2, y: 0, z: 6}
+  m_LocalPosition: {x: 2, y: 1, z: 6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
