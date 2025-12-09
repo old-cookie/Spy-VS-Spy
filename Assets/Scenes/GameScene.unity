@@ -517,6 +517,8 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   scoreText: {fileID: 663437566}
+  pointsToWin: 1
+  endSceneName: EndScene
   levelPrefabs:
   - {fileID: 3786009117572631067, guid: bd891386d5740ac4db865a0b2d4548cf, type: 3}
   defaultLevelName: Demo

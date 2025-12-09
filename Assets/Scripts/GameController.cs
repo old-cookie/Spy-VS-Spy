@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using Unity.Netcode;
+using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -27,12 +28,24 @@ public class GameController : NetworkBehaviour
     /// <summary>
     /// Network variable to sync blue team score across all clients.
     /// </summary>
-    private NetworkVariable<int> blueTeamScore = new NetworkVariable<int>(0);
+    private readonly NetworkVariable<int> blueTeamScore = new(0);
 
     /// <summary>
     /// Network variable to sync red team score across all clients.
     /// </summary>
-    private NetworkVariable<int> redTeamScore = new NetworkVariable<int>(0);
+    private readonly NetworkVariable<int> redTeamScore = new(0);
+
+    /// <summary>
+    /// Points required to trigger the end scene.
+    /// </summary>
+    [SerializeField]
+    private int pointsToWin = 5;
+
+    /// <summary>
+    /// Scene name to load when a team wins.
+    /// </summary>
+    [SerializeField]
+    private string endSceneName = "EndScene";
 
     /// <summary>
     /// Level prefabs available to spawn when the game scene loads. Assign prefabs from Assets/Levels.
@@ -61,6 +74,11 @@ public class GameController : NetworkBehaviour
     /// </summary>
     private static bool levelSpawned;
 
+    /// <summary>
+    /// Prevents multiple win triggers once a team has reached the target score.
+    /// </summary>
+    private bool matchEnded;
+
     private void Awake()
     {
         if (Instance == null)
@@ -83,9 +101,16 @@ public class GameController : NetworkBehaviour
         blueTeamScore.OnValueChanged += OnBlueScoreChanged;
         redTeamScore.OnValueChanged += OnRedScoreChanged;
 
+        matchEnded = false;
+
         UpdateScoreUI();
 
         TrySpawnSelectedLevel();
+
+        if (IsServer && LevelSelectionState.Instance != null)
+        {
+            LevelSelectionState.Instance.ClearWinningTeam();
+        }
 
         if (IsHost)
         {
@@ -100,6 +125,7 @@ public class GameController : NetworkBehaviour
         redTeamScore.OnValueChanged -= OnRedScoreChanged;
 
         levelSpawned = false;
+        matchEnded = false;
     }
 
     /// <summary>
@@ -290,6 +316,16 @@ public class GameController : NetworkBehaviour
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     public void AddScoreRpc(Team team, int points = 1)
     {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        if (matchEnded)
+        {
+            return;
+        }
+
         if (team == Team.Blue)
         {
             blueTeamScore.Value += points;
@@ -298,6 +334,46 @@ public class GameController : NetworkBehaviour
         {
             redTeamScore.Value += points;
         }
+
+        int teamScore = GetScore(team);
+        if (teamScore >= pointsToWin)
+        {
+            matchEnded = true;
+            SetWinningTeam(team);
+            LoadEndScene();
+        }
+    }
+
+    /// <summary>
+    /// Stores the winning team so the end scene can display results.
+    /// </summary>
+    /// <param name="team">Team that reached the win condition.</param>
+    private void SetWinningTeam(Team team)
+    {
+        if (LevelSelectionState.Instance != null)
+        {
+            LevelSelectionState.Instance.SetWinningTeam(team);
+        }
+    }
+
+    /// <summary>
+    /// Loads the configured end scene via Netcode's scene manager.
+    /// </summary>
+    private void LoadEndScene()
+    {
+        if (NetworkManager.Singleton == null || NetworkManager.Singleton.SceneManager == null)
+        {
+            Debug.LogWarning("[GameController] Cannot load end scene because NetworkManager or SceneManager is missing.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(endSceneName))
+        {
+            Debug.LogWarning("[GameController] End scene name is not set.");
+            return;
+        }
+
+        NetworkManager.Singleton.SceneManager.LoadScene(endSceneName, LoadSceneMode.Single);
     }
 
     /// <summary>

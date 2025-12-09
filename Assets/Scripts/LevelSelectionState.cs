@@ -22,9 +22,22 @@ public class LevelSelectionState : NetworkBehaviour
             NetworkVariableWritePermission.Server);
 
     /// <summary>
+    /// Networked winning team so the end scene knows who won.
+    /// </summary>
+    private readonly NetworkVariable<Team> winningTeam =
+        new NetworkVariable<Team>(Team.None,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server);
+
+    /// <summary>
     /// Currently selected level prefab name.
     /// </summary>
     public string SelectedLevelName => selectedLevelName.Value.ToString();
+
+    /// <summary>
+    /// Team that won the last match.
+    /// </summary>
+    public Team WinningTeam => winningTeam.Value;
 
     private void Awake()
     {
@@ -57,5 +70,32 @@ public class LevelSelectionState : NetworkBehaviour
         }
 
         selectedLevelName.Value = new FixedString64Bytes(levelName ?? string.Empty);
+    }
+
+    /// <summary>
+    /// Sets the winning team (server only).
+    /// </summary>
+    /// <param name="team">Team that reached the win condition.</param>
+    public void SetWinningTeam(Team team)
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        winningTeam.Value = team;
+    }
+
+    /// <summary>
+    /// Clears the winning team state (server only).
+    /// </summary>
+    public void ClearWinningTeam()
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        winningTeam.Value = Team.None;
     }
 }
