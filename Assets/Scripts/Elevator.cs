@@ -9,7 +9,7 @@ public class AutomatedElevator : MonoBehaviour
     public float moveSpeed = 2.0f; // Speed in units per second
     public float waitTime = 2.0f;  // Time to wait at each floor
 
-    private bool isMoving = false;
+    public bool isMoving = false;
     private int targetFloor;
 
     private void Start()
@@ -46,7 +46,7 @@ public class AutomatedElevator : MonoBehaviour
         Debug.Log("Moving to floor: " + floor);
 
         // Calculate the target position (adjust as needed)
-        Vector3 targetPosition = new Vector3(transform.position.x, floor, transform.position.z);
+        Vector3 targetPosition = new(transform.position.x, floor, transform.position.z);
 
         while (transform.position.y != targetPosition.y)
         {

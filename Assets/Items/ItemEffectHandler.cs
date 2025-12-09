@@ -1,6 +1,8 @@
 using UnityEngine;
 using Unity.Netcode;
 
+[RequireComponent(typeof(PlayerController))]
+
 /// <summary>
 /// Handles item effects applied to the player, such as speed boosts and slow downs.
 /// </summary>

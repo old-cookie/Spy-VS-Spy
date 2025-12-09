@@ -17,7 +17,7 @@ public class LevelSelectionState : NetworkBehaviour
     /// Networked chosen level prefab name (host writes, everyone reads).
     /// </summary>
     private readonly NetworkVariable<FixedString64Bytes> selectedLevelName =
-        new NetworkVariable<FixedString64Bytes>(new FixedString64Bytes(""),
+        new(new FixedString64Bytes(""),
             NetworkVariableReadPermission.Everyone,
             NetworkVariableWritePermission.Server);
 
@@ -25,7 +25,7 @@ public class LevelSelectionState : NetworkBehaviour
     /// Networked winning team so the end scene knows who won.
     /// </summary>
     private readonly NetworkVariable<Team> winningTeam =
-        new NetworkVariable<Team>(Team.None,
+        new(Team.None,
             NetworkVariableReadPermission.Everyone,
             NetworkVariableWritePermission.Server);
 

@@ -207,9 +207,8 @@ public class PlayerController : NetworkBehaviour
     private void IgnorePlayerCollisions()
     {
         var players = GameObject.FindGameObjectsWithTag("Player");
-        var myCollider = GetComponent<Collider>();
         
-        if (myCollider == null)
+        if (!TryGetComponent<Collider>(out var myCollider))
         {
             return;
         }
@@ -221,8 +220,7 @@ public class PlayerController : NetworkBehaviour
                 continue;
             }
 
-            var otherCollider = player.GetComponent<Collider>();
-            if (otherCollider != null)
+            if (player.TryGetComponent<Collider>(out var otherCollider))
             {
                 Physics.IgnoreCollision(myCollider, otherCollider, true);
             }
@@ -401,7 +399,7 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
-        Material materialToApply = null;
+        Material materialToApply;
         switch (team)
         {
             case Team.Blue:
@@ -1210,6 +1208,7 @@ public class PlayerController : NetworkBehaviour
 
     /// <summary>
     /// Plays the outcome animation (win/lose) and disables movement.
+    /// This is the public entry point that routes the request appropriately for network sync.
     /// </summary>
     /// <param name="isWinner">Whether this player is the winner.</param>
     /// <param name="winTrigger">Animator trigger name for win.</param>
@@ -1218,6 +1217,42 @@ public class PlayerController : NetworkBehaviour
     /// <param name="loseStateName">Animator state name for looping lose animation.</param>
     /// <param name="idleStateName">Animator state name for idle fallback.</param>
     public void PlayOutcomeAnimation(bool isWinner, string winTrigger, string loseTrigger, string winStateName, string loseStateName, string idleStateName)
+    {
+        // For network sync: each player's animation must be triggered by their owner client
+        // because ClientNetworkAnimator uses client authority
+        if (IsOwner)
+        {
+            // This is our own player, play directly
+            PlayOutcomeAnimationLocal(isWinner, winTrigger, loseTrigger, winStateName, loseStateName, idleStateName);
+        }
+        else
+        {
+            // This is another player's character, we need to request them to play via ClientRpc
+            // The ClientRpc will be sent to all clients, but only the owner will actually play
+            PlayOutcomeAnimationClientRpc(isWinner, winTrigger, loseTrigger, winStateName, loseStateName, idleStateName);
+        }
+    }
+
+    /// <summary>
+    /// ClientRpc to request the owner client to play the outcome animation.
+    /// Only the owner of this NetworkObject will actually execute the animation.
+    /// </summary>
+    [ClientRpc]
+    private void PlayOutcomeAnimationClientRpc(bool isWinner, string winTrigger, string loseTrigger, string winStateName, string loseStateName, string idleStateName)
+    {
+        // Only the owner should play the animation for proper network sync
+        if (!IsOwner)
+        {
+            return;
+        }
+
+        PlayOutcomeAnimationLocal(isWinner, winTrigger, loseTrigger, winStateName, loseStateName, idleStateName);
+    }
+
+    /// <summary>
+    /// Actually plays the outcome animation locally. Called by owner client only.
+    /// </summary>
+    private void PlayOutcomeAnimationLocal(bool isWinner, string winTrigger, string loseTrigger, string winStateName, string loseStateName, string idleStateName)
     {
         CacheAnimatorReference();
         CacheRigidbodyReference();
@@ -1253,7 +1288,7 @@ public class PlayerController : NetworkBehaviour
             if (!string.IsNullOrWhiteSpace(state))
             {
                 animator.Play(state, 0, 0f);
-                Debug.Log($"[PlayerController] Playing state '{state}' for {(isWinner ? "winner" : "loser")}");
+                Debug.Log($"[PlayerController] Playing state '{state}' for {(isWinner ? "winner" : "loser")} (IsOwner={IsOwner})");
             }
             else
             {
@@ -1262,13 +1297,13 @@ public class PlayerController : NetworkBehaviour
                 if (!string.IsNullOrWhiteSpace(trigger) && AnimatorHasTrigger(trigger))
                 {
                     animator.SetTrigger(trigger);
-                    Debug.Log($"[PlayerController] Setting trigger '{trigger}' for {(isWinner ? "winner" : "loser")}");
+                    Debug.Log($"[PlayerController] Setting trigger '{trigger}' for {(isWinner ? "winner" : "loser")} (IsOwner={IsOwner})");
                 }
                 else if (!string.IsNullOrWhiteSpace(idleStateName))
                 {
                     // Fallback to idle
                     animator.Play(idleStateName, 0, 0f);
-                    Debug.Log($"[PlayerController] Playing idle state '{idleStateName}' for {(isWinner ? "winner" : "loser")}");
+                    Debug.Log($"[PlayerController] Playing idle state '{idleStateName}' for {(isWinner ? "winner" : "loser")} (IsOwner={IsOwner})");
                 }
             }
         }

@@ -21,10 +21,10 @@ public class DemoMiniGame : MiniGame
     private Canvas miniGameCanvas;
 
     /// <summary>
-    /// Title text display.
+    /// Timer component for managing countdown.
     /// </summary>
     [SerializeField]
-    private Text txtTitle;
+    private MiniGameTimer timer;
 
     /// <summary>
     /// Button to finish/complete the mini game.
@@ -38,8 +38,6 @@ public class DemoMiniGame : MiniGame
     [SerializeField]
     private Button btnFail;
 
-    private float remainingTime;
-
     private void Awake()
     {
         // Setup button listeners
@@ -51,6 +49,12 @@ public class DemoMiniGame : MiniGame
         if (btnFail != null)
         {
             btnFail.onClick.AddListener(OnFailClicked);
+        }
+
+        // Setup timer event
+        if (timer != null)
+        {
+            timer.OnTimeUp += OnTimerExpired;
         }
     }
 
@@ -66,12 +70,25 @@ public class DemoMiniGame : MiniGame
         {
             btnFail.onClick.RemoveListener(OnFailClicked);
         }
+
+        // Cleanup timer event
+        if (timer != null)
+        {
+            timer.OnTimeUp -= OnTimerExpired;
+        }
+    }
+
+    private void OnTimerExpired()
+    {
+        if (IsActive)
+        {
+            FailGame();
+        }
     }
 
     protected override void OnGameStart()
     {
         base.OnGameStart();
-        remainingTime = timeLimit;
         
         // Show UI
         if (miniGameCanvas != null)
@@ -79,7 +96,12 @@ public class DemoMiniGame : MiniGame
             miniGameCanvas.gameObject.SetActive(true);
         }
 
-        UpdateUI();
+        // Start timer if time limit is set
+        if (timer != null && timeLimit > 0f)
+        {
+            timer.SetDisplayVisible(true);
+            timer.StartTimer(timeLimit);
+        }
         
         Debug.Log($"[DemoMiniGame] Started - Time limit: {timeLimit}s");
     }
@@ -104,39 +126,21 @@ public class DemoMiniGame : MiniGame
         FailGame();
     }
 
-    private void UpdateUI()
-    {
-        if (txtTitle != null && timeLimit > 0f)
-        {
-            txtTitle.text = $"Time: {remainingTime:F1}s";
-        }
-    }
-
     protected override void Update()
     {
         base.Update();
-
-        if (!IsActive)
-        {
-            return;
-        }
-
-        // Check time limit
-        if (timeLimit > 0f)
-        {
-            remainingTime -= Time.deltaTime;
-            UpdateUI();
-            
-            if (remainingTime <= 0f)
-            {
-                FailGame();
-            }
-        }
     }
 
     protected override void OnGameEnd(int result)
     {
         base.OnGameEnd(result);
+
+        // Stop and hide timer
+        if (timer != null)
+        {
+            timer.StopTimer();
+            timer.SetDisplayVisible(false);
+        }
 
         // Hide UI
         if (miniGameCanvas != null)

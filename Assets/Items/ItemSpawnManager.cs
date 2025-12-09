@@ -83,15 +83,15 @@ public class ItemSpawnManager : NetworkBehaviour
         }
         else
         {
-            RequestSpawnItemServerRpc(playerNetworkObjectId, chestPosition, itemPrefabIndex);
+            RequestSpawnItemRpc(playerNetworkObjectId, chestPosition, itemPrefabIndex);
         }
     }
 
     /// <summary>
     /// Server RPC to request item spawn from a client.
     /// </summary>
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestSpawnItemServerRpc(ulong playerNetworkObjectId, Vector3 chestPosition, int itemPrefabIndex)
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestSpawnItemRpc(ulong playerNetworkObjectId, Vector3 chestPosition, int itemPrefabIndex)
     {
         SpawnItemForPlayer(playerNetworkObjectId, chestPosition, itemPrefabIndex);
     }

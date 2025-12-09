@@ -257,11 +257,6 @@ public class LobbyUIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Shows the level selection panel for the host once in the waiting state.
-    /// </summary>
-    private void UpdateLevelSelectPanelVisibility() { }
-
-    /// <summary>
     /// Shows or hides the level dropdown.
     /// </summary>
     /// <param name="visible">Whether the dropdown should be visible.</param>

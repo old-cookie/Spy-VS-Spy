@@ -14,6 +14,8 @@ using UnityEditor;
 /// </summary>
 public class GameController : NetworkBehaviour
 {
+    private static WaitForSeconds _waitForSeconds1 = new WaitForSeconds(1f);
+
     /// <summary>
     /// The player prefab to instantiate for each connected client.
     /// </summary>
@@ -240,9 +242,8 @@ public class GameController : NetworkBehaviour
             return;
         }
 
-        var networkObject = levelPrefab.GetComponent<NetworkObject>();
-
-        if (networkObject != null)
+        
+        if (levelPrefab.TryGetComponent<NetworkObject>(out var networkObject))
         {
             if (IsServer)
             {
@@ -664,7 +665,7 @@ public class GameController : NetworkBehaviour
         while (remaining > 0f && !exitTriggered)
         {
             UpdateBtnEndLabel(Mathf.CeilToInt(remaining));
-            yield return new WaitForSeconds(1f);
+            yield return _waitForSeconds1;
             remaining -= 1f;
         }
 
