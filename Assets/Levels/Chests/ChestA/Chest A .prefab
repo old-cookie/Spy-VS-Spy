@@ -249,6 +249,7 @@ MonoBehaviour:
   - {fileID: 8832418608165538874, guid: 8f2f0a77a22acb74f84d3cbd0c2f3029, type: 3}
   - {fileID: 919132149155446097, guid: b922956fdec5db0419bda91898b4a268, type: 3}
   - {fileID: 2911461576491320129, guid: d0f92cc91f988f6408ddb3db6cf8d756, type: 3}
+  - {fileID: 1912105335735116042, guid: cbbd3fc0d2d3f3744a1bf6f3d625901e, type: 3}
   payloadFollowHeight: 3
   payloadMoveDuration: 0.75
   payloadFollowSmoothSpeed: 8
