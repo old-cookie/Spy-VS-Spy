@@ -81,6 +81,10 @@ public class GameController : NetworkBehaviour
     private readonly List<Transform> chestSpawnPos = new();
     private bool chestsSpawned;
 
+    [Header("Items")]
+    [SerializeField]
+    private GameObject itemSpawnManagerPrefab;
+
     [Header("Flags")]
     [SerializeField]
     private GameObject blueFlagPrefab;
@@ -222,6 +226,7 @@ public class GameController : NetworkBehaviour
                 CacheSpawnPositions(instance);
                 SpawnChests();
                 SpawnFlags();
+                SpawnItemSpawnManager();
             }
         }
         else
@@ -231,6 +236,7 @@ public class GameController : NetworkBehaviour
             CacheSpawnPositions(instance);
             SpawnChests();
             SpawnFlags();
+            SpawnItemSpawnManager();
         }
 
         levelSpawned = true;
@@ -300,7 +306,7 @@ public class GameController : NetworkBehaviour
     /// <param name="levelInstance">Instantiated level object.</param>
     private void CacheSpawnPositions(GameObject levelInstance)
     {
-        if (!IsServer || levelInstance == null)
+        if (levelInstance == null)
         {
             return;
         }
@@ -348,7 +354,7 @@ public class GameController : NetworkBehaviour
 
     private void SpawnChests()
     {
-        if (!IsServer || chestsSpawned)
+        if (chestsSpawned)
         {
             return;
         }
@@ -359,6 +365,8 @@ public class GameController : NetworkBehaviour
             return;
         }
 
+        Debug.Log($"[GameController] Spawning {chestSpawnPos.Count} chests locally...");
+
         foreach (var point in chestSpawnPos)
         {
             if (point == null)
@@ -366,12 +374,8 @@ public class GameController : NetworkBehaviour
                 continue;
             }
 
-            var chest = Instantiate(chestPrefab, point.position, point.rotation);
-            var net = chest.GetComponent<NetworkObject>();
-            if (net != null)
-            {
-                net.Spawn(true);
-            }
+            // Spawn locally without network sync
+            Instantiate(chestPrefab, point.position, point.rotation);
         }
 
         chestsSpawned = true;
@@ -379,7 +383,7 @@ public class GameController : NetworkBehaviour
 
     private void SpawnFlags()
     {
-        if (!IsServer || flagsSpawned)
+        if (flagsSpawned)
         {
             return;
         }
@@ -390,27 +394,60 @@ public class GameController : NetworkBehaviour
             return;
         }
 
+        Debug.Log("[GameController] Spawning flags locally...");
+
         if (blueFlagPos != null)
         {
-            var blue = Instantiate(blueFlagPrefab, blueFlagPos.position, blueFlagPos.rotation);
-            var net = blue.GetComponent<NetworkObject>();
-            if (net != null)
-            {
-                net.Spawn(true);
-            }
+            // Spawn locally without network sync
+            Instantiate(blueFlagPrefab, blueFlagPos.position, blueFlagPos.rotation);
         }
 
         if (redFlagPos != null)
         {
-            var red = Instantiate(redFlagPrefab, redFlagPos.position, redFlagPos.rotation);
-            var net = red.GetComponent<NetworkObject>();
-            if (net != null)
-            {
-                net.Spawn(true);
-            }
+            // Spawn locally without network sync
+            Instantiate(redFlagPrefab, redFlagPos.position, redFlagPos.rotation);
         }
 
         flagsSpawned = true;
+    }
+
+    /// <summary>
+    /// Spawns the ItemSpawnManager on the server and syncs to clients.
+    /// </summary>
+    private void SpawnItemSpawnManager()
+    {
+        // Only spawn if we're the server and the prefab is assigned
+        if (!IsServer)
+        {
+            return;
+        }
+
+        if (itemSpawnManagerPrefab == null)
+        {
+            Debug.LogWarning("[GameController] ItemSpawnManager prefab not assigned; cannot spawn item manager.");
+            return;
+        }
+
+        // Check if ItemSpawnManager already exists
+        if (ItemSpawnManager.Instance != null)
+        {
+            Debug.Log("[GameController] ItemSpawnManager already exists.");
+            return;
+        }
+
+        Debug.Log("[GameController] Spawning ItemSpawnManager...");
+
+        var instance = Instantiate(itemSpawnManagerPrefab);
+        var networkObject = instance.GetComponent<NetworkObject>();
+
+        if (networkObject != null)
+        {
+            networkObject.Spawn(true);
+        }
+        else
+        {
+            Debug.LogError("[GameController] ItemSpawnManager prefab is missing NetworkObject component!");
+        }
     }
 
     /// <summary>
