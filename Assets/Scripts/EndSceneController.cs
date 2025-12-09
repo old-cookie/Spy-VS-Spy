@@ -11,6 +11,7 @@ using System.Reflection;
 /// </summary>
 public class EndSceneController : MonoBehaviour
 {
+    private static WaitForSeconds _waitForSeconds1 = new WaitForSeconds(1f);
     [Header("Prefabs & Spawns")]
     [SerializeField]
     private GameObject playerPrefab;
@@ -143,7 +144,7 @@ public class EndSceneController : MonoBehaviour
         }
 
         var resolved = new List<Transform>();
-        var transforms = FindObjectsOfType<Transform>(true);
+        var transforms = FindObjectsByType<Transform>(FindObjectsSortMode.None);
         var p1 = transforms.FirstOrDefault(t => t.name == "p1Spawn");
         var p2 = transforms.FirstOrDefault(t => t.name == "p2Spawn");
 
@@ -184,7 +185,7 @@ public class EndSceneController : MonoBehaviour
         while (remaining > 0f && !exitTriggered)
         {
             UpdateQuitLabel(Mathf.CeilToInt(remaining));
-            yield return new WaitForSeconds(1f);
+            yield return _waitForSeconds1;
             remaining -= 1f;
         }
 

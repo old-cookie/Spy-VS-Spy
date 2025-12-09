@@ -5,6 +5,13 @@ MonoImporter:
   serializedVersion: 2
   defaultReferences:
   - playerPrefabs: {fileID: 7287134322769121558, guid: 97bd4365f2fbca24c9612105f55946ec, type: 3}
+  - scoreText: {instanceID: 0}
+  - chestPrefab: {fileID: 1318005759483055872, guid: eff6c4b209c859c44b327d222a36e1e9, type: 3}
+  - blueFlagPrefab: {fileID: 8744781403516227787, guid: 0328bce4f5661db4c9d7c32a01d69208, type: 3}
+  - redFlagPrefab: {fileID: 150395110806727339, guid: 812d9dc6e8128de4f865b2ac34e71f1a, type: 3}
+  - btnEnd: {instanceID: 0}
+  - btnEndLabel: {instanceID: 0}
+  - lobbyScene: {fileID: 102900000, guid: 16159d50989e68549a6830b5e7a6b8e9, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
