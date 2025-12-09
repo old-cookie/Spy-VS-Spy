@@ -514,14 +514,17 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   playerPrefabs: {fileID: 7287134322769121558, guid: 97bd4365f2fbca24c9612105f55946ec, type: 3}
   spawnPos:
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 2568885382546180211, guid: 9ab998d5b49c5f441909fa1cb918d498, type: 3}
+  - {fileID: 489247131040113308, guid: 3083c968036bcef49902bd307cf4bde8, type: 3}
   scoreText: {fileID: 663437566}
   pointsToWin: 1
   endSceneName: EndScene
   levelPrefabs:
   - {fileID: 3786009117572631067, guid: bd891386d5740ac4db865a0b2d4548cf, type: 3}
   defaultLevelName: Demo
+  chestPrefab: {fileID: 1318005759483055872, guid: eff6c4b209c859c44b327d222a36e1e9, type: 3}
+  blueFlagPrefab: {fileID: 8744781403516227787, guid: 0328bce4f5661db4c9d7c32a01d69208, type: 3}
+  redFlagPrefab: {fileID: 150395110806727339, guid: 812d9dc6e8128de4f865b2ac34e71f1a, type: 3}
 --- !u!4 &1233078921
 Transform:
   m_ObjectHideFlags: 0

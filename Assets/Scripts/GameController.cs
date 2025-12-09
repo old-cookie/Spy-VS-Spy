@@ -79,6 +79,24 @@ public class GameController : NetworkBehaviour
     /// </summary>
     private bool matchEnded;
 
+    [Header("Chests")]
+    [SerializeField]
+    private GameObject chestPrefab;
+
+    private readonly List<Transform> chestSpawnPos = new();
+    private bool chestsSpawned;
+
+    [Header("Flags")]
+    [SerializeField]
+    private GameObject blueFlagPrefab;
+
+    [SerializeField]
+    private GameObject redFlagPrefab;
+
+    private Transform blueFlagPos;
+    private Transform redFlagPos;
+    private bool flagsSpawned;
+
     private void Awake()
     {
         if (Instance == null)
@@ -102,6 +120,8 @@ public class GameController : NetworkBehaviour
         redTeamScore.OnValueChanged += OnRedScoreChanged;
 
         matchEnded = false;
+        chestsSpawned = false;
+        flagsSpawned = false;
 
         UpdateScoreUI();
 
@@ -126,6 +146,8 @@ public class GameController : NetworkBehaviour
 
         levelSpawned = false;
         matchEnded = false;
+        chestsSpawned = false;
+        flagsSpawned = false;
     }
 
     /// <summary>
@@ -158,6 +180,8 @@ public class GameController : NetworkBehaviour
                 instanceNet.Spawn(true);
 
                 CacheSpawnPositions(instance);
+                SpawnChests();
+                SpawnFlags();
             }
         }
         else
@@ -165,6 +189,8 @@ public class GameController : NetworkBehaviour
             // Non-networked level prefab: instantiate locally on each client/host.
             var instance = Instantiate(levelPrefab);
             CacheSpawnPositions(instance);
+            SpawnChests();
+            SpawnFlags();
         }
 
         levelSpawned = true;
@@ -243,9 +269,13 @@ public class GameController : NetworkBehaviour
         var transforms = levelInstance.GetComponentsInChildren<Transform>(true);
         var p1 = transforms.FirstOrDefault(t => t.name == "p1Spawn");
         var p2 = transforms.FirstOrDefault(t => t.name == "p2Spawn");
+        var chestPoints = transforms.Where(t => t.name.ToLower().Contains("chestpos")).ToList();
+        blueFlagPos = transforms.FirstOrDefault(t => t.name == "blueFlagPos");
+        redFlagPos = transforms.FirstOrDefault(t => t.name == "redFlagPos");
 
         spawnPos ??= new List<Transform>();
         spawnPos.Clear();
+        chestSpawnPos.Clear();
 
         if (p1 != null)
         {
@@ -256,10 +286,92 @@ public class GameController : NetworkBehaviour
             spawnPos.Add(p2);
         }
 
+        if (chestPoints.Count > 0)
+        {
+            chestSpawnPos.AddRange(chestPoints);
+        }
+
         if (spawnPos.Count == 0)
         {
             Debug.LogWarning("[GameController] No spawn points named p1Spawn/p2Spawn found in level instance.");
         }
+
+        if (chestPoints.Count == 0)
+        {
+            Debug.LogWarning("[GameController] No chest spawn points found (expects name containing 'chestPos').");
+        }
+
+        if (blueFlagPos == null || redFlagPos == null)
+        {
+            Debug.LogWarning("[GameController] Flag spawn points missing (expects 'blueFlagPos' and 'redFlagPos').");
+        }
+    }
+
+    private void SpawnChests()
+    {
+        if (!IsServer || chestsSpawned)
+        {
+            return;
+        }
+
+        if (chestPrefab == null)
+        {
+            Debug.LogWarning("[GameController] Chest prefab not assigned; cannot spawn chests.");
+            return;
+        }
+
+        foreach (var point in chestSpawnPos)
+        {
+            if (point == null)
+            {
+                continue;
+            }
+
+            var chest = Instantiate(chestPrefab, point.position, point.rotation);
+            var net = chest.GetComponent<NetworkObject>();
+            if (net != null)
+            {
+                net.Spawn(true);
+            }
+        }
+
+        chestsSpawned = true;
+    }
+
+    private void SpawnFlags()
+    {
+        if (!IsServer || flagsSpawned)
+        {
+            return;
+        }
+
+        if (blueFlagPrefab == null || redFlagPrefab == null)
+        {
+            Debug.LogWarning("[GameController] Flag prefabs not assigned; cannot spawn flags.");
+            return;
+        }
+
+        if (blueFlagPos != null)
+        {
+            var blue = Instantiate(blueFlagPrefab, blueFlagPos.position, blueFlagPos.rotation);
+            var net = blue.GetComponent<NetworkObject>();
+            if (net != null)
+            {
+                net.Spawn(true);
+            }
+        }
+
+        if (redFlagPos != null)
+        {
+            var red = Instantiate(redFlagPrefab, redFlagPos.position, redFlagPos.rotation);
+            var net = red.GetComponent<NetworkObject>();
+            if (net != null)
+            {
+                net.Spawn(true);
+            }
+        }
+
+        flagsSpawned = true;
     }
 
     /// <summary>
