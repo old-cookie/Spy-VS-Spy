@@ -32,16 +32,36 @@ public class ItemEffectHandler : NetworkBehaviour
     [SerializeField, Min(0f)]
     private float slowDownDuration = 3f;
 
+    /// <summary>
+    /// Multiplier applied to jump force when a super drink is consumed.
+    /// </summary>
+    [Header("Jump Boost Settings (Super Drink)")]
+    [SerializeField, Range(1f, 5f)]
+    private float jumpBoostMultiplier = 1.5f;
+
+    /// <summary>
+    /// Duration in seconds for the jump boost effect.
+    /// </summary>
+    [SerializeField, Min(0f)]
+    private float jumpBoostDuration = 4f;
+
     private float speedBoostTimer;
     private float slowDownTimer;
+    private float jumpBoostTimer;
     private float activeBoostMultiplier = 1f;
     private float activeSlowMultiplier = 1f;
+    private float activeJumpMultiplier = 1f;
     private PlayerController playerController;
 
     /// <summary>
     /// Gets the current combined speed multiplier from all active effects.
     /// </summary>
     public float CurrentSpeedMultiplier => activeBoostMultiplier * activeSlowMultiplier;
+
+    /// <summary>
+    /// Gets the current jump force multiplier from active jump boost effects.
+    /// </summary>
+    public float CurrentJumpMultiplier => activeJumpMultiplier;
 
     private void Awake()
     {
@@ -89,6 +109,9 @@ public class ItemEffectHandler : NetworkBehaviour
             case "banana":
                 ApplySlowDownToOthersServerRpc();
                 break;
+            case "super drink":
+                ApplyJumpBoost();
+                break;
             default:
                 break;
         }
@@ -124,6 +147,15 @@ public class ItemEffectHandler : NetworkBehaviour
             if (slowDownTimer <= 0f)
             {
                 activeSlowMultiplier = 1f;
+            }
+        }
+
+        if (jumpBoostTimer > 0f)
+        {
+            jumpBoostTimer = Mathf.Max(0f, jumpBoostTimer - Time.deltaTime);
+            if (jumpBoostTimer <= 0f)
+            {
+                activeJumpMultiplier = 1f;
             }
         }
     }
@@ -181,5 +213,14 @@ public class ItemEffectHandler : NetworkBehaviour
     {
         activeSlowMultiplier = slowDownMultiplier;
         slowDownTimer = slowDownDuration;
+    }
+
+    /// <summary>
+    /// Applies the jump boost effect to this player.
+    /// </summary>
+    private void ApplyJumpBoost()
+    {
+        activeJumpMultiplier = jumpBoostMultiplier;
+        jumpBoostTimer = jumpBoostDuration;
     }
 }
