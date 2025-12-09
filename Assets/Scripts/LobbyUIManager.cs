@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
+using System.Collections.Generic;
+using System.Linq;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -25,6 +27,17 @@ public class LobbyUIManager : MonoBehaviour
     /// Panel displayed while waiting for players to join.
     /// </summary>
     public GameObject waitingPanel;
+
+    /// <summary>
+    /// Dropdown for picking which level prefab to load.
+    /// </summary>
+    public Dropdown levelDropdown;
+
+    /// <summary>
+    /// Available level prefabs (assign from Assets/Levels).
+    /// </summary>
+    [SerializeField]
+    private List<GameObject> levelPrefabs = new List<GameObject>();
 
     /// <summary>
     /// Button to start the game, only visible to the host when enough players have joined.
@@ -55,11 +68,18 @@ public class LobbyUIManager : MonoBehaviour
     /// </summary>
     public bool isHost = false;
 
+    /// <summary>
+    /// Currently selected level prefab name.
+    /// </summary>
+    private string selectedLevelName = string.Empty;
+
     private void Start()
     {
         startPanel.SetActive(true);
         waitingPanel.SetActive(false);
         startButton.SetActive(false);
+
+        BuildLevelDropdownOptions();
     }
 
     private void Update()
@@ -84,10 +104,8 @@ public class LobbyUIManager : MonoBehaviour
     /// </summary>
     private void CheckStartCondition()
     {
-        if (NetworkManager.Singleton.ConnectedClients.Count == 2 && isHost)
-        {
-            startButton.SetActive(true);
-        }
+        bool readyToStart = NetworkManager.Singleton.ConnectedClients.Count == 2 && isHost && !string.IsNullOrWhiteSpace(selectedLevelName);
+        startButton.SetActive(readyToStart);
     }
 
     /// <summary>
@@ -127,6 +145,71 @@ public class LobbyUIManager : MonoBehaviour
         waitingPanel.SetActive(true);
         isHost = false;
     }
+
+    /// <summary>
+    /// Called by the dropdown when the host selects a level option.
+    /// </summary>
+    /// <param name="index">Dropdown option index.</param>
+    public void OnLevelDropdownChanged(int index)
+    {
+        if (levelDropdown == null)
+        {
+            return;
+        }
+
+        if (index < 0 || index >= levelDropdown.options.Count)
+        {
+            return;
+        }
+
+        string chosen = levelDropdown.options[index].text;
+        SetSelectedLevel(chosen);
+    }
+
+    /// <summary>
+    /// Builds dropdown options from assigned level prefabs.
+    /// </summary>
+    private void BuildLevelDropdownOptions()
+    {
+        if (levelDropdown == null)
+        {
+            return;
+        }
+
+        var names = levelPrefabs
+            .Where(p => p != null)
+            .Select(p => p.name)
+            .ToList();
+
+        if (names.Count == 0)
+        {
+            names.Add("Demo");
+        }
+
+        levelDropdown.ClearOptions();
+        levelDropdown.AddOptions(names);
+
+        SetSelectedLevel(names[0]);
+        levelDropdown.SetValueWithoutNotify(0);
+    }
+
+    /// <summary>
+    /// Applies the chosen level name and syncs it to the selection state (host only).
+    /// </summary>
+    private void SetSelectedLevel(string levelName)
+    {
+        selectedLevelName = levelName;
+
+        if (isHost && NetworkManager.Singleton.IsHost && LevelSelectionState.Instance != null)
+        {
+            LevelSelectionState.Instance.SetSelectedLevelName(levelName);
+        }
+    }
+
+    /// <summary>
+    /// Shows the level selection panel for the host once in the waiting state.
+    /// </summary>
+    private void UpdateLevelSelectPanelVisibility() { }
 
 #if UNITY_EDITOR
     /// <summary>

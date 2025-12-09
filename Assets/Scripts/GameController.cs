@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Unity.Netcode;
 using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 /// Manages game initialization, player spawning, team assignment, and scoring for networked multiplayer.
@@ -34,6 +35,18 @@ public class GameController : NetworkBehaviour
     private NetworkVariable<int> redTeamScore = new NetworkVariable<int>(0);
 
     /// <summary>
+    /// Level prefabs available to spawn when the game scene loads. Assign prefabs from Assets/Levels.
+    /// </summary>
+    [SerializeField]
+    private List<GameObject> levelPrefabs = new List<GameObject>();
+
+    /// <summary>
+    /// Fallback level name if nothing is selected in the lobby.
+    /// </summary>
+    [SerializeField]
+    private string defaultLevelName = "Demo";
+
+    /// <summary>
     /// The local player's team, used to determine which score to display.
     /// </summary>
     private Team localPlayerTeam = Team.None;
@@ -42,6 +55,11 @@ public class GameController : NetworkBehaviour
     /// Singleton instance for easy access from other scripts.
     /// </summary>
     public static GameController Instance { get; private set; }
+
+    /// <summary>
+    /// Prevents duplicate level instantiation across host/client processes.
+    /// </summary>
+    private static bool levelSpawned;
 
     private void Awake()
     {
@@ -67,6 +85,8 @@ public class GameController : NetworkBehaviour
 
         UpdateScoreUI();
 
+        TrySpawnSelectedLevel();
+
         if (IsHost)
         {
             SpawnAllPlayers();
@@ -78,6 +98,77 @@ public class GameController : NetworkBehaviour
         base.OnNetworkDespawn();
         blueTeamScore.OnValueChanged -= OnBlueScoreChanged;
         redTeamScore.OnValueChanged -= OnRedScoreChanged;
+
+        levelSpawned = false;
+    }
+
+    /// <summary>
+    /// Instantiates the chosen level prefab when the game scene loads.
+    /// </summary>
+    private void TrySpawnSelectedLevel()
+    {
+        if (levelSpawned)
+        {
+            return;
+        }
+
+        string chosenName = GetChosenLevelName();
+        GameObject levelPrefab = ResolveLevelPrefab(chosenName);
+
+        if (levelPrefab == null)
+        {
+            Debug.LogWarning($"[GameController] Level '{chosenName}' not found. Aborting level spawn.");
+            return;
+        }
+
+        var networkObject = levelPrefab.GetComponent<NetworkObject>();
+
+        if (networkObject != null)
+        {
+            if (IsServer)
+            {
+                GameObject instance = Instantiate(levelPrefab);
+                var instanceNet = instance.GetComponent<NetworkObject>();
+                instanceNet.Spawn(true);
+
+                CacheSpawnPositions(instance);
+            }
+        }
+        else
+        {
+            // Non-networked level prefab: instantiate locally on each client/host.
+            var instance = Instantiate(levelPrefab);
+            CacheSpawnPositions(instance);
+        }
+
+        levelSpawned = true;
+    }
+
+    /// <summary>
+    /// Reads the lobby-selected level name from the synced state or falls back to default.
+    /// </summary>
+    private string GetChosenLevelName()
+    {
+        if (LevelSelectionState.Instance != null && !string.IsNullOrWhiteSpace(LevelSelectionState.Instance.SelectedLevelName))
+        {
+            return LevelSelectionState.Instance.SelectedLevelName;
+        }
+
+        return defaultLevelName;
+    }
+
+    /// <summary>
+    /// Finds the level prefab that matches the provided name.
+    /// </summary>
+    /// <param name="levelName">Prefab name to locate.</param>
+    private GameObject ResolveLevelPrefab(string levelName)
+    {
+        if (string.IsNullOrWhiteSpace(levelName))
+        {
+            return levelPrefabs.FirstOrDefault();
+        }
+
+        return levelPrefabs.FirstOrDefault(p => p != null && p.name == levelName);
     }
 
     /// <summary>
@@ -86,6 +177,12 @@ public class GameController : NetworkBehaviour
     /// </summary>
     private void SpawnAllPlayers()
     {
+        if (spawnPos == null || spawnPos.Count < NetworkManager.Singleton.ConnectedClientsIds.Count)
+        {
+            Debug.LogWarning($"[GameController] Not enough spawn positions. Required: {NetworkManager.Singleton.ConnectedClientsIds.Count}, Available: {spawnPos?.Count ?? 0}");
+            return;
+        }
+
         Quaternion spawnRotation = Quaternion.Euler(0f, 90f, 0f);
         for (int i = 0; i < NetworkManager.Singleton.ConnectedClientsIds.Count; i++)
         {
@@ -102,6 +199,40 @@ public class GameController : NetworkBehaviour
                 Team assignedTeam = (i == 0) ? Team.Blue : Team.Red;
                 teamMember.SetTeamRpc(assignedTeam);
             }
+        }
+    }
+
+    /// <summary>
+    /// Attempts to bind spawn positions from the spawned level instance.
+    /// Looks for children named "p1Spawn" and "p2Spawn" (case-sensitive).
+    /// </summary>
+    /// <param name="levelInstance">Instantiated level object.</param>
+    private void CacheSpawnPositions(GameObject levelInstance)
+    {
+        if (!IsServer || levelInstance == null)
+        {
+            return;
+        }
+
+        var transforms = levelInstance.GetComponentsInChildren<Transform>(true);
+        var p1 = transforms.FirstOrDefault(t => t.name == "p1Spawn");
+        var p2 = transforms.FirstOrDefault(t => t.name == "p2Spawn");
+
+        spawnPos ??= new List<Transform>();
+        spawnPos.Clear();
+
+        if (p1 != null)
+        {
+            spawnPos.Add(p1);
+        }
+        if (p2 != null)
+        {
+            spawnPos.Add(p2);
+        }
+
+        if (spawnPos.Count == 0)
+        {
+            Debug.LogWarning("[GameController] No spawn points named p1Spawn/p2Spawn found in level instance.");
         }
     }
 
