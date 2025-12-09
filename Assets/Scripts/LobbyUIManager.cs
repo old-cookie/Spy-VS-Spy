@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 #if UNITY_EDITOR
@@ -128,6 +129,13 @@ public class LobbyUIManager : MonoBehaviour
         startPanel.SetActive(false);
         waitingPanel.SetActive(true);
         isHost = true;
+
+        // Host can see and use the dropdown to select levels
+        SetDropdownVisible(true);
+
+        // Sync the already selected level to LevelSelectionState now that we are the host
+        // Use coroutine to wait for LevelSelectionState.Instance to be available
+        StartCoroutine(WaitAndSyncLevelSelection());
     }
 
     /// <summary>
@@ -143,6 +151,9 @@ public class LobbyUIManager : MonoBehaviour
         NetworkManager.Singleton.StartClient();
         startPanel.SetActive(false);
         waitingPanel.SetActive(true);
+
+        // Clients cannot see or change level selection, only host can
+        SetDropdownVisible(false);
         isHost = false;
     }
 
@@ -152,6 +163,8 @@ public class LobbyUIManager : MonoBehaviour
     /// <param name="index">Dropdown option index.</param>
     public void OnLevelDropdownChanged(int index)
     {
+        Debug.Log($"[LobbyUIManager] OnLevelDropdownChanged called with index: {index}");
+        
         if (levelDropdown == null)
         {
             return;
@@ -163,6 +176,7 @@ public class LobbyUIManager : MonoBehaviour
         }
 
         string chosen = levelDropdown.options[index].text;
+        Debug.Log($"[LobbyUIManager] Level selected: {chosen}");
         SetSelectedLevel(chosen);
     }
 
@@ -189,6 +203,10 @@ public class LobbyUIManager : MonoBehaviour
         levelDropdown.ClearOptions();
         levelDropdown.AddOptions(names);
 
+        // Register the dropdown change event listener
+        levelDropdown.onValueChanged.RemoveAllListeners();
+        levelDropdown.onValueChanged.AddListener(OnLevelDropdownChanged);
+
         SetSelectedLevel(names[0]);
         levelDropdown.SetValueWithoutNotify(0);
     }
@@ -199,10 +217,42 @@ public class LobbyUIManager : MonoBehaviour
     private void SetSelectedLevel(string levelName)
     {
         selectedLevelName = levelName;
+        SyncSelectedLevelToState();
+    }
 
-        if (isHost && NetworkManager.Singleton.IsHost && LevelSelectionState.Instance != null)
+    /// <summary>
+    /// Syncs the current selectedLevelName to LevelSelectionState if we are the host.
+    /// </summary>
+    private void SyncSelectedLevelToState()
+    {
+        if (isHost && NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost && LevelSelectionState.Instance != null)
         {
-            LevelSelectionState.Instance.SetSelectedLevelName(levelName);
+            LevelSelectionState.Instance.SetSelectedLevelName(selectedLevelName);
+            Debug.Log($"[LobbyUIManager] Synced level selection: {selectedLevelName}");
+        }
+    }
+
+    /// <summary>
+    /// Coroutine to wait for LevelSelectionState.Instance to be available, then sync the level.
+    /// </summary>
+    private IEnumerator WaitAndSyncLevelSelection()
+    {
+        // Wait until LevelSelectionState.Instance is available (NetworkObject spawned)
+        float timeout = 5f;
+        float elapsed = 0f;
+        while (LevelSelectionState.Instance == null && elapsed < timeout)
+        {
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        if (LevelSelectionState.Instance != null)
+        {
+            SyncSelectedLevelToState();
+        }
+        else
+        {
+            Debug.LogWarning("[LobbyUIManager] LevelSelectionState.Instance not found after timeout. Level selection may not sync correctly.");
         }
     }
 
@@ -210,6 +260,18 @@ public class LobbyUIManager : MonoBehaviour
     /// Shows the level selection panel for the host once in the waiting state.
     /// </summary>
     private void UpdateLevelSelectPanelVisibility() { }
+
+    /// <summary>
+    /// Shows or hides the level dropdown.
+    /// </summary>
+    /// <param name="visible">Whether the dropdown should be visible.</param>
+    private void SetDropdownVisible(bool visible)
+    {
+        if (levelDropdown != null)
+        {
+            levelDropdown.gameObject.SetActive(visible);
+        }
+    }
 
 #if UNITY_EDITOR
     /// <summary>

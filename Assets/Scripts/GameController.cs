@@ -162,6 +162,33 @@ public class GameController : NetworkBehaviour
 
         UpdateScoreUI();
 
+        // Use coroutine to wait for LevelSelectionState.Instance before spawning level
+        StartCoroutine(WaitForLevelSelectionAndSpawn());
+    }
+
+    /// <summary>
+    /// Waits for LevelSelectionState.Instance to be available, then spawns the level and players.
+    /// </summary>
+    private IEnumerator WaitForLevelSelectionAndSpawn()
+    {
+        // Wait until LevelSelectionState.Instance is available
+        float timeout = 5f;
+        float elapsed = 0f;
+        while (LevelSelectionState.Instance == null && elapsed < timeout)
+        {
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        if (LevelSelectionState.Instance == null)
+        {
+            Debug.LogWarning("[GameController] LevelSelectionState.Instance not found after timeout. Using default level.");
+        }
+        else
+        {
+            Debug.Log($"[GameController] LevelSelectionState.Instance found. SelectedLevelName = '{LevelSelectionState.Instance.SelectedLevelName}'");
+        }
+
         TrySpawnSelectedLevel();
 
         if (IsServer && LevelSelectionState.Instance != null)
@@ -247,9 +274,18 @@ public class GameController : NetworkBehaviour
     /// </summary>
     private string GetChosenLevelName()
     {
-        if (LevelSelectionState.Instance != null && !string.IsNullOrWhiteSpace(LevelSelectionState.Instance.SelectedLevelName))
+        if (LevelSelectionState.Instance != null)
         {
-            return LevelSelectionState.Instance.SelectedLevelName;
+            string levelName = LevelSelectionState.Instance.SelectedLevelName;
+            Debug.Log($"[GameController] GetChosenLevelName: LevelSelectionState.SelectedLevelName = '{levelName}'");
+            if (!string.IsNullOrWhiteSpace(levelName))
+            {
+                return levelName;
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[GameController] GetChosenLevelName: LevelSelectionState.Instance is null!");
         }
 
         return string.Empty;
@@ -261,12 +297,34 @@ public class GameController : NetworkBehaviour
     /// <param name="levelName">Prefab name to locate.</param>
     private GameObject ResolveLevelPrefab(string levelName)
     {
+        // Debug: Log all available level prefabs
+        Debug.Log($"[GameController] ResolveLevelPrefab: Looking for '{levelName}'. Available prefabs: {string.Join(", ", levelPrefabs.Where(p => p != null).Select(p => $"'{p.name}'"))}");
+        
         if (string.IsNullOrWhiteSpace(levelName))
         {
+            Debug.Log("[GameController] ResolveLevelPrefab: levelName is empty, returning first prefab");
             return levelPrefabs.FirstOrDefault();
         }
 
-        return levelPrefabs.FirstOrDefault(p => p != null && p.name == levelName);
+        // First try exact match
+        var found = levelPrefabs.FirstOrDefault(p => p != null && p.name == levelName);
+        
+        // If not found, try matching with spaces removed (to handle "Lv 2" vs "Lv2")
+        if (found == null)
+        {
+            string normalizedName = levelName.Replace(" ", "");
+            found = levelPrefabs.FirstOrDefault(p => p != null && p.name.Replace(" ", "") == normalizedName);
+            if (found != null)
+            {
+                Debug.Log($"[GameController] ResolveLevelPrefab: Found '{found.name}' by normalized match for '{levelName}'");
+            }
+        }
+        
+        if (found == null)
+        {
+            Debug.LogWarning($"[GameController] ResolveLevelPrefab: No prefab found matching '{levelName}'");
+        }
+        return found;
     }
 
     /// <summary>

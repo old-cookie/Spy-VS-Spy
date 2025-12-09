@@ -157,6 +157,8 @@ public class PlayerController : NetworkBehaviour
     private InputAction jumpAction;
     private InputAction pickAction;
     private InputAction useAction;
+    private bool isOutcomeAnimationPlaying;
+    private Quaternion lockedOutcomeRotation;
 
     private void Awake()
     {
@@ -280,6 +282,15 @@ public class PlayerController : NetworkBehaviour
         }
 
         SmoothFacingRotation();
+    }
+
+    private void LateUpdate()
+    {
+        // Force rotation after animation updates during outcome animation
+        if (isOutcomeAnimationPlaying)
+        {
+            transform.rotation = lockedOutcomeRotation;
+        }
     }
 
     /// <summary>
@@ -1211,13 +1222,27 @@ public class PlayerController : NetworkBehaviour
         CacheAnimatorReference();
         CacheRigidbodyReference();
 
-        // Freeze rigidbody first (before disabling)
+        // Freeze rigidbody - set kinematic first, then zero velocities only if not already kinematic
         if (playerRigidbody != null)
         {
-            playerRigidbody.linearVelocity = Vector3.zero;
-            playerRigidbody.angularVelocity = Vector3.zero;
+            if (!playerRigidbody.isKinematic)
+            {
+                playerRigidbody.linearVelocity = Vector3.zero;
+                playerRigidbody.angularVelocity = Vector3.zero;
+            }
             playerRigidbody.isKinematic = true;
             playerRigidbody.useGravity = false;
+        }
+
+        // Rotate to face camera (negative Z direction) for outcome animation
+        lockedOutcomeRotation = Quaternion.Euler(0f, 180f, 0f);
+        transform.rotation = lockedOutcomeRotation;
+        isOutcomeAnimationPlaying = true;
+
+        // Disable root motion to prevent animation from overriding rotation
+        if (animator != null)
+        {
+            animator.applyRootMotion = false;
         }
 
         // Play animation before disabling to ensure animator is set up

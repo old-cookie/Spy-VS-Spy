@@ -799,6 +799,7 @@ MonoBehaviour:
   pointsToWin: 1
   levelPrefabs:
   - {fileID: 3786009117572631067, guid: bd891386d5740ac4db865a0b2d4548cf, type: 3}
+  - {fileID: 3786009117572631067, guid: 3f0bae4e2501e5048b1b5cb0253ae8db, type: 3}
   chestPrefab: {fileID: 1318005759483055872, guid: eff6c4b209c859c44b327d222a36e1e9, type: 3}
   itemSpawnManagerPrefab: {fileID: 910747670}
   blueFlagPrefab: {fileID: 8744781403516227787, guid: 0328bce4f5661db4c9d7c32a01d69208, type: 3}
