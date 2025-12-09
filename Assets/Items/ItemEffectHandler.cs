@@ -58,13 +58,28 @@ public class ItemEffectHandler : NetworkBehaviour
     [SerializeField, Min(0f)]
     private float rustGearSlowDownDuration = 10f;
 
+    /// <summary>
+    /// Force applied to pull other players towards the magnet user.
+    /// </summary>
+    [Header("Magnet Settings")]
+    [SerializeField, Min(0f)]
+    private float magnetPullForce = 15f;
+
+    /// <summary>
+    /// Duration in seconds for the magnet pull effect.
+    /// </summary>
+    [SerializeField, Min(0f)]
+    private float magnetPullDuration = 2f;
+
     private float speedBoostTimer;
     private float slowDownTimer;
     private float jumpBoostTimer;
+    private float magnetPullTimer;
     private float activeBoostMultiplier = 1f;
     private float activeSlowMultiplier = 1f;
     private float activeJumpMultiplier = 1f;
     private PlayerController playerController;
+    private Transform magnetAttractor;
 
     /// <summary>
     /// Gets the current combined speed multiplier from all active effects.
@@ -128,6 +143,9 @@ public class ItemEffectHandler : NetworkBehaviour
             case "rust gear":
                 ApplyRustGearSlowDownServerRpc();
                 break;
+            case "magnet":
+                ApplyMagnetPullServerRpc();
+                break;
             default:
                 break;
         }
@@ -172,6 +190,15 @@ public class ItemEffectHandler : NetworkBehaviour
             if (jumpBoostTimer <= 0f)
             {
                 activeJumpMultiplier = 1f;
+            }
+        }
+
+        if (magnetPullTimer > 0f)
+        {
+            magnetPullTimer = Mathf.Max(0f, magnetPullTimer - Time.deltaTime);
+            if (magnetPullTimer <= 0f)
+            {
+                magnetAttractor = null;
             }
         }
     }
@@ -285,4 +312,68 @@ public class ItemEffectHandler : NetworkBehaviour
         activeSlowMultiplier = rustGearSlowDownMultiplier;
         slowDownTimer = rustGearSlowDownDuration;
     }
+
+    /// <summary>
+    /// Server RPC to apply magnet pull effect to all other players.
+    /// </summary>
+    [ServerRpc]
+    private void ApplyMagnetPullServerRpc()
+    {
+        var players = GameObject.FindGameObjectsWithTag("Player");
+        foreach (var player in players)
+        {
+            var handler = player.GetComponent<ItemEffectHandler>();
+            if (handler != null && handler != this)
+            {
+                handler.ApplyMagnetPullClientRpc(GetComponent<NetworkObject>().NetworkObjectId);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Client RPC to receive and apply the magnet pull effect on the local player.
+    /// </summary>
+    [ClientRpc]
+    public void ApplyMagnetPullClientRpc(ulong attractorNetworkObjectId)
+    {
+        if (!IsLocalPlayer)
+        {
+            return;
+        }
+
+        // Cannot be affected by effects while playing mini game
+        if (IsPlayingMiniGame())
+        {
+            return;
+        }
+
+        ApplyMagnetPull(attractorNetworkObjectId);
+    }
+
+    /// <summary>
+    /// Applies the magnet pull effect to this player, pulling them towards the attractor.
+    /// </summary>
+    /// <param name="attractorNetworkObjectId">The network object ID of the player using the magnet.</param>
+    private void ApplyMagnetPull(ulong attractorNetworkObjectId)
+    {
+        // Find the attractor player
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(attractorNetworkObjectId, out var networkObject))
+        {
+            magnetAttractor = networkObject.transform;
+            magnetPullTimer = magnetPullDuration;
+        }
+    }
+
+    /// <summary>
+    /// Gets the current magnet pull force and attractor if active.
+    /// </summary>
+    /// <param name="pullForce">The force to apply for magnet pull.</param>
+    /// <returns>The transform to pull towards, or null if no magnet effect is active.</returns>
+    public Transform GetMagnetAttractorForce(out float pullForce)
+    {
+        pullForce = magnetPullForce;
+        return magnetPullTimer > 0f ? magnetAttractor : null;
+    }
 }
+
+

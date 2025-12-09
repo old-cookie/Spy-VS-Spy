@@ -267,6 +267,17 @@ public class PlayerController : NetworkBehaviour
             transform.Translate(delta, Space.World);
         }
 
+        // Apply magnet pull force if active
+        if (itemEffectHandler != null)
+        {
+            var magnetAttractor = itemEffectHandler.GetMagnetAttractorForce(out float magnetForce);
+            if (magnetAttractor != null && playerRigidbody != null)
+            {
+                var direction = (magnetAttractor.position - transform.position).normalized;
+                playerRigidbody.AddForce(direction * magnetForce, ForceMode.Force);
+            }
+        }
+
         SmoothFacingRotation();
     }
 
