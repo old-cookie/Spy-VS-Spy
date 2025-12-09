@@ -5,6 +5,9 @@ using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 /// <summary>
 /// Manages game initialization, player spawning, team assignment, and scoring for networked multiplayer.
@@ -14,17 +17,20 @@ public class GameController : NetworkBehaviour
     /// <summary>
     /// The player prefab to instantiate for each connected client.
     /// </summary>
-    public GameObject playerPrefabs;
+    [SerializeField]
+    private GameObject playerPrefabs;
 
     /// <summary>
     /// List of spawn positions for players. Each player spawns at the position corresponding to their index.
     /// </summary>
-    public List<Transform> spawnPos;
+    [SerializeField]
+    private List<Transform> spawnPos;
 
     /// <summary>
     /// UI Text element to display the player's own team score.
     /// </summary>
-    public Text scoreText;
+    [SerializeField]
+    private Text scoreText;
 
     /// <summary>
     /// Network variable to sync blue team score across all clients.
@@ -43,22 +49,10 @@ public class GameController : NetworkBehaviour
     private int pointsToWin = 5;
 
     /// <summary>
-    /// Scene name to load when a team wins.
-    /// </summary>
-    [SerializeField]
-    private string endSceneName = "EndScene";
-
-    /// <summary>
     /// Level prefabs available to spawn when the game scene loads. Assign prefabs from Assets/Levels.
     /// </summary>
     [SerializeField]
     private List<GameObject> levelPrefabs = new List<GameObject>();
-
-    /// <summary>
-    /// Fallback level name if nothing is selected in the lobby.
-    /// </summary>
-    [SerializeField]
-    private string defaultLevelName = "Demo";
 
     /// <summary>
     /// The local player's team, used to determine which score to display.
@@ -111,8 +105,13 @@ public class GameController : NetworkBehaviour
     [SerializeField]
     private float autoQuitDelay = 30f;
 
+#if UNITY_EDITOR
     [SerializeField]
-    private string lobbySceneName = "Lobby";
+    private SceneAsset lobbyScene;
+#endif
+
+    [SerializeField, HideInInspector]
+    private string lobbySceneName = "LobbyScene";
 
     private Coroutine countdownRoutine;
     private bool exitTriggered;
@@ -238,7 +237,7 @@ public class GameController : NetworkBehaviour
     }
 
     /// <summary>
-    /// Reads the lobby-selected level name from the synced state or falls back to default.
+    /// Reads the lobby-selected level name from the synced state.
     /// </summary>
     private string GetChosenLevelName()
     {
@@ -247,7 +246,7 @@ public class GameController : NetworkBehaviour
             return LevelSelectionState.Instance.SelectedLevelName;
         }
 
-        return defaultLevelName;
+        return string.Empty;
     }
 
     /// <summary>
@@ -286,8 +285,7 @@ public class GameController : NetworkBehaviour
             networkObject.SpawnAsPlayerObject(clientID);
 
             // Assign team: Host (index 0) = Blue, others = Red
-            var teamMember = player.GetComponent<TeamMember>();
-            if (teamMember != null)
+            if (player.TryGetComponent<TeamMember>(out var teamMember))
             {
                 Team assignedTeam = (i == 0) ? Team.Blue : Team.Red;
                 teamMember.SetTeamRpc(assignedTeam);
@@ -509,21 +507,11 @@ public class GameController : NetworkBehaviour
         }
     }
 
-    [Header("Outcome Animation Settings")]
-    [SerializeField]
-    private string winTriggerName = "win";
-
-    [SerializeField]
-    private string loseTriggerName = "lose";
-
-    [SerializeField]
-    private string winStateName = "";
-
-    [SerializeField]
-    private string loseStateName = "";
-
-    [SerializeField]
-    private string idleStateName = "Idle";
+    private const string winTriggerName = "win";
+    private const string loseTriggerName = "lose";
+    private const string winStateName = "Win";
+    private const string loseStateName = "Lose";
+    private const string idleStateName = "Idle";
 
     /// <summary>
     /// Plays win/lose animations on all players via ClientRpc.
@@ -531,7 +519,7 @@ public class GameController : NetworkBehaviour
     [ClientRpc]
     private void PlayOutcomeAnimationsClientRpc(Team winningTeam)
     {
-        var players = FindObjectsOfType<PlayerController>(true);
+        var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
         Debug.Log($"[GameController] Found {players.Length} players for outcome animations. Winning team: {winningTeam}");
         
         foreach (var player in players)
@@ -648,6 +636,16 @@ public class GameController : NetworkBehaviour
             SceneManager.LoadScene(lobbySceneName);
         }
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (lobbyScene != null)
+        {
+            lobbySceneName = lobbyScene.name;
+        }
+    }
+#endif
 
     /// <summary>
     /// Despawns all player objects before changing scenes.

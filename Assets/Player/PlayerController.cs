@@ -149,6 +149,7 @@ public class PlayerController : NetworkBehaviour
     private ItemEffectHandler itemEffectHandler;
     private bool canPickFlag;
     private FlagTrigger currentFlag;
+    private static readonly Collider[] overlapResults = new Collider[16];
     private TeamMember teamMember;
     private bool isPlayingMiniGame;
     private InputSystem_Actions inputActions;
@@ -584,10 +585,14 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
-        var hits = Physics.OverlapSphere(transform.position, chestPickupRadius, ~0, QueryTriggerInteraction.Collide);
-        foreach (var hit in hits)
+        int hitCount = Physics.OverlapSphereNonAlloc(transform.position, chestPickupRadius, overlapResults, ~0, QueryTriggerInteraction.Collide);
+        for (int i = 0; i < hitCount; i++)
         {
-            var chest = hit.GetComponentInParent<ChestController>() ?? hit.GetComponent<ChestController>();
+            var chest = overlapResults[i].GetComponentInParent<ChestController>();
+            if (chest == null)
+            {
+                chest = overlapResults[i].GetComponent<ChestController>();
+            }
             if (chest != null)
             {
                 canPickChest = true;
@@ -607,10 +612,14 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
-        var hits = Physics.OverlapSphere(transform.position, flagPickupRadius, ~0, QueryTriggerInteraction.Collide);
-        foreach (var hit in hits)
+        int hitCount = Physics.OverlapSphereNonAlloc(transform.position, flagPickupRadius, overlapResults, ~0, QueryTriggerInteraction.Collide);
+        for (int i = 0; i < hitCount; i++)
         {
-            var flag = hit.GetComponentInParent<FlagTrigger>() ?? hit.GetComponent<FlagTrigger>();
+            var flag = overlapResults[i].GetComponentInParent<FlagTrigger>();
+            if (flag == null)
+            {
+                flag = overlapResults[i].GetComponent<FlagTrigger>();
+            }
             if (flag == null)
             {
                 continue;

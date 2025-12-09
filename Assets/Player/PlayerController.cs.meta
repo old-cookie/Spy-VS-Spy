@@ -1,2 +1,15 @@
 fileFormatVersion: 2
 guid: 3acd11b0bf98e504d9a67c47b5c0cf76
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - blueTeamMaterial: {fileID: 2100000, guid: fd090030d4db9c44589d8400e6cb5c95, type: 2}
+  - redTeamMaterial: {fileID: 2100000, guid: 1ecc1fe2942d2ae4e83386fd56fba1b9, type: 2}
+  - groundCheckPos: {instanceID: 0}
+  - animator: {fileID: 3674305575702069602, guid: 97bd4365f2fbca24c9612105f55946ec, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

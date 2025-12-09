@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: -3041961559649973323}
   - component: {fileID: 7364846887808400374}
   m_Layer: 0
-  m_Name: Flag_Red_Center
+  m_Name: Red_Flag
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
