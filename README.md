@@ -35,3 +35,12 @@ Fast local-network multiplayer for two players. One hosts, one joins, and both r
 - Both players must be on the same LAN; verify firewalls are not blocking the game.
 - If the client cannot find the host, confirm the host started first and is visible on the network.
 - Restart the lobby if either player gets desynced before the match begins.
+
+## Assets
+[3D Icons - Game Basic1](https://assetstore.unity.com/packages/3d/gui/3d-icons-game-basic1-258130)
+[Casual Game Music Pack](https://assetstore.unity.com/packages/audio/music/casual-game-music-pack-53575)
+[Direction arrows](https://sketchfab.com/3d-models/direction-arrows-75c7bf0dcbf041769aff1296b7b1cbf0)
+[GUI Pro - Simple Casual](https://assetstore.unity.com/packages/2d/gui/gui-pro-simple-casual-203399)
+[Hyper Casual Chests](https://assetstore.unity.com/packages/3d/props/hyper-casual-chests-211250)
+[Junk Food Pack](https://assetstore.unity.com/packages/3d/props/food/junk-food-pack-184367)
+[KayKit - Prototype Bits (for Unity)](https://assetstore.unity.com/packages/3d/environments/kaykit-prototype-bits-for-unity-285107)
