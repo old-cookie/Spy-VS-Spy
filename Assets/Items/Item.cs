@@ -35,7 +35,7 @@ public class Item : NetworkBehaviour
     /// <summary>
     /// Consumes the item, notifying the owner and destroying the game object.
     /// </summary>
-    public void Consume()
+    public virtual void Consume()
     {
         NotifyOwnerConsumed();
         DespawnItem();

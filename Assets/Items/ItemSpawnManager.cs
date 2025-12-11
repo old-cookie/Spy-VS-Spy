@@ -286,4 +286,38 @@ public class ItemSpawnManager : NetworkBehaviour
             activeItemCoroutines.Remove(itemNetworkObjectId);
         }
     }
+
+    /// <summary>
+    /// Changes the item's follow target to a new player.
+    /// </summary>
+    /// <param name="itemNetworkObjectId">The network object ID of the item.</param>
+    /// <param name="newOwnerPlayerNetworkObjectId">The network object ID of the new owner player.</param>
+    public void ChangeItemOwner(ulong itemNetworkObjectId, ulong newOwnerPlayerNetworkObjectId)
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        // Stop the existing follow coroutine
+        StopItemFollow(itemNetworkObjectId);
+
+        // Get the item
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(itemNetworkObjectId, out var itemNetworkObject))
+        {
+            Debug.LogWarning($"[ItemSpawnManager] Item {itemNetworkObjectId} not found.");
+            return;
+        }
+
+        // Get the new owner
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(newOwnerPlayerNetworkObjectId, out var newOwnerNetworkObject))
+        {
+            Debug.LogWarning($"[ItemSpawnManager] New owner player {newOwnerPlayerNetworkObjectId} not found.");
+            return;
+        }
+
+        // Start a new follow coroutine with the new owner
+        var coroutine = StartCoroutine(ItemFollowRoutine(itemNetworkObject.transform, newOwnerNetworkObject.transform, newOwnerPlayerNetworkObjectId));
+        activeItemCoroutines[itemNetworkObjectId] = coroutine;
+    }
 }

@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.InputSystem;
+using System.Collections;
 
 /// <summary>
 /// Controls player movement, jumping, facing direction, item interaction, and chest picking.
@@ -134,6 +135,11 @@ public class PlayerController : NetworkBehaviour
     [SerializeField]
     private bool isLand = true;
 
+    /// <summary>
+    /// Stores the player's spawn position for teleportation.
+    /// </summary>
+    private Vector3 spawnPosition;
+
     private Quaternion rightFacingRotation;
     private Quaternion leftFacingRotation;
     private Quaternion frontFacingRotation;
@@ -171,6 +177,10 @@ public class PlayerController : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+        
+        // Store the spawn position for teleportation
+        spawnPosition = transform.position;
+        
         CacheFacingRotations();
         IgnorePlayerCollisions();
         CacheTeamMember();
@@ -266,17 +276,6 @@ public class PlayerController : NetworkBehaviour
             var moveSpeed = playerSpeed * speedMultiplier;
             var delta = moveSpeed * Time.deltaTime * new Vector3(horizontal, 0f, 0f);
             transform.Translate(delta, Space.World);
-        }
-
-        // Apply magnet pull force if active
-        if (itemEffectHandler != null)
-        {
-            var magnetAttractor = itemEffectHandler.GetMagnetAttractorForce(out float magnetForce);
-            if (magnetAttractor != null && playerRigidbody != null)
-            {
-                var direction = (magnetAttractor.position - transform.position).normalized;
-                playerRigidbody.AddForce(direction * magnetForce, ForceMode.Force);
-            }
         }
 
         SmoothFacingRotation();
@@ -846,11 +845,13 @@ public class PlayerController : NetworkBehaviour
     {
         if (newItem == null)
         {
+            Debug.LogWarning($"Player {name} tried to register a null item.");
             return;
         }
 
         if (heldItem != null && heldItem != newItem)
         {
+            Debug.Log($"Player {name} is discarding item {heldItem.ItemType} to register new item {newItem.ItemType}.");
             heldItem.Discard();
             heldItem = null;
             heldItemType = null;
@@ -858,6 +859,7 @@ public class PlayerController : NetworkBehaviour
 
         heldItem = newItem;
         heldItemType = newItem.ItemType;
+        Debug.Log($"Player {name} registered new item {heldItemType}.");
     }
 
     /// <summary>
@@ -1332,6 +1334,141 @@ public class PlayerController : NetworkBehaviour
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Checks if the player is currently holding an item.
+    /// </summary>
+    /// <returns>True if holding an item, false otherwise.</returns>
+    public bool HasHeldItem()
+    {
+        Debug.Log($"Player {name} heldItem is {(heldItem != null ? "not null" : "null")}.");
+        return heldItem != null;
+    }
+
+    /// <summary>
+    /// Executes item stealing on the server (called directly from ItemEffectHandler).
+    /// </summary>
+    /// <param name="stealerNetworkObjectId">The network object ID of the player stealing the item.</param>
+    public void ExecuteItemSteal(ulong stealerNetworkObjectId)
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        // Check if this player is holding an item
+        if (heldItem == null)
+        {
+            return;
+        }
+
+        // Find the stealer player
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(stealerNetworkObjectId, out var stealerNetworkObject))
+        {
+            return;
+        }
+
+        var stealerPlayerController = stealerNetworkObject.GetComponent<PlayerController>();
+        if (stealerPlayerController == null)
+        {
+            return;
+        }
+
+        // Transfer the item from this player to the stealer
+        var stolenItem = heldItem;
+        var stolenItemNetworkObjectId = stolenItem.GetComponent<NetworkObject>().NetworkObjectId;
+        
+        heldItem = null;
+        heldItemType = null;
+
+        // Give the item to the stealer
+        stealerPlayerController.RegisterHeldItem(stolenItem);
+
+        // Notify the stealer's client to register the item
+        stealerPlayerController.RegisterStolenItemClientRpc(stolenItemNetworkObjectId);
+
+        // Update the ItemSpawnManager to follow the new owner
+        if (ItemSpawnManager.Instance != null)
+        {
+            ItemSpawnManager.Instance.ChangeItemOwner(stolenItemNetworkObjectId, stealerNetworkObjectId);
+        }
+    }
+
+    /// <summary>
+    /// Server RPC to steal the held item from this player and transfer it to the stealing player.
+    /// </summary>
+    /// <param name="stealerNetworkObjectId">The network object ID of the player stealing the item.</param>
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void StealHeldItemServerRpc(ulong stealerNetworkObjectId)
+    {
+        ExecuteItemSteal(stealerNetworkObjectId);
+    }
+
+    /// <summary>
+    /// Client RPC to notify the stealing player to register the stolen item locally.
+    /// </summary>
+    /// <param name="itemNetworkObjectId">The network object ID of the stolen item.</param>
+    [ClientRpc]
+    private void RegisterStolenItemClientRpc(ulong itemNetworkObjectId)
+    {
+        // Only the stealer registers the item on their client
+        if (!IsLocalPlayer)
+        {
+            return;
+        }
+
+        StartCoroutine(RegisterStolenItem(itemNetworkObjectId));
+    }
+
+    /// <summary>
+    /// Waits for the stolen item to be available and registers it to the local player.
+    /// </summary>
+    private IEnumerator RegisterStolenItem(ulong itemNetworkObjectId)
+    {
+        // Wait a frame for the item to be available
+        yield return null;
+
+        // Try to find the spawned item
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(itemNetworkObjectId, out var itemNetworkObject))
+        {
+            Debug.LogWarning($"[PlayerController] Stolen item {itemNetworkObjectId} not found on client.");
+            yield break;
+        }
+
+        var item = itemNetworkObject.GetComponent<Item>();
+        if (item == null)
+        {
+            Debug.LogWarning("[PlayerController] Stolen item has no Item component.");
+            yield break;
+        }
+
+        // Register the stolen item to the local player
+        RegisterHeldItem(item);
+    }
+
+    /// <summary>
+    /// Teleports the player back to their spawn position.
+    /// </summary>
+    public void TeleportToSpawn()
+    {
+        if (playerRigidbody == null)
+        {
+            CacheRigidbodyReference();
+        }
+
+        if (playerRigidbody != null)
+        {
+            // Teleport the player to spawn position
+            playerRigidbody.linearVelocity = Vector3.zero;
+            transform.position = spawnPosition;
+            
+            Debug.Log($"[PlayerController] Player teleported to spawn position: {spawnPosition}");
+        }
+        else
+        {
+            Debug.LogWarning("[PlayerController] Rigidbody not found. Cannot teleport player.");
+        }
     }
 }
 

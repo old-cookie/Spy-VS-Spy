@@ -61,27 +61,19 @@ public class ItemEffectHandler : NetworkBehaviour
     private float rustGearSlowDownDuration = 10f;
 
     /// <summary>
-    /// Force applied to pull other players towards the magnet user.
+    /// Radius to search for nearby players to steal items from. Set to 0 or negative for unlimited range.
     /// </summary>
-    [Header("Magnet Settings")]
+    [Header("Magnet Settings (Item Stealing)")]
     [SerializeField, Min(0f)]
-    private float magnetPullForce = 15f;
-
-    /// <summary>
-    /// Duration in seconds for the magnet pull effect.
-    /// </summary>
-    [SerializeField, Min(0f)]
-    private float magnetPullDuration = 2f;
+    private float itemStealRadius = 0f;
 
     private float speedBoostTimer;
     private float slowDownTimer;
     private float jumpBoostTimer;
-    private float magnetPullTimer;
     private float activeBoostMultiplier = 1f;
     private float activeSlowMultiplier = 1f;
     private float activeJumpMultiplier = 1f;
     private PlayerController playerController;
-    private Transform magnetAttractor;
 
     /// <summary>
     /// Gets the current combined speed multiplier from all active effects.
@@ -146,7 +138,10 @@ public class ItemEffectHandler : NetworkBehaviour
                 ApplyRustGearSlowDownServerRpc();
                 break;
             case "magnet":
-                ApplyMagnetPullServerRpc();
+                ApplyItemStealServerRpc();
+                break;
+            case "teleport":
+                TeleportToSpawnServerRpc();
                 break;
             default:
                 break;
@@ -194,16 +189,8 @@ public class ItemEffectHandler : NetworkBehaviour
                 activeJumpMultiplier = 1f;
             }
         }
-
-        if (magnetPullTimer > 0f)
-        {
-            magnetPullTimer = Mathf.Max(0f, magnetPullTimer - Time.deltaTime);
-            if (magnetPullTimer <= 0f)
-            {
-                magnetAttractor = null;
-            }
-        }
     }
+
 
     /// <summary>
     /// Applies the speed boost effect to this player.
@@ -316,66 +303,126 @@ public class ItemEffectHandler : NetworkBehaviour
     }
 
     /// <summary>
-    /// Server RPC to apply magnet pull effect to all other players.
+    /// Server RPC to steal an item from the opposing team player.
     /// </summary>
-    [ServerRpc]
-    private void ApplyMagnetPullServerRpc()
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void ApplyItemStealServerRpc()
     {
-        var players = GameObject.FindGameObjectsWithTag("Player");
-        foreach (var player in players)
+        CachePlayerController();
+        if (playerController == null)
         {
-            var handler = player.GetComponent<ItemEffectHandler>();
-            if (handler != null && handler != this)
+            Debug.LogWarning("PlayerController not found. Cannot apply item steal.");
+            return;
+        }
+
+        // Get this player's team
+        var teamMember = playerController.GetComponent<TeamMember>();
+        if (teamMember == null)
+        {
+            Debug.LogWarning("TeamMember not found. Cannot apply item steal.");
+            return;
+        }
+
+        Team playerTeam = teamMember.CurrentTeam;
+        if (playerTeam == Team.None)
+        {
+            Debug.LogWarning("Player is not on a team. Cannot apply item steal.");
+            return;
+        }
+
+        // Determine opposing team
+        Team opposingTeam = playerTeam == Team.Blue ? Team.Red : Team.Blue;
+        Debug.Log($"Player team: {playerTeam}, Opposing team: {opposingTeam}");
+
+        // Find the opposing team player (no range limit)
+        var allPlayers = GameObject.FindGameObjectsWithTag("Player");
+        Debug.Log($"Total players found: {allPlayers.Length}");
+
+        var stealerNetworkObjectId = GetComponent<NetworkObject>().NetworkObjectId;
+
+        foreach (var player in allPlayers)
+        {
+            var otherPlayerController = player.GetComponent<PlayerController>();
+            var otherTeamMember = player.GetComponent<TeamMember>();
+
+            if (otherPlayerController != null && otherTeamMember != null && otherTeamMember != teamMember)
             {
-                handler.ApplyMagnetPullClientRpc(GetComponent<NetworkObject>().NetworkObjectId);
+                Debug.Log($"Checking player: {player.name}, Team: {otherTeamMember.CurrentTeam}");
+
+                // Check if this is the opposing team player
+                if (otherTeamMember.IsOnTeam(opposingTeam))
+                {
+                    Debug.Log($"Player {player.name} is on the opposing team.");
+
+                    if (otherPlayerController.HasHeldItem())
+                    {
+                        Debug.Log($"Player {player.name} has a held item. Stealing item.");
+
+                        // Use RPC to steal from the opposing team player
+                        otherPlayerController.StealHeldItemServerRpc(stealerNetworkObjectId);
+                        Debug.Log("Item steal RPC sent successfully.");
+                        return;
+                    }
+                    else
+                    {
+                        Debug.Log($"Player {player.name} does not have a held item.");
+                    }
+                }
             }
         }
+
+        Debug.LogWarning("No valid target found for item steal.");
     }
 
     /// <summary>
-    /// Client RPC to receive and apply the magnet pull effect on the local player.
+    /// Server RPC to teleport the player back to their spawn position.
+    /// </summary>
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void TeleportToSpawnServerRpc()
+    {
+        CachePlayerController();
+        if (playerController == null)
+        {
+            Debug.LogWarning("PlayerController not found. Cannot apply teleport effect.");
+            return;
+        }
+
+        // Get the player's network object
+        var playerNetworkObject = GetComponent<NetworkObject>();
+        if (playerNetworkObject == null)
+        {
+            Debug.LogWarning("NetworkObject not found on ItemEffectHandler.");
+            return;
+        }
+
+        // Call the teleport on all clients for this player
+        TeleportToSpawnClientRpc(playerNetworkObject.NetworkObjectId);
+    }
+
+    /// <summary>
+    /// Client RPC to teleport the player back to spawn on all clients.
     /// </summary>
     [ClientRpc]
-    public void ApplyMagnetPullClientRpc(ulong attractorNetworkObjectId)
+    private void TeleportToSpawnClientRpc(ulong playerNetworkObjectId)
     {
-        if (!IsLocalPlayer)
+        // Get the player network object
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerNetworkObjectId, out var playerNetworkObject))
         {
+            Debug.LogWarning($"[ItemEffectHandler] Player with NetworkObjectId {playerNetworkObjectId} not found.");
             return;
         }
 
-        // Cannot be affected by effects while playing mini game
-        if (IsPlayingMiniGame())
+        var targetPlayerController = playerNetworkObject.GetComponent<PlayerController>();
+        if (targetPlayerController == null)
         {
+            Debug.LogWarning("[ItemEffectHandler] PlayerController not found on target player.");
             return;
         }
 
-        ApplyMagnetPull(attractorNetworkObjectId);
-    }
-
-    /// <summary>
-    /// Applies the magnet pull effect to this player, pulling them towards the attractor.
-    /// </summary>
-    /// <param name="attractorNetworkObjectId">The network object ID of the player using the magnet.</param>
-    private void ApplyMagnetPull(ulong attractorNetworkObjectId)
-    {
-        // Find the attractor player
-        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(attractorNetworkObjectId, out var networkObject))
-        {
-            magnetAttractor = networkObject.transform;
-            magnetPullTimer = magnetPullDuration;
-        }
-    }
-
-    /// <summary>
-    /// Gets the current magnet pull force and attractor if active.
-    /// </summary>
-    /// <param name="pullForce">The force to apply for magnet pull.</param>
-    /// <returns>The transform to pull towards, or null if no magnet effect is active.</returns>
-    public Transform GetMagnetAttractorForce(out float pullForce)
-    {
-        pullForce = magnetPullForce;
-        return magnetPullTimer > 0f ? magnetAttractor : null;
+        // Teleport the player back to spawn
+        targetPlayerController.TeleportToSpawn();
     }
 }
+
 
 
