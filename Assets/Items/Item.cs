@@ -53,7 +53,7 @@ public class Item : NetworkBehaviour
     /// <summary>
     /// Handles despawning the item properly for both host and non-host clients.
     /// </summary>
-    private void DespawnItem()
+    protected void DespawnItem()
     {
         if (IsHost)
         {
