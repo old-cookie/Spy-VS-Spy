@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 8148529171116422354}
   - component: {fileID: 6264950538461085720}
   - component: {fileID: 2348292640462104955}
+  - component: {fileID: 8146726092202590863}
   m_Layer: 0
   m_Name: Platform
   m_TagString: Untagged
@@ -105,3 +106,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RisingPlatform
   jumpForce: 10
   riseDuration: 1
+--- !u!65 &8146726092202590863
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5616392403787325901}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.4752712, y: 0.27482432, z: 2.4752712}
+  m_Center: {x: 0, y: -0.1368111, z: -0.000000059604645}
