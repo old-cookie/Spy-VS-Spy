@@ -228,8 +228,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   availableMiniGamePrefabs:
-  - {fileID: 7101518589224427197, guid: 407ddc21a12a82e4fb351bbf2060ff73, type: 3}
-  - {fileID: 2428448716305287125, guid: 9954182dfa44896438e4977169cc8411, type: 3}
+  - {fileID: 4359575161078315479, guid: 0a46250cca3614a4eba2429cb603fd57, type: 3}
 --- !u!4 &549635433
 Transform:
   m_ObjectHideFlags: 0
