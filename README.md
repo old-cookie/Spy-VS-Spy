@@ -44,3 +44,7 @@ Fast local-network multiplayer for two players. One hosts, one joins, and both r
 [Hyper Casual Chests](https://assetstore.unity.com/packages/3d/props/hyper-casual-chests-211250)
 [Junk Food Pack](https://assetstore.unity.com/packages/3d/props/food/junk-food-pack-184367)
 [KayKit - Prototype Bits (for Unity)](https://assetstore.unity.com/packages/3d/environments/kaykit-prototype-bits-for-unity-285107)
+
+---
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/old-cookie/Spy-VS-Spy)
