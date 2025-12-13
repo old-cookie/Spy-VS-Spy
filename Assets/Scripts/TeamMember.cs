@@ -64,6 +64,27 @@ public class TeamMember : NetworkBehaviour
         {
             GameController.Instance.SetLocalPlayerTeam(assignedTeam);
         }
+        else
+        {
+            // Defer if GameController not ready yet
+            StartCoroutine(WaitForGameControllerAndNotify(assignedTeam));
+        }
+    }
+
+    private System.Collections.IEnumerator WaitForGameControllerAndNotify(Team assignedTeam)
+    {
+        float timeout = 5f;
+        float elapsed = 0f;
+        while (GameController.Instance == null && elapsed < timeout)
+        {
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        if (GameController.Instance != null)
+        {
+            GameController.Instance.SetLocalPlayerTeam(assignedTeam);
+        }
     }
 
     /// <summary>

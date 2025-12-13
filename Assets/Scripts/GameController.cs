@@ -14,7 +14,7 @@ using UnityEditor;
 /// </summary>
 public class GameController : NetworkBehaviour
 {
-    private static WaitForSeconds _waitForSeconds1 = new WaitForSeconds(1f);
+    private static readonly WaitForSeconds _waitForSeconds1 = new(1f);
 
     /// <summary>
     /// The player prefab to instantiate for each connected client.
@@ -28,11 +28,24 @@ public class GameController : NetworkBehaviour
     [SerializeField]
     private List<Transform> spawnPos;
 
-    /// <summary>
-    /// UI Text element to display the player's own team score.
-    /// </summary>
+    [Header("Score UI")]
     [SerializeField]
-    private Text scoreText;
+    private GameObject ownFlagParent;
+
+    [SerializeField]
+    private GameObject otherFlagParent;
+
+    [SerializeField]
+    private Text ownScoreText;
+
+    [SerializeField]
+    private Text otherScoreText;
+
+    [SerializeField]
+    private float ownFlagScale = 300f;
+
+    [SerializeField]
+    private float otherFlagScale = 200f;
 
     /// <summary>
     /// Network variable to sync blue team score across all clients.
@@ -54,7 +67,7 @@ public class GameController : NetworkBehaviour
     /// Level prefabs available to spawn when the game scene loads. Assign prefabs from Assets/Levels.
     /// </summary>
     [SerializeField]
-    private List<GameObject> levelPrefabs = new List<GameObject>();
+    private List<GameObject> levelPrefabs = new();
 
     /// <summary>
     /// The local player's team, used to determine which score to display.
@@ -94,9 +107,19 @@ public class GameController : NetworkBehaviour
     [SerializeField]
     private GameObject redFlagPrefab;
 
+    [Header("Flag Sprites (UI)")]
+    [SerializeField]
+    private Sprite blueFlagSprite;
+
+    [SerializeField]
+    private Sprite redFlagSprite;
+
     private Transform blueFlagPos;
     private Transform redFlagPos;
     private bool flagsSpawned;
+
+    private GameObject ownFlagInstance;
+    private GameObject otherFlagInstance;
 
     [Header("End Game UI")]
     [SerializeField]
@@ -221,6 +244,8 @@ public class GameController : NetworkBehaviour
             StopCoroutine(countdownRoutine);
             countdownRoutine = null;
         }
+
+        ClearFlagInstances();
     }
 
     /// <summary>
@@ -242,7 +267,7 @@ public class GameController : NetworkBehaviour
             return;
         }
 
-        
+
         if (levelPrefab.TryGetComponent<NetworkObject>(out var networkObject))
         {
             if (IsServer)
@@ -300,7 +325,7 @@ public class GameController : NetworkBehaviour
     {
         // Debug: Log all available level prefabs
         Debug.Log($"[GameController] ResolveLevelPrefab: Looking for '{levelName}'. Available prefabs: {string.Join(", ", levelPrefabs.Where(p => p != null).Select(p => $"'{p.name}'"))}");
-        
+
         if (string.IsNullOrWhiteSpace(levelName))
         {
             Debug.Log("[GameController] ResolveLevelPrefab: levelName is empty, returning first prefab");
@@ -309,7 +334,7 @@ public class GameController : NetworkBehaviour
 
         // First try exact match
         var found = levelPrefabs.FirstOrDefault(p => p != null && p.name == levelName);
-        
+
         // If not found, try matching with spaces removed (to handle "Lv 2" vs "Lv2")
         if (found == null)
         {
@@ -320,7 +345,7 @@ public class GameController : NetworkBehaviour
                 Debug.Log($"[GameController] ResolveLevelPrefab: Found '{found.name}' by normalized match for '{levelName}'");
             }
         }
-        
+
         if (found == null)
         {
             Debug.LogWarning($"[GameController] ResolveLevelPrefab: No prefab found matching '{levelName}'");
@@ -497,9 +522,8 @@ public class GameController : NetworkBehaviour
         Debug.Log("[GameController] Spawning ItemSpawnManager...");
 
         var instance = Instantiate(itemSpawnManagerPrefab);
-        var networkObject = instance.GetComponent<NetworkObject>();
 
-        if (networkObject != null)
+        if (instance.TryGetComponent<NetworkObject>(out var networkObject))
         {
             networkObject.Spawn(true);
         }
@@ -514,10 +538,7 @@ public class GameController : NetworkBehaviour
     /// </summary>
     private void OnBlueScoreChanged(int oldValue, int newValue)
     {
-        if (localPlayerTeam == Team.Blue)
-        {
-            UpdateScoreUI();
-        }
+        UpdateScoreUI();
     }
 
     /// <summary>
@@ -525,10 +546,7 @@ public class GameController : NetworkBehaviour
     /// </summary>
     private void OnRedScoreChanged(int oldValue, int newValue)
     {
-        if (localPlayerTeam == Team.Red)
-        {
-            UpdateScoreUI();
-        }
+        UpdateScoreUI();
     }
 
     /// <summary>
@@ -536,13 +554,20 @@ public class GameController : NetworkBehaviour
     /// </summary>
     private void UpdateScoreUI()
     {
-        if (scoreText == null)
+        if (localPlayerTeam == Team.None)
         {
+            UpdateScoreLabels(0, 0);
+            ClearFlagInstances();
             return;
         }
 
-        int score = GetScore(localPlayerTeam);
-        scoreText.text = "Score: " + score;
+        Team otherTeam = GetOpposingTeam(localPlayerTeam);
+        int ownScore = GetScore(localPlayerTeam);
+        int otherScore = GetScore(otherTeam);
+
+        UpdateScoreLabels(ownScore, otherScore);
+        UpdateFlagInstance(ownFlagParent, localPlayerTeam, ref ownFlagInstance, true);
+        UpdateFlagInstance(otherFlagParent, otherTeam, ref otherFlagInstance, false);
     }
 
     /// <summary>
@@ -553,6 +578,104 @@ public class GameController : NetworkBehaviour
     {
         localPlayerTeam = team;
         UpdateScoreUI();
+    }
+
+    private void UpdateScoreLabels(int ownScore, int otherScore)
+    {
+        if (ownScoreText != null)
+        {
+            ownScoreText.text = ownScore.ToString();
+        }
+
+        if (otherScoreText != null)
+        {
+            otherScoreText.text = otherScore.ToString();
+        }
+    }
+
+    private void UpdateFlagInstance(GameObject parent, Team team, ref GameObject instance, bool isOwnFlag)
+    {
+        if (parent == null || team == Team.None)
+        {
+            if (instance != null)
+            {
+                Destroy(instance);
+                instance = null;
+            }
+            return;
+        }
+
+        var canvas = parent.GetComponentInParent<Canvas>();
+        if (canvas != null)
+        {
+            Sprite selectedSprite = (team == Team.Blue) ? blueFlagSprite : redFlagSprite;
+            if (instance != null)
+            {
+                Destroy(instance);
+            }
+            instance = new GameObject(team + "FlagUI", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+            instance.transform.SetParent(parent.transform, false);
+            var rect = instance.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            var img = instance.GetComponent<UnityEngine.UI.Image>();
+            img.sprite = selectedSprite;
+            img.preserveAspect = true;
+            img.color = Color.white;
+        }
+        else
+        {
+            if (instance != null)
+            {
+                Destroy(instance);
+                instance = null;
+            }
+        }
+    }
+
+    private void ClearFlagInstances()
+    {
+        if (ownFlagInstance != null)
+        {
+            Destroy(ownFlagInstance);
+            ownFlagInstance = null;
+        }
+
+        if (otherFlagInstance != null)
+        {
+            Destroy(otherFlagInstance);
+            otherFlagInstance = null;
+        }
+    }
+
+    private Team GetOpposingTeam(Team team)
+    {
+        if (team == Team.Blue)
+        {
+            return Team.Red;
+        }
+        if (team == Team.Red)
+        {
+            return Team.Blue;
+        }
+
+        return Team.None;
+    }
+
+    private GameObject GetFlagPrefab(Team team)
+    {
+        if (team == Team.Blue)
+        {
+            return blueFlagPrefab;
+        }
+        if (team == Team.Red)
+        {
+            return redFlagPrefab;
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -617,13 +740,13 @@ public class GameController : NetworkBehaviour
     {
         var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
         Debug.Log($"[GameController] Found {players.Length} players for outcome animations. Winning team: {winningTeam}");
-        
+
         foreach (var player in players)
         {
             var teamMember = player.GetComponent<TeamMember>();
             Team playerTeam = teamMember != null ? teamMember.CurrentTeam : Team.None;
             bool isWinner = playerTeam == winningTeam && winningTeam != Team.None;
-            
+
             Debug.Log($"[GameController] Player {player.name}: Team={playerTeam}, IsWinner={isWinner}");
             player.PlayOutcomeAnimation(isWinner, winTriggerName, loseTriggerName, winStateName, loseStateName, idleStateName);
         }
@@ -741,27 +864,8 @@ public class GameController : NetworkBehaviour
             lobbySceneName = lobbyScene.name;
         }
     }
+
 #endif
-
-    /// <summary>
-    /// Despawns all player objects before changing scenes.
-    /// </summary>
-    private void DespawnAllPlayers()
-    {
-        if (!IsServer || NetworkManager.Singleton == null)
-        {
-            return;
-        }
-
-        foreach (var clientPair in NetworkManager.Singleton.ConnectedClients)
-        {
-            var playerObject = clientPair.Value?.PlayerObject;
-            if (playerObject != null && playerObject.IsSpawned)
-            {
-                playerObject.Despawn(true);
-            }
-        }
-    }
 
     /// <summary>
     /// Gets the current score for the specified team.
