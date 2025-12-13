@@ -65,7 +65,7 @@ public class ItemEffectHandler : NetworkBehaviour
     /// </summary>
     [Header("Magnet Settings (Item Stealing)")]
     [SerializeField, Min(0f)]
-    private float itemStealRadius = 0f;
+    //private float itemStealRadius = 0f;
 
     private float speedBoostTimer;
     private float slowDownTimer;
