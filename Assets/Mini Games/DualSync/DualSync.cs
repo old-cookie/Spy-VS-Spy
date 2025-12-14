@@ -2,56 +2,111 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 
+/// <summary>
+/// Mini-game where players synchronize two power bars by holding
+/// the left and right arrow keys to keep both bars within their
+/// target ranges. Score is gained by maintaining the target state
+/// for required time; the game ends when reaching the score goal
+/// or when time runs out.
+/// </summary>
 public class DualSync : MiniGame
 {
+    /// <summary>
+    /// The fill Image for the first power bar.
+    /// </summary>
     public Image bar1Fill;
+    /// <summary>
+    /// The fill Image for the second power bar.
+    /// </summary>
     public Image bar2Fill;
+    /// <summary>
+    /// Target line UI for the first bar.
+    /// </summary>
     public Image targetLine1;
+    /// <summary>
+    /// Target line UI for the second bar.
+    /// </summary>
     public Image targetLine2;
+    /// <summary>
+    /// Status text displaying progress, target time, and remaining time.
+    /// </summary>
     public Text statusText;
+    /// <summary>
+    /// Text displaying the current score.
+    /// </summary>
     public Text scoreText;
+    /// <summary>
+    /// Text shown when the game ends.
+    /// </summary>
     public Text endText;
+    /// <summary>
+    /// Mini-game timer controlling the overall time limit and timeout event.
+    /// </summary>
     public MiniGameTimer gameTimer;
 
+    /// <summary>
+    /// Fill speed per second while the key is held.
+    /// </summary>
     public float fillSpeed = 0.01f;
+    /// <summary>
+    /// Decay speed per second when no input is pressed (used with a factor).
+    /// </summary>
     public float decaySpeed = 0.5f;
+    /// <summary>
+    /// Minimum target fill value (0–1).
+    /// </summary>
     public float minTargetFill = 0.5f;
+    /// <summary>
+    /// Maximum target fill value (0–1).
+    /// </summary>
     public float maxTargetFill = 0.8f;
-    public float targetTimeRequired = 1f;  // 在目标维持2秒
-    public float scorePerTarget = 1f;      // 每次维持2秒获得1分
-    public float gameTimeLimit = 30f;      // 游戏时间限制（秒）
+    /// <summary>
+    /// Seconds required within the target range to earn one score.
+    /// </summary>
+    public float targetTimeRequired = 1f;
+    /// <summary>
+    /// Score awarded each time the required target time is reached.
+    /// </summary>
+    public float scorePerTarget = 1f;
+    /// <summary>
+    /// Overall game time limit in seconds.
+    /// </summary>
+    public float gameTimeLimit = 30f;
 
     private float bar1FillValue = 0f;
     private float bar2FillValue = 0f;
     private float targetFill1;
     private float targetFill2;
     private bool gameEnded = false;
-    private float timeInTarget = 0f;      // 在目标区域的时间
-    private int score = 0;                 // 当前分数
+    private float timeInTarget = 0f;
+    private int score = 0;
 
     private InputSystem_Actions inputActions;
 
+    /// <summary>
+    /// Game start event: reset state, randomize targets, start timer, and refresh UI.
+    /// </summary>
     protected override void OnGameStart()
     {
-        // 重置游戏状态
+        // Reset game state
         gameEnded = false;
         bar1FillValue = 0f;
         bar2FillValue = 0f;
         timeInTarget = 0f;
         score = 0;
-        
-        // 随机生成目标填充值
+
+        // Randomize target fill values
         targetFill1 = Random.Range(minTargetFill, maxTargetFill);
         targetFill2 = Random.Range(minTargetFill, maxTargetFill);
 
-        // 启动计时器
+        // Start the timer
         if (gameTimer != null)
         {
             gameTimer.OnTimeUp += OnTimerEnded;
             gameTimer.StartTimer(gameTimeLimit);
         }
 
-        // 初始化 UI
+        // Initialize UI
         UpdateUI();
         if (endText != null)
         {
@@ -63,15 +118,18 @@ public class DualSync : MiniGame
         }
     }
 
+    /// <summary>
+    /// Unity Start: initialize input, randomize targets, and refresh UI.
+    /// </summary>
     void Start()
     {
         SetupInput();
 
-        // 随机生成目标填充值
+        // Randomize target fill values
         targetFill1 = Random.Range(minTargetFill, maxTargetFill);
         targetFill2 = Random.Range(minTargetFill, maxTargetFill);
 
-        // 初始化 UI
+        // Initialize UI
         UpdateUI();
         if (endText != null)
         {
@@ -79,17 +137,26 @@ public class DualSync : MiniGame
         }
     }
 
+    /// <summary>
+    /// Enable input when the component is enabled.
+    /// </summary>
     private void OnEnable()
     {
         SetupInput();
         EnableInput();
     }
 
+    /// <summary>
+    /// Disable input and release resources when the component is disabled.
+    /// </summary>
     private void OnDisable()
     {
         DisableInput();
     }
 
+    /// <summary>
+    /// Create the input actions instance if it does not exist.
+    /// </summary>
     private void SetupInput()
     {
         if (inputActions != null)
@@ -100,11 +167,17 @@ public class DualSync : MiniGame
         inputActions = new InputSystem_Actions();
     }
 
+    /// <summary>
+    /// Enable the mini-game input action map.
+    /// </summary>
     private void EnableInput()
     {
         inputActions?.MiniGame.Enable();
     }
 
+    /// <summary>
+    /// Disable the mini-game input action map and dispose resources.
+    /// </summary>
     private void DisableInput()
     {
         inputActions?.MiniGame.Disable();
@@ -112,12 +185,17 @@ public class DualSync : MiniGame
         inputActions = null;
     }
 
+    /// <summary>
+    /// Timer timeout callback: declare failure and end the flow.
+    /// </summary>
     private void OnTimerEnded()
     {
-        Debug.Log($"⏰ 时间到！游戏失败。总分数: {score}");
         FailGame();
     }
 
+    /// <summary>
+    /// Handle long presses of left/right arrow keys to increase bar fill values.
+    /// </summary>
     private void HandleLongPressInput()
     {
         if (gameEnded)
@@ -125,7 +203,7 @@ public class DualSync : MiniGame
             return;
         }
 
-        // 直接檢查鍵盤按鍵
+        // Directly check keyboard keys
         if (Keyboard.current != null)
         {
             if (Keyboard.current.leftArrowKey.isPressed)
@@ -142,45 +220,46 @@ public class DualSync : MiniGame
         }
     }
 
+    /// <summary>
+    /// Per-frame update: read input, apply decay, check target-range time for scoring, then update UI.
+    /// </summary>
     protected override void Update()
     {
         if (gameEnded) return;
 
-        // 处理长按输入（每帧读取）
+        // Handle long-press input (per frame)
         HandleLongPressInput();
 
-        // 缓慢衰减（没有按键时）
+        // Slow decay when no keys are pressed
         bar1FillValue -= decaySpeed * Time.deltaTime * 0.1f;
         bar2FillValue -= decaySpeed * Time.deltaTime * 0.1f;
 
         bar1FillValue = Mathf.Clamp01(bar1FillValue);
         bar2FillValue = Mathf.Clamp01(bar2FillValue);
 
-        // 检查是否两条都在目标范围内（宽松范围：±0.15）
+        // Check whether both bars are within target ranges (lenient: ±0.15)
         bool bar1InTarget = bar1FillValue >= targetFill1 - 0.05f && bar1FillValue <= targetFill1 + 0.15f;
         bool bar2InTarget = bar2FillValue >= targetFill2 - 0.05f && bar2FillValue <= targetFill2 + 0.15f;
 
         if (bar1InTarget && bar2InTarget)
         {
-            // 在目标范围内，累积时间
+            // Accumulate time while within target ranges
             timeInTarget += Time.deltaTime;
 
-            // 每targetTimeRequired秒获得1分
+            // Earn 1 point each targetTimeRequired seconds
             if (timeInTarget >= targetTimeRequired)
             {
-                score += 1;  // 每次触发只加1分
-                timeInTarget -= targetTimeRequired;  // 减去已计数的时间，允许继续计数
-                Debug.Log($"✓ 得分! 总分数: {score}");
-                
-                // 检查是否达到5分，如果达到则完成游戏
+                score += 1;  // Add 1 point per trigger
+                timeInTarget -= targetTimeRequired;  // Subtract counted time, allow continuous counting
+
+                // If reaching 5 points, complete the game
                 if (score >= 5)
                 {
-                    Debug.Log($"🎉 游戏完成！总分数: {score}");
                     CompleteGame();
                     return;
                 }
-                
-                // 获得分数后，生成新的目标值并重置条
+
+                // After scoring, randomize targets and reset bars
                 targetFill1 = Random.Range(minTargetFill, maxTargetFill);
                 targetFill2 = Random.Range(minTargetFill, maxTargetFill);
                 bar1FillValue = 0f;
@@ -188,32 +267,31 @@ public class DualSync : MiniGame
             }
         }
         else
-        {
-            // 离开目标范围，重置计时
-            if (timeInTarget > 0)
-            {
-                Debug.Log($"离开目标范围 - Bar1: {bar1FillValue:F2} (目标:{targetFill1:F2}), Bar2: {bar2FillValue:F2} (目标:{targetFill2:F2})");
-            }
+        {            
+            // Reset time in target if either bar is out of range
             timeInTarget = 0f;
         }
 
         UpdateUI();
     }
 
+    /// <summary>
+    /// Update all UI: bar fills, target line positions, status text, and score.
+    /// </summary>
     void UpdateUI()
     {
-        // 更新能量条填充
+        // Update bar fills
         if (bar1Fill != null)
         {
             bar1Fill.fillAmount = bar1FillValue;
         }
-        
+
         if (bar2Fill != null)
         {
             bar2Fill.fillAmount = bar2FillValue;
         }
 
-        // 更新目标线位置（因为 Bar 容器 Anchor 是 Center）
+        // Update target line positions (Bar container anchor is Center)
         if (targetLine1 != null)
         {
             float yPos = (targetFill1 - 0.5f) * 800f;
@@ -226,30 +304,17 @@ public class DualSync : MiniGame
             targetLine2.rectTransform.anchoredPosition = new Vector2(0, yPos);
         }
 
-        // 更新状态文字 - 显示条的进度
+        // Update status text - show bar progress
         if (statusText != null)
         {
             float remainingTime = gameTimer != null ? gameTimer.RemainingTime : gameTimeLimit;
-            statusText.text = $"Bar1: {(bar1FillValue * 100):F0}%  |  Bar2: {(bar2FillValue * 100):F0}%\nTime In Target: {timeInTarget:F1}s / {targetTimeRequired}s\nGame Time: {remainingTime:F1}s";
+            statusText.text = $"Bar1: {bar1FillValue * 100:F0}%  |  Bar2: {bar2FillValue * 100:F0}%\nTime In Target: {timeInTarget:F1}s / {targetTimeRequired}s\nGame Time: {remainingTime:F1}s";
         }
 
-        // 更新分数文字
+        // Update score text
         if (scoreText != null)
         {
             scoreText.text = $"Score: {score}";
         }
-    }
-
-    void EndGame()
-    {
-        gameEnded = true;
-        if (endText != null)
-        {
-            endText.text = "✓ 完成！";
-            endText.gameObject.SetActive(true);
-        }
-        
-        // 调用 MiniGame 的完成方法
-        CompleteGame();
     }
 }
