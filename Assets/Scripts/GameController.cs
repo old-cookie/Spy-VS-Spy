@@ -41,12 +41,6 @@ public class GameController : NetworkBehaviour
     [SerializeField]
     private Text otherScoreText;
 
-    [SerializeField]
-    private float ownFlagScale = 300f;
-
-    [SerializeField]
-    private float otherFlagScale = 200f;
-
     /// <summary>
     /// Network variable to sync blue team score across all clients.
     /// </summary>
@@ -205,15 +199,6 @@ public class GameController : NetworkBehaviour
             yield return null;
         }
 
-        if (LevelSelectionState.Instance == null)
-        {
-            Debug.LogWarning("[GameController] LevelSelectionState.Instance not found after timeout. Using default level.");
-        }
-        else
-        {
-            Debug.Log($"[GameController] LevelSelectionState.Instance found. SelectedLevelName = '{LevelSelectionState.Instance.SelectedLevelName}'");
-        }
-
         TrySpawnSelectedLevel();
 
         if (IsServer && LevelSelectionState.Instance != null)
@@ -263,10 +248,8 @@ public class GameController : NetworkBehaviour
 
         if (levelPrefab == null)
         {
-            Debug.LogWarning($"[GameController] Level '{chosenName}' not found. Aborting level spawn.");
             return;
         }
-
 
         if (levelPrefab.TryGetComponent<NetworkObject>(out var networkObject))
         {
@@ -303,15 +286,10 @@ public class GameController : NetworkBehaviour
         if (LevelSelectionState.Instance != null)
         {
             string levelName = LevelSelectionState.Instance.SelectedLevelName;
-            Debug.Log($"[GameController] GetChosenLevelName: LevelSelectionState.SelectedLevelName = '{levelName}'");
             if (!string.IsNullOrWhiteSpace(levelName))
             {
                 return levelName;
             }
-        }
-        else
-        {
-            Debug.LogWarning("[GameController] GetChosenLevelName: LevelSelectionState.Instance is null!");
         }
 
         return string.Empty;
@@ -323,33 +301,16 @@ public class GameController : NetworkBehaviour
     /// <param name="levelName">Prefab name to locate.</param>
     private GameObject ResolveLevelPrefab(string levelName)
     {
-        // Debug: Log all available level prefabs
-        Debug.Log($"[GameController] ResolveLevelPrefab: Looking for '{levelName}'. Available prefabs: {string.Join(", ", levelPrefabs.Where(p => p != null).Select(p => $"'{p.name}'"))}");
-
         if (string.IsNullOrWhiteSpace(levelName))
         {
-            Debug.Log("[GameController] ResolveLevelPrefab: levelName is empty, returning first prefab");
             return levelPrefabs.FirstOrDefault();
         }
 
         // First try exact match
         var found = levelPrefabs.FirstOrDefault(p => p != null && p.name == levelName);
 
-        // If not found, try matching with spaces removed (to handle "Lv 2" vs "Lv2")
-        if (found == null)
-        {
-            string normalizedName = levelName.Replace(" ", "");
-            found = levelPrefabs.FirstOrDefault(p => p != null && p.name.Replace(" ", "") == normalizedName);
-            if (found != null)
-            {
-                Debug.Log($"[GameController] ResolveLevelPrefab: Found '{found.name}' by normalized match for '{levelName}'");
-            }
-        }
 
-        if (found == null)
-        {
-            Debug.LogWarning($"[GameController] ResolveLevelPrefab: No prefab found matching '{levelName}'");
-        }
+
         return found;
     }
 
@@ -361,7 +322,6 @@ public class GameController : NetworkBehaviour
     {
         if (spawnPos == null || spawnPos.Count < NetworkManager.Singleton.ConnectedClientsIds.Count)
         {
-            Debug.LogWarning($"[GameController] Not enough spawn positions. Required: {NetworkManager.Singleton.ConnectedClientsIds.Count}, Available: {spawnPos?.Count ?? 0}");
             return;
         }
 
@@ -420,20 +380,6 @@ public class GameController : NetworkBehaviour
             chestSpawnPos.AddRange(chestPoints);
         }
 
-        if (spawnPos.Count == 0)
-        {
-            Debug.LogWarning("[GameController] No spawn points named p1Spawn/p2Spawn found in level instance.");
-        }
-
-        if (chestPoints.Count == 0)
-        {
-            Debug.LogWarning("[GameController] No chest spawn points found (expects name containing 'chestPos').");
-        }
-
-        if (blueFlagPos == null || redFlagPos == null)
-        {
-            Debug.LogWarning("[GameController] Flag spawn points missing (expects 'blueFlagPos' and 'redFlagPos').");
-        }
     }
 
     private void SpawnChests()
@@ -445,11 +391,8 @@ public class GameController : NetworkBehaviour
 
         if (chestPrefab == null)
         {
-            Debug.LogWarning("[GameController] Chest prefab not assigned; cannot spawn chests.");
             return;
         }
-
-        Debug.Log($"[GameController] Spawning {chestSpawnPos.Count} chests locally...");
 
         foreach (var point in chestSpawnPos)
         {
@@ -474,11 +417,8 @@ public class GameController : NetworkBehaviour
 
         if (blueFlagPrefab == null || redFlagPrefab == null)
         {
-            Debug.LogWarning("[GameController] Flag prefabs not assigned; cannot spawn flags.");
             return;
         }
-
-        Debug.Log("[GameController] Spawning flags locally...");
 
         if (blueFlagPos != null)
         {
@@ -508,18 +448,14 @@ public class GameController : NetworkBehaviour
 
         if (itemSpawnManagerPrefab == null)
         {
-            Debug.LogWarning("[GameController] ItemSpawnManager prefab not assigned; cannot spawn item manager.");
             return;
         }
 
         // Check if ItemSpawnManager already exists
         if (ItemSpawnManager.Instance != null)
         {
-            Debug.Log("[GameController] ItemSpawnManager already exists.");
             return;
         }
-
-        Debug.Log("[GameController] Spawning ItemSpawnManager...");
 
         var instance = Instantiate(itemSpawnManagerPrefab);
 
@@ -529,7 +465,7 @@ public class GameController : NetworkBehaviour
         }
         else
         {
-            Debug.LogError("[GameController] ItemSpawnManager prefab is missing NetworkObject component!");
+            return;
         }
     }
 
@@ -664,20 +600,6 @@ public class GameController : NetworkBehaviour
         return Team.None;
     }
 
-    private GameObject GetFlagPrefab(Team team)
-    {
-        if (team == Team.Blue)
-        {
-            return blueFlagPrefab;
-        }
-        if (team == Team.Red)
-        {
-            return redFlagPrefab;
-        }
-
-        return null;
-    }
-
     /// <summary>
     /// Adds score to the specified team. Called from flag triggers.
     /// </summary>
@@ -739,19 +661,13 @@ public class GameController : NetworkBehaviour
     private void PlayOutcomeAnimationsClientRpc(Team winningTeam)
     {
         var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
-        Debug.Log($"[GameController] Found {players.Length} players for outcome animations. Winning team: {winningTeam}");
-
         foreach (var player in players)
         {
             var teamMember = player.GetComponent<TeamMember>();
             Team playerTeam = teamMember != null ? teamMember.CurrentTeam : Team.None;
             bool isWinner = playerTeam == winningTeam && winningTeam != Team.None;
-
-            Debug.Log($"[GameController] Player {player.name}: Team={playerTeam}, IsWinner={isWinner}");
             player.PlayOutcomeAnimation(isWinner, winTriggerName, loseTriggerName, winStateName, loseStateName, idleStateName);
         }
-
-        Debug.Log($"[GameController] Match ended. Winner: {winningTeam}");
 
         // Start the countdown to show btnEnd and auto-quit
         StartEndGameCountdown();
