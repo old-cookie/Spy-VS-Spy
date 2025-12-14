@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.UIElements;
 using Unity.Netcode;
 using UnityEngine.SceneManagement;
 using System.Collections;
@@ -30,16 +30,7 @@ public class GameController : NetworkBehaviour
 
     [Header("Score UI")]
     [SerializeField]
-    private GameObject ownFlagParent;
-
-    [SerializeField]
-    private GameObject otherFlagParent;
-
-    [SerializeField]
-    private Text ownScoreText;
-
-    [SerializeField]
-    private Text otherScoreText;
+    private UIDocument uiDocument;
 
     /// <summary>
     /// Network variable to sync blue team score across all clients.
@@ -112,15 +103,12 @@ public class GameController : NetworkBehaviour
     private Transform redFlagPos;
     private bool flagsSpawned;
 
-    private GameObject ownFlagInstance;
-    private GameObject otherFlagInstance;
-
-    [Header("End Game UI")]
-    [SerializeField]
+    private VisualElement ownFlagParent;
+    private VisualElement otherFlagParent;
+    private Label ownScoreText;
+    private Label otherScoreText;
+    private VisualElement endGameContainer;
     private Button btnEnd;
-
-    [SerializeField]
-    private Text btnEndLabel;
 
     [SerializeField]
     private float buttonRevealDelay = 3f;
@@ -150,11 +138,32 @@ public class GameController : NetworkBehaviour
             Destroy(gameObject);
         }
 
-        // Hide btnEnd on awake
+        InitializeUI();
+    }
+
+    private void InitializeUI()
+    {
+        if (uiDocument == null)
+        {
+            return;
+        }
+
+        var root = uiDocument.rootVisualElement;
+        ownFlagParent = root.Q<VisualElement>("OwnFlagParent");
+        otherFlagParent = root.Q<VisualElement>("OtherFlagParent");
+        ownScoreText = root.Q<Label>("OwnScoreText");
+        otherScoreText = root.Q<Label>("OtherScoreText");
+        endGameContainer = root.Q<VisualElement>("EndGameContainer");
+        btnEnd = root.Q<Button>("BtnEnd");
+
         if (btnEnd != null)
         {
-            btnEnd.gameObject.SetActive(false);
-            btnEnd.onClick.AddListener(OnBtnEndClicked);
+            btnEnd.clicked += OnBtnEndClicked;
+        }
+
+        if (endGameContainer != null)
+        {
+            endGameContainer.style.display = DisplayStyle.None;
         }
     }
 
@@ -173,10 +182,9 @@ public class GameController : NetworkBehaviour
         flagsSpawned = false;
         exitTriggered = false;
 
-        // Ensure btnEnd is hidden on spawn
-        if (btnEnd != null)
+        if (endGameContainer != null)
         {
-            btnEnd.gameObject.SetActive(false);
+            endGameContainer.style.display = DisplayStyle.None;
         }
 
         UpdateScoreUI();
@@ -229,8 +237,6 @@ public class GameController : NetworkBehaviour
             StopCoroutine(countdownRoutine);
             countdownRoutine = null;
         }
-
-        ClearFlagInstances();
     }
 
     /// <summary>
@@ -251,7 +257,7 @@ public class GameController : NetworkBehaviour
             return;
         }
 
-        if (levelPrefab.TryGetComponent<NetworkObject>(out var networkObject))
+        if (levelPrefab.TryGetComponent<NetworkObject>(out _))
         {
             if (IsServer)
             {
@@ -493,7 +499,8 @@ public class GameController : NetworkBehaviour
         if (localPlayerTeam == Team.None)
         {
             UpdateScoreLabels(0, 0);
-            ClearFlagInstances();
+            UpdateFlagDisplay(ownFlagParent, null);
+            UpdateFlagDisplay(otherFlagParent, null);
             return;
         }
 
@@ -502,8 +509,8 @@ public class GameController : NetworkBehaviour
         int otherScore = GetScore(otherTeam);
 
         UpdateScoreLabels(ownScore, otherScore);
-        UpdateFlagInstance(ownFlagParent, localPlayerTeam, ref ownFlagInstance, true);
-        UpdateFlagInstance(otherFlagParent, otherTeam, ref otherFlagInstance, false);
+        UpdateFlagDisplay(ownFlagParent, localPlayerTeam == Team.Blue ? blueFlagSprite : redFlagSprite);
+        UpdateFlagDisplay(otherFlagParent, otherTeam == Team.Blue ? blueFlagSprite : redFlagSprite);
     }
 
     /// <summary>
@@ -529,60 +536,26 @@ public class GameController : NetworkBehaviour
         }
     }
 
-    private void UpdateFlagInstance(GameObject parent, Team team, ref GameObject instance, bool isOwnFlag)
+    private void UpdateFlagDisplay(VisualElement parent, Sprite flagSprite)
     {
-        if (parent == null || team == Team.None)
+        if (parent == null)
         {
-            if (instance != null)
-            {
-                Destroy(instance);
-                instance = null;
-            }
             return;
         }
 
-        var canvas = parent.GetComponentInParent<Canvas>();
-        if (canvas != null)
+        parent.Clear();
+
+        if (flagSprite != null)
         {
-            Sprite selectedSprite = (team == Team.Blue) ? blueFlagSprite : redFlagSprite;
-            if (instance != null)
-            {
-                Destroy(instance);
-            }
-            instance = new GameObject(team + "FlagUI", typeof(RectTransform), typeof(UnityEngine.UI.Image));
-            instance.transform.SetParent(parent.transform, false);
-            var rect = instance.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-            var img = instance.GetComponent<UnityEngine.UI.Image>();
-            img.sprite = selectedSprite;
-            img.preserveAspect = true;
-            img.color = Color.white;
+            parent.style.backgroundImage = new StyleBackground(flagSprite);
+            parent.style.backgroundPositionX = new BackgroundPosition(BackgroundPositionKeyword.Center);
+            parent.style.backgroundPositionY = new BackgroundPosition(BackgroundPositionKeyword.Center);
+            parent.style.backgroundRepeat = new BackgroundRepeat(Repeat.NoRepeat, Repeat.NoRepeat);
+            parent.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Contain);
         }
         else
         {
-            if (instance != null)
-            {
-                Destroy(instance);
-                instance = null;
-            }
-        }
-    }
-
-    private void ClearFlagInstances()
-    {
-        if (ownFlagInstance != null)
-        {
-            Destroy(ownFlagInstance);
-            ownFlagInstance = null;
-        }
-
-        if (otherFlagInstance != null)
-        {
-            Destroy(otherFlagInstance);
-            otherFlagInstance = null;
+            parent.style.backgroundImage = null;
         }
     }
 
@@ -694,9 +667,9 @@ public class GameController : NetworkBehaviour
         yield return new WaitForSeconds(buttonRevealDelay);
 
         // Show the button
-        if (btnEnd != null)
+        if (endGameContainer != null)
         {
-            btnEnd.gameObject.SetActive(true);
+            endGameContainer.style.display = DisplayStyle.Flex;
         }
 
         // Countdown and update label
@@ -711,7 +684,7 @@ public class GameController : NetworkBehaviour
         // Auto-quit if not already triggered
         if (!exitTriggered)
         {
-            OnBtnEndClicked();
+            TriggerReturnToLobbyRpc();
         }
     }
 
@@ -720,17 +693,35 @@ public class GameController : NetworkBehaviour
     /// </summary>
     private void UpdateBtnEndLabel(int secondsRemaining)
     {
-        var label = btnEndLabel != null ? btnEndLabel : (btnEnd != null ? btnEnd.GetComponentInChildren<Text>() : null);
-        if (label != null)
+        if (btnEnd != null)
         {
-            label.text = $"Go back to lobby ({secondsRemaining}s)";
+            btnEnd.text = $"Go back to lobby ({secondsRemaining}s)";
         }
     }
 
     /// <summary>
-    /// Called when btnEnd is clicked. Shuts down network and loads lobby scene.
+    /// Called when btnEnd is clicked. Only host can trigger this.
     /// </summary>
     private void OnBtnEndClicked()
+    {
+        if (!IsHost)
+        {
+            return;
+        }
+
+        if (exitTriggered)
+        {
+            return;
+        }
+
+        TriggerReturnToLobbyRpc();
+    }
+
+    /// <summary>
+    /// RPC to trigger all clients and host to return to lobby.
+    /// </summary>
+    [Rpc(SendTo.Everyone)]
+    private void TriggerReturnToLobbyRpc()
     {
         if (exitTriggered)
         {
@@ -749,7 +740,7 @@ public class GameController : NetworkBehaviour
 
         if (btnEnd != null)
         {
-            btnEnd.interactable = false;
+            btnEnd.SetEnabled(false);
         }
 
         ShutdownNetworkAndLoadLobby();
