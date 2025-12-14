@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.UIElements;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using System.Collections;
@@ -14,25 +14,16 @@ using UnityEditor;
 /// </summary>
 public class LobbyUIManager : MonoBehaviour
 {
-    /// <summary>
-    /// Input field for entering the host IP address when joining a game.
-    /// </summary>
-    public InputField ipInput;
+    private UIDocument uiDocument;
 
-    /// <summary>
-    /// Panel displayed at the start with host/join options.
-    /// </summary>
-    public GameObject startPanel;
-
-    /// <summary>
-    /// Panel displayed while waiting for players to join.
-    /// </summary>
-    public GameObject waitingPanel;
-
-    /// <summary>
-    /// Dropdown for picking which level prefab to load.
-    /// </summary>
-    public Dropdown levelDropdown;
+    private VisualElement startPanel;
+    private VisualElement waitingPanel;
+    private TextField ipInput;
+    private DropdownField levelDropdown;
+    private Button startButton;
+    private Button hostButton;
+    private Button joinButton;
+    private Label playerNumLabel;
 
     /// <summary>
     /// Available level prefabs (assign from Assets/Levels).
@@ -40,10 +31,7 @@ public class LobbyUIManager : MonoBehaviour
     [SerializeField]
     private List<GameObject> levelPrefabs = new List<GameObject>();
 
-    /// <summary>
-    /// Button to start the game, only visible to the host when enough players have joined.
-    /// </summary>
-    public GameObject startButton;
+    // startButton handled via UI Toolkit
 
 #if UNITY_EDITOR
     /// <summary>
@@ -59,10 +47,7 @@ public class LobbyUIManager : MonoBehaviour
     [SerializeField, HideInInspector]
     private string gameSceneName;
 
-    /// <summary>
-    /// Text displaying the current number of connected players.
-    /// </summary>
-    public Text playerNumText;
+    // playerNumLabel handled via UI Toolkit
 
     /// <summary>
     /// Whether this client is the host of the game.
@@ -76,16 +61,47 @@ public class LobbyUIManager : MonoBehaviour
 
     private void Start()
     {
-        startPanel.SetActive(true);
-        waitingPanel.SetActive(false);
-        startButton.SetActive(false);
+        uiDocument = GetComponent<UIDocument>();
+        if (uiDocument == null)
+        {
+            Debug.LogError("[LobbyUIManager] UIDocument not found on GameObject.");
+            return;
+        }
+
+        var root = uiDocument.rootVisualElement;
+        startPanel = root.Q<VisualElement>("startPanel");
+        waitingPanel = root.Q<VisualElement>("waitingPanel");
+        ipInput = root.Q<TextField>("ipInput");
+        levelDropdown = root.Q<DropdownField>("levelDropdown");
+        startButton = root.Q<Button>("startButton");
+        hostButton = root.Q<Button>("hostButton");
+        joinButton = root.Q<Button>("joinButton");
+        playerNumLabel = root.Q<Label>("playerNumText");
+
+        SetVisible(startPanel, true);
+        SetVisible(waitingPanel, false);
+        SetVisible(startButton, false);
+
+        // Bind button events
+        if (hostButton != null) hostButton.clicked += HostBtnOnClick;
+        if (joinButton != null) joinButton.clicked += JoinBtnOnClick;
+        if (startButton != null) startButton.clicked += StartBtnOnClick;
+
+        // Bind dropdown change
+        if (levelDropdown != null)
+        {
+            levelDropdown.RegisterValueChangedCallback(evt =>
+            {
+                OnLevelDropdownChanged(levelDropdown.choices.IndexOf(evt.newValue));
+            });
+        }
 
         BuildLevelDropdownOptions();
     }
 
     private void Update()
     {
-        if (waitingPanel.activeSelf)
+        if (waitingPanel != null && waitingPanel.resolvedStyle.display != DisplayStyle.None)
         {
             UpdatePlayerCount();
             CheckStartCondition();
@@ -97,7 +113,10 @@ public class LobbyUIManager : MonoBehaviour
     /// </summary>
     private void UpdatePlayerCount()
     {
-        playerNumText.text = "Joined Players: " + NetworkManager.Singleton.ConnectedClients.Count;
+        if (playerNumLabel != null)
+        {
+            playerNumLabel.text = "Joined Players: " + NetworkManager.Singleton.ConnectedClients.Count;
+        }
     }
 
     /// <summary>
@@ -106,7 +125,7 @@ public class LobbyUIManager : MonoBehaviour
     private void CheckStartCondition()
     {
         bool readyToStart = NetworkManager.Singleton.ConnectedClients.Count == 2 && isHost && !string.IsNullOrWhiteSpace(selectedLevelName);
-        startButton.SetActive(readyToStart);
+        SetVisible(startButton, readyToStart);
     }
 
     /// <summary>
@@ -125,9 +144,14 @@ public class LobbyUIManager : MonoBehaviour
     /// </summary>
     public void HostBtnOnClick()
     {
+        var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
+        if (transport != null)
+        {
+            transport.SetConnectionData("0.0.0.0", 7777);
+        }
         NetworkManager.Singleton.StartHost();
-        startPanel.SetActive(false);
-        waitingPanel.SetActive(true);
+        SetVisible(startPanel, false);
+        SetVisible(waitingPanel, true);
         isHost = true;
 
         // Host can see and use the dropdown to select levels
@@ -143,14 +167,16 @@ public class LobbyUIManager : MonoBehaviour
     /// </summary>
     public void JoinBtnOnClick()
     {
-        if (ipInput.text != "")
+        var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
+        if (transport != null)
         {
-            NetworkManager.Singleton.GetComponent<UnityTransport>().SetConnectionData(ipInput.text, 7777);
+            var addr = (ipInput != null && !string.IsNullOrEmpty(ipInput.value)) ? ipInput.value : "127.0.0.1";
+            transport.SetConnectionData(addr, 7777);
         }
 
         NetworkManager.Singleton.StartClient();
-        startPanel.SetActive(false);
-        waitingPanel.SetActive(true);
+        SetVisible(startPanel, false);
+        SetVisible(waitingPanel, true);
 
         // Clients cannot see or change level selection, only host can
         SetDropdownVisible(false);
@@ -170,12 +196,13 @@ public class LobbyUIManager : MonoBehaviour
             return;
         }
 
-        if (index < 0 || index >= levelDropdown.options.Count)
+        var choices = levelDropdown.choices ?? new List<string>();
+        if (index < 0 || index >= choices.Count)
         {
             return;
         }
 
-        string chosen = levelDropdown.options[index].text;
+        string chosen = choices[index];
         Debug.Log($"[LobbyUIManager] Level selected: {chosen}");
         SetSelectedLevel(chosen);
     }
@@ -200,15 +227,9 @@ public class LobbyUIManager : MonoBehaviour
             names.Add("Demo");
         }
 
-        levelDropdown.ClearOptions();
-        levelDropdown.AddOptions(names);
-
-        // Register the dropdown change event listener
-        levelDropdown.onValueChanged.RemoveAllListeners();
-        levelDropdown.onValueChanged.AddListener(OnLevelDropdownChanged);
-
+        levelDropdown.choices = names;
+        levelDropdown.SetValueWithoutNotify(names[0]);
         SetSelectedLevel(names[0]);
-        levelDropdown.SetValueWithoutNotify(0);
     }
 
     /// <summary>
@@ -264,8 +285,20 @@ public class LobbyUIManager : MonoBehaviour
     {
         if (levelDropdown != null)
         {
-            levelDropdown.gameObject.SetActive(visible);
+            levelDropdown.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
         }
+    }
+
+    private void SetVisible(VisualElement element, bool visible)
+    {
+        if (element == null) return;
+        element.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+    }
+
+    private void SetVisible(Button element, bool visible)
+    {
+        if (element == null) return;
+        element.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
     }
 
 #if UNITY_EDITOR

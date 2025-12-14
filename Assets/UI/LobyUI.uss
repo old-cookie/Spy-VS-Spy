@@ -1,0 +1,80 @@
+/* Lobby UI Styles */
+
+.lobby-root {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+    height: 100%;
+    font-size: 18px;
+}
+
+.container {
+    width: 720px;
+    max-width: 100%;
+}
+
+.header {
+    font-size: 28px;
+    -unity-font-style: bold;
+    margin-bottom: 8px;
+}
+
+.card {
+    flex-direction: column;
+    padding: 20px;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgba(0,0,0,0.25);
+    background-color: rgba(0,0,0,0.2);
+}
+
+/* Card hover to add a subtle emphasis (shadow not supported) */
+.card:hover {
+    border-color: rgba(0,0,0,0.35);
+    background-color: rgba(0,0,0,0.25);
+}
+
+.row {
+    flex-direction: row;
+}
+
+.input, .dropdown {
+    width: 100%;
+    font-size: 18px;
+}
+
+.btn {
+    flex-grow: 1;
+    font-size: 18px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.primary {
+    background-color: rgb(52, 112, 224);
+    color: white;
+    border-width: 1px;
+    border-color: rgb(42, 92, 184);
+}
+
+.primary:hover {
+    background-color: rgb(42, 92, 184);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Spacing helpers for older UI Toolkit versions without gap support */
+.row .spaced {
+    margin-left: 8px;
+}
+
+.card .spaced {
+    margin-top: 12px;
+}

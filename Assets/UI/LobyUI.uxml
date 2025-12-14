@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd"
+>
+    <ui:Style src="LobyUI.uss" />
+    <ui:VisualElement name="root" class="lobby-root">
+        <ui:VisualElement class="container">
+            <!-- Start Panel: Host / Join options -->
+            <ui:VisualElement name="startPanel" class="card start-panel">
+                <ui:Label text="Lobby" class="header" />
+
+                <ui:TextField name="ipInput" label="Host IP" class="input" value="127.0.0.1" />
+
+                <ui:VisualElement class="row">
+                    <ui:Button name="hostButton" text="Host" class="btn primary" />
+                    <ui:Button name="joinButton" text="Join" class="btn spaced" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Waiting Panel: player count, level selection, start button -->
+            <ui:VisualElement name="waitingPanel" class="card waiting-panel hidden">
+                <ui:Label name="playerNumText" text="Joined Players: 0" />
+
+                <ui:DropdownField name="levelDropdown" label="Select Level" class="dropdown spaced" />
+
+                <ui:Button name="startButton" text="Start Game" class="btn primary hidden spaced" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
