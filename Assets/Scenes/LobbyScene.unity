@@ -151,10 +151,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   levelScenes:
   - {fileID: 102900000, guid: 0a41d840b01d0404ba36836a472f06ef, type: 3}
+  - {fileID: 102900000, guid: 60d834bb97ddb884b87d7aace51768ff, type: 3}
+  - {fileID: 102900000, guid: 7bb34999e5e03cf449c040cdb4f81074, type: 3}
   levelSceneNames:
   - Lv1
-  gameScene: {fileID: 102900000, guid: ef6947665274e494f9510e28a9a551c7, type: 3}
-  gameSceneName: GameScene
+  - Lv2
+  - Lv3
   isHost: 0
 --- !u!4 &100613783
 Transform:
