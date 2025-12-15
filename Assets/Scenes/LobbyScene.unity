@@ -150,10 +150,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   levelScenes:
+  - {fileID: 102900000, guid: 9101e0c1aa5bef84e9e903b6cc1f03af, type: 3}
   - {fileID: 102900000, guid: 0a41d840b01d0404ba36836a472f06ef, type: 3}
   - {fileID: 102900000, guid: 60d834bb97ddb884b87d7aace51768ff, type: 3}
   - {fileID: 102900000, guid: 7bb34999e5e03cf449c040cdb4f81074, type: 3}
   levelSceneNames:
+  - Demo
   - Lv1
   - Lv2
   - Lv3
