@@ -59,11 +59,6 @@ public class GameController : NetworkBehaviour
     public static GameController Instance { get; private set; }
 
     /// <summary>
-    /// Prevents duplicate level instantiation across host/client processes.
-    /// </summary>
-    private static bool levelSpawned;
-
-    /// <summary>
     /// Prevents multiple win triggers once a team has reached the target score.
     /// </summary>
     private bool matchEnded;
@@ -95,7 +90,6 @@ public class GameController : NetworkBehaviour
 
     private VisualElement ownFlagParent;
     private VisualElement otherFlagParent;
-    private VisualElement ownTeamContainer;
     private VisualElement otherTeamContainer;
     private Label ownScoreText;
     private Label otherScoreText;
@@ -153,7 +147,6 @@ public class GameController : NetworkBehaviour
         var root = uiDocument.rootVisualElement;
         ownFlagParent = root.Q<VisualElement>("OwnFlagParent");
         otherFlagParent = root.Q<VisualElement>("OtherFlagParent");
-        ownTeamContainer = root.Q<VisualElement>("OwnTeamContainer");
         otherTeamContainer = root.Q<VisualElement>("OtherTeamContainer");
         ownScoreText = root.Q<Label>("OwnScoreText");
         otherScoreText = root.Q<Label>("OtherScoreText");
@@ -260,7 +253,7 @@ public class GameController : NetworkBehaviour
         {
             CacheSpawnPositions();
             SpawnItemSpawnManager();
-            
+
             if (LevelSelectionState.Instance != null)
             {
                 LevelSelectionState.Instance.ClearWinningTeam();
@@ -278,8 +271,6 @@ public class GameController : NetworkBehaviour
         base.OnNetworkDespawn();
         blueTeamScore.OnValueChanged -= OnBlueScoreChanged;
         redTeamScore.OnValueChanged -= OnRedScoreChanged;
-
-        levelSpawned = false;
         matchEnded = false;
         // No dynamic chest/flag spawning
         exitTriggered = false;

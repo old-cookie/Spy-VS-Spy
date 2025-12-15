@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 #if UNITY_EDITOR
 using UnityEditor;
+
+[RequireComponent(typeof(UIDocument))]
 #endif
 
 /// <summary>
@@ -52,7 +54,7 @@ public class LobbyUIManager : MonoBehaviour
     /// Scene names extracted from levelScenes, used at runtime.
     /// </summary>
     [SerializeField, HideInInspector]
-    private List<string> levelSceneNames = new List<string>();
+    private List<string> levelSceneNames = new();
 
     // startButton handled via UI Toolkit
 
@@ -124,23 +126,45 @@ public class LobbyUIManager : MonoBehaviour
         if (backFromClientButton != null) backFromClientButton.clicked += BackFromClientBtnOnClick;
 
         // Bind dropdown change
-        if (levelDropdown != null)
-        {
-            levelDropdown.RegisterValueChangedCallback(evt =>
+        levelDropdown?.RegisterValueChangedCallback(evt =>
             {
                 OnLevelDropdownChanged(levelDropdown.choices.IndexOf(evt.newValue));
             });
-        }
 
-        if (singleLevelDropdown != null)
-        {
-            singleLevelDropdown.RegisterValueChangedCallback(evt =>
+        singleLevelDropdown?.RegisterValueChangedCallback(evt =>
             {
                 OnSingleLevelDropdownChanged(singleLevelDropdown.choices.IndexOf(evt.newValue));
             });
-        }
 
         BuildLevelDropdownOptions();
+
+        // Start floating animation for start game button
+        StartButtonFloatAnimation();
+    }
+
+    private void StartButtonFloatAnimation()
+    {
+        if (startGameButton == null) return;
+
+        // Start with down state
+        startGameButton.AddToClassList("btn-float-down");
+
+        // Toggle between float states every 800ms
+        bool isUp = false;
+        startGameButton.schedule.Execute(() =>
+        {
+            if (isUp)
+            {
+                startGameButton.RemoveFromClassList("btn-float-up");
+                startGameButton.AddToClassList("btn-float-down");
+            }
+            else
+            {
+                startGameButton.RemoveFromClassList("btn-float-down");
+                startGameButton.AddToClassList("btn-float-up");
+            }
+            isUp = !isUp;
+        }).Every(800);
     }
 
     private void Update()
@@ -161,7 +185,7 @@ public class LobbyUIManager : MonoBehaviour
     private void UpdatePlayerCount()
     {
         int playerCount = NetworkManager.Singleton.ConnectedClients.Count;
-        
+
         if (playerNumLabel != null)
         {
             playerNumLabel.text = "Joined Players: " + playerCount;
@@ -359,8 +383,7 @@ public class LobbyUIManager : MonoBehaviour
     /// </summary>
     public void JoinBtnOnClick()
     {
-        var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-        if (transport != null)
+        if (NetworkManager.Singleton.TryGetComponent<UnityTransport>(out var transport))
         {
             var addr = (ipInput != null && !string.IsNullOrEmpty(ipInput.value)) ? ipInput.value : "127.0.0.1";
             transport.SetConnectionData(addr, 7777);
@@ -427,7 +450,7 @@ public class LobbyUIManager : MonoBehaviour
     public void OnLevelDropdownChanged(int index)
     {
         Debug.Log($"[LobbyUIManager] OnLevelDropdownChanged called with index: {index}");
-        
+
         if (levelDropdown == null)
         {
             return;

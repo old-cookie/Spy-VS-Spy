@@ -56,10 +56,22 @@
     color: white;
     border-width: 1px;
     border-color: rgb(42, 92, 184);
+    transition-duration: 0.8s;
+    transition-property: translate;
+    transition-timing-function: ease-in-out;
 }
 
 .primary:hover {
     background-color: rgb(42, 92, 184);
+}
+
+/* Float animation states */
+.btn-float-up {
+    translate: 0 -8px;
+}
+
+.btn-float-down {
+    translate: 0 0;
 }
 
 .btn:disabled {
