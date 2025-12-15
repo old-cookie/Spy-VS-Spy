@@ -26,26 +26,24 @@ public class LobbyUIManager : MonoBehaviour
     private Label playerNumLabel;
 
     /// <summary>
-    /// Available level prefabs (assign from Assets/Levels).
+    /// Available level scenes (assign from Assets/Scenes or Assets/Levels).
     /// </summary>
+#if UNITY_EDITOR
     [SerializeField]
-    private List<GameObject> levelPrefabs = new List<GameObject>();
+    private SceneAsset[] levelScenes;
+#endif
+
+    /// <summary>
+    /// Scene names extracted from levelScenes, used at runtime.
+    /// </summary>
+    [SerializeField, HideInInspector]
+    private List<string> levelSceneNames = new List<string>();
 
     // startButton handled via UI Toolkit
 
 #if UNITY_EDITOR
-    /// <summary>
-    /// Reference to the game scene asset for drag-and-drop assignment in the editor.
-    /// </summary>
-    [SerializeField]
-    private SceneAsset gameScene;
+    // gameScene removed - now loading level scenes directly
 #endif
-
-    /// <summary>
-    /// The name of the game scene to load when starting the game.
-    /// </summary>
-    [SerializeField, HideInInspector]
-    private string gameSceneName;
 
     // playerNumLabel handled via UI Toolkit
 
@@ -129,13 +127,15 @@ public class LobbyUIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Called when the start button is clicked. Loads the game scene for all clients.
+    /// Called when the start button is clicked. Loads the selected level scene for all clients.
     /// </summary>
     public void StartBtnOnClick()
     {
         if (isHost)
         {
-            NetworkManager.Singleton.SceneManager.LoadScene(gameSceneName, UnityEngine.SceneManagement.LoadSceneMode.Single);
+            string levelToLoad = string.IsNullOrWhiteSpace(selectedLevelName) ? "Lv1" : selectedLevelName;
+            Debug.Log($"[LobbyUIManager] Loading level scene: {levelToLoad}");
+            NetworkManager.Singleton.SceneManager.LoadScene(levelToLoad, UnityEngine.SceneManagement.LoadSceneMode.Single);
         }
     }
 
@@ -208,7 +208,7 @@ public class LobbyUIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Builds dropdown options from assigned level prefabs.
+    /// Builds dropdown options from assigned level scenes.
     /// </summary>
     private void BuildLevelDropdownOptions()
     {
@@ -217,14 +217,13 @@ public class LobbyUIManager : MonoBehaviour
             return;
         }
 
-        var names = levelPrefabs
-            .Where(p => p != null)
-            .Select(p => p.name)
+        var names = levelSceneNames
+            .Where(n => !string.IsNullOrWhiteSpace(n))
             .ToList();
 
         if (names.Count == 0)
         {
-            names.Add("Demo");
+            names.Add("Lv1");
         }
 
         levelDropdown.choices = names;
@@ -303,13 +302,21 @@ public class LobbyUIManager : MonoBehaviour
 
 #if UNITY_EDITOR
     /// <summary>
-    /// Called when values are changed in the inspector. Syncs the game scene name from the scene asset.
+    /// Called when values are changed in the inspector. Extracts scene names from levelScenes.
     /// </summary>
     private void OnValidate()
     {
-        if (gameScene != null)
+        // Extract scene names from levelScenes
+        levelSceneNames.Clear();
+        if (levelScenes != null)
         {
-            gameSceneName = gameScene.name;
+            foreach (var sceneAsset in levelScenes)
+            {
+                if (sceneAsset != null)
+                {
+                    levelSceneNames.Add(sceneAsset.name);
+                }
+            }
         }
     }
 #endif

@@ -149,10 +149,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86358d51998e1374282f5983555d81e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  levelPrefabs:
-  - {fileID: 3786009117572631067, guid: bd891386d5740ac4db865a0b2d4548cf, type: 3}
-  - {fileID: 3786009117572631067, guid: 3f0bae4e2501e5048b1b5cb0253ae8db, type: 3}
-  - {fileID: 3786009117572631067, guid: 7c7efdf78a2267a478b7b3a0193b255c, type: 3}
+  levelScenes:
+  - {fileID: 102900000, guid: 0a41d840b01d0404ba36836a472f06ef, type: 3}
+  levelSceneNames:
+  - Lv1
   gameScene: {fileID: 102900000, guid: ef6947665274e494f9510e28a9a551c7, type: 3}
   gameSceneName: GameScene
   isHost: 0

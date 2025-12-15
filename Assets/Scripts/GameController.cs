@@ -49,12 +49,6 @@ public class GameController : NetworkBehaviour
     private int pointsToWin = 5;
 
     /// <summary>
-    /// Level prefabs available to spawn when the game scene loads. Assign prefabs from Assets/Levels.
-    /// </summary>
-    [SerializeField]
-    private List<GameObject> levelPrefabs = new();
-
-    /// <summary>
     /// The local player's team, used to determine which score to display.
     /// </summary>
     private Team localPlayerTeam = Team.None;
@@ -77,9 +71,7 @@ public class GameController : NetworkBehaviour
     [Header("Chests")]
     [SerializeField]
     private GameObject chestPrefab;
-
-    private readonly List<Transform> chestSpawnPos = new();
-    private bool chestsSpawned;
+    // Chests are placed directly in scenes; no runtime spawning.
 
     [Header("Items")]
     [SerializeField]
@@ -99,9 +91,7 @@ public class GameController : NetworkBehaviour
     [SerializeField]
     private Sprite redFlagSprite;
 
-    private Transform blueFlagPos;
-    private Transform redFlagPos;
-    private bool flagsSpawned;
+    // Flags are placed directly in scenes; no runtime spawning.
 
     private VisualElement ownFlagParent;
     private VisualElement otherFlagParent;
@@ -178,8 +168,7 @@ public class GameController : NetworkBehaviour
         redTeamScore.OnValueChanged += OnRedScoreChanged;
 
         matchEnded = false;
-        chestsSpawned = false;
-        flagsSpawned = false;
+        // No dynamic chest/flag spawning
         exitTriggered = false;
 
         if (endGameContainer != null)
@@ -194,7 +183,7 @@ public class GameController : NetworkBehaviour
     }
 
     /// <summary>
-    /// Waits for LevelSelectionState.Instance to be available, then spawns the level and players.
+    /// Waits for LevelSelectionState.Instance to be available, then initializes the level and spawns players.
     /// </summary>
     private IEnumerator WaitForLevelSelectionAndSpawn()
     {
@@ -207,11 +196,16 @@ public class GameController : NetworkBehaviour
             yield return null;
         }
 
-        TrySpawnSelectedLevel();
-
-        if (IsServer && LevelSelectionState.Instance != null)
+        // Level scene is already loaded directly from lobby, just initialize
+        if (IsServer)
         {
-            LevelSelectionState.Instance.ClearWinningTeam();
+            CacheSpawnPositions();
+            SpawnItemSpawnManager();
+            
+            if (LevelSelectionState.Instance != null)
+            {
+                LevelSelectionState.Instance.ClearWinningTeam();
+            }
         }
 
         if (IsHost)
@@ -228,8 +222,7 @@ public class GameController : NetworkBehaviour
 
         levelSpawned = false;
         matchEnded = false;
-        chestsSpawned = false;
-        flagsSpawned = false;
+        // No dynamic chest/flag spawning
         exitTriggered = false;
 
         if (countdownRoutine != null)
@@ -239,86 +232,7 @@ public class GameController : NetworkBehaviour
         }
     }
 
-    /// <summary>
-    /// Instantiates the chosen level prefab when the game scene loads.
-    /// </summary>
-    private void TrySpawnSelectedLevel()
-    {
-        if (levelSpawned)
-        {
-            return;
-        }
-
-        string chosenName = GetChosenLevelName();
-        GameObject levelPrefab = ResolveLevelPrefab(chosenName);
-
-        if (levelPrefab == null)
-        {
-            return;
-        }
-
-        if (levelPrefab.TryGetComponent<NetworkObject>(out _))
-        {
-            if (IsServer)
-            {
-                GameObject instance = Instantiate(levelPrefab);
-                var instanceNet = instance.GetComponent<NetworkObject>();
-                instanceNet.Spawn(true);
-
-                CacheSpawnPositions(instance);
-                SpawnChests();
-                SpawnFlags();
-                SpawnItemSpawnManager();
-            }
-        }
-        else
-        {
-            // Non-networked level prefab: instantiate locally on each client/host.
-            var instance = Instantiate(levelPrefab);
-            CacheSpawnPositions(instance);
-            SpawnChests();
-            SpawnFlags();
-            SpawnItemSpawnManager();
-        }
-
-        levelSpawned = true;
-    }
-
-    /// <summary>
-    /// Reads the lobby-selected level name from the synced state.
-    /// </summary>
-    private string GetChosenLevelName()
-    {
-        if (LevelSelectionState.Instance != null)
-        {
-            string levelName = LevelSelectionState.Instance.SelectedLevelName;
-            if (!string.IsNullOrWhiteSpace(levelName))
-            {
-                return levelName;
-            }
-        }
-
-        return string.Empty;
-    }
-
-    /// <summary>
-    /// Finds the level prefab that matches the provided name.
-    /// </summary>
-    /// <param name="levelName">Prefab name to locate.</param>
-    private GameObject ResolveLevelPrefab(string levelName)
-    {
-        if (string.IsNullOrWhiteSpace(levelName))
-        {
-            return levelPrefabs.FirstOrDefault();
-        }
-
-        // First try exact match
-        var found = levelPrefabs.FirstOrDefault(p => p != null && p.name == levelName);
-
-
-
-        return found;
-    }
+    // TrySpawnSelectedLevel removed - level scenes are now loaded directly from lobby
 
     /// <summary>
     /// Spawns player objects for all connected clients at their designated spawn positions.
@@ -350,27 +264,21 @@ public class GameController : NetworkBehaviour
     }
 
     /// <summary>
-    /// Attempts to bind spawn positions from the spawned level instance.
-    /// Looks for children named "p1Spawn" and "p2Spawn" (case-sensitive).
+    /// Attempts to bind spawn positions from the loaded level scene.
+    /// Looks for objects named "p1Spawn" and "p2Spawn" (case-sensitive).
     /// </summary>
-    /// <param name="levelInstance">Instantiated level object.</param>
-    private void CacheSpawnPositions(GameObject levelInstance)
+    private void CacheSpawnPositions()
     {
-        if (levelInstance == null)
-        {
-            return;
-        }
+        // Find all transforms in the currently loaded scenes
+        var allTransforms = FindObjectsByType<Transform>(FindObjectsSortMode.None);
 
-        var transforms = levelInstance.GetComponentsInChildren<Transform>(true);
-        var p1 = transforms.FirstOrDefault(t => t.name == "p1Spawn");
-        var p2 = transforms.FirstOrDefault(t => t.name == "p2Spawn");
-        var chestPoints = transforms.Where(t => t.name.ToLower().Contains("chestpos")).ToList();
-        blueFlagPos = transforms.FirstOrDefault(t => t.name == "blueFlagPos");
-        redFlagPos = transforms.FirstOrDefault(t => t.name == "redFlagPos");
+        var p1 = allTransforms.FirstOrDefault(t => t.name == "p1Spawn");
+        var p2 = allTransforms.FirstOrDefault(t => t.name == "p2Spawn");
+        // Chest and flag positions are not needed; placed directly in scenes.
 
         spawnPos ??= new List<Transform>();
         spawnPos.Clear();
-        chestSpawnPos.Clear();
+        // No chest positions list
 
         if (p1 != null)
         {
@@ -381,65 +289,10 @@ public class GameController : NetworkBehaviour
             spawnPos.Add(p2);
         }
 
-        if (chestPoints.Count > 0)
-        {
-            chestSpawnPos.AddRange(chestPoints);
-        }
+        // No chest positions aggregation
 
     }
-
-    private void SpawnChests()
-    {
-        if (chestsSpawned)
-        {
-            return;
-        }
-
-        if (chestPrefab == null)
-        {
-            return;
-        }
-
-        foreach (var point in chestSpawnPos)
-        {
-            if (point == null)
-            {
-                continue;
-            }
-
-            // Spawn locally without network sync
-            Instantiate(chestPrefab, point.position, point.rotation);
-        }
-
-        chestsSpawned = true;
-    }
-
-    private void SpawnFlags()
-    {
-        if (flagsSpawned)
-        {
-            return;
-        }
-
-        if (blueFlagPrefab == null || redFlagPrefab == null)
-        {
-            return;
-        }
-
-        if (blueFlagPos != null)
-        {
-            // Spawn locally without network sync
-            Instantiate(blueFlagPrefab, blueFlagPos.position, blueFlagPos.rotation);
-        }
-
-        if (redFlagPos != null)
-        {
-            // Spawn locally without network sync
-            Instantiate(redFlagPrefab, redFlagPos.position, redFlagPos.rotation);
-        }
-
-        flagsSpawned = true;
-    }
+    // Removed dynamic chest/flag spawning
 
     /// <summary>
     /// Spawns the ItemSpawnManager on the server and syncs to clients.
@@ -751,6 +604,16 @@ public class GameController : NetworkBehaviour
     /// </summary>
     private void ShutdownNetworkAndLoadLobby()
     {
+        // Unload any loaded level scenes before returning to lobby
+        for (int i = 0; i < SceneManager.sceneCount; i++)
+        {
+            Scene scene = SceneManager.GetSceneAt(i);
+            if (scene.isLoaded && scene.name != "GameScene" && scene.name != lobbySceneName)
+            {
+                SceneManager.UnloadSceneAsync(scene);
+            }
+        }
+
         if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.Shutdown();

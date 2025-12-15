@@ -120,14 +120,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1318005759483055872}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
   m_LocalPosition: {x: -0, y: 0, z: 0}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6941291125669642777}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!33 &278466524226572448
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -205,8 +205,8 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 1.3995655
-  m_Center: {x: -0.0009868145, y: 0.46602568, z: 0.049610555}
+  m_Radius: 4
+  m_Center: {x: 0, y: 2, z: 3}
 --- !u!114 &-8834612061558087597
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -244,15 +244,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3d39a30628b222d43a6de6f99df09b11, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  payloadPrefabs:
-  - {fileID: 8832418608165538874, guid: 8f2f0a77a22acb74f84d3cbd0c2f3029, type: 3}
-  - {fileID: 919132149155446097, guid: b922956fdec5db0419bda91898b4a268, type: 3}
-  - {fileID: 2911461576491320129, guid: d0f92cc91f988f6408ddb3db6cf8d756, type: 3}
-  - {fileID: 1912105335735116042, guid: cbbd3fc0d2d3f3744a1bf6f3d625901e, type: 3}
-  payloadFollowHeight: 3
-  payloadMoveDuration: 0.75
-  payloadFollowSmoothSpeed: 8
 --- !u!1 &6596392729624759029
 GameObject:
   m_ObjectHideFlags: 0
