@@ -244,11 +244,16 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
-        // Handle ESC key for mini game exit
-        HandleMiniGameEscapeInput();
-
-        // Block all input while playing mini game
+        // Handle ESC key for mini game exit or pause menu
         if (isPlayingMiniGame)
+        {
+            HandleMiniGameEscapeInput();
+            return;
+        }
+
+        HandlePauseMenuInput();
+
+        if (GameController.Instance != null && GameController.Instance.IsPauseMenuOpen)
         {
             return;
         }
@@ -956,6 +961,27 @@ public class PlayerController : NetworkBehaviour
         }
 
         return nearestFloor;
+    }
+
+    /// <summary>
+    /// Handles ESC key input to toggle the pause menu when not in a mini game.
+    /// </summary>
+    private void HandlePauseMenuInput()
+    {
+        if (Keyboard.current == null)
+        {
+            return;
+        }
+
+        if (!Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+            return;
+        }
+
+        if (GameController.Instance != null)
+        {
+            GameController.Instance.TogglePauseMenu();
+        }
     }
 
     /// <summary>

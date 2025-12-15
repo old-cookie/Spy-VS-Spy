@@ -95,10 +95,16 @@ public class GameController : NetworkBehaviour
 
     private VisualElement ownFlagParent;
     private VisualElement otherFlagParent;
+    private VisualElement ownTeamContainer;
+    private VisualElement otherTeamContainer;
     private Label ownScoreText;
     private Label otherScoreText;
+    private Label vsLabel;
     private VisualElement endGameContainer;
     private Button btnEnd;
+    private VisualElement pauseMenu;
+    private Button btnPauseContinue;
+    private Button btnPauseEnd;
 
     [SerializeField]
     private float buttonRevealDelay = 3f;
@@ -116,6 +122,12 @@ public class GameController : NetworkBehaviour
 
     private Coroutine countdownRoutine;
     private bool exitTriggered;
+    private bool pauseMenuVisible;
+
+    /// <summary>
+    /// Whether the pause menu is currently open on this client.
+    /// </summary>
+    public bool IsPauseMenuOpen => pauseMenuVisible;
 
     private void Awake()
     {
@@ -141,20 +153,65 @@ public class GameController : NetworkBehaviour
         var root = uiDocument.rootVisualElement;
         ownFlagParent = root.Q<VisualElement>("OwnFlagParent");
         otherFlagParent = root.Q<VisualElement>("OtherFlagParent");
+        ownTeamContainer = root.Q<VisualElement>("OwnTeamContainer");
+        otherTeamContainer = root.Q<VisualElement>("OtherTeamContainer");
         ownScoreText = root.Q<Label>("OwnScoreText");
         otherScoreText = root.Q<Label>("OtherScoreText");
+        vsLabel = root.Q<Label>("vsLabel");
         endGameContainer = root.Q<VisualElement>("EndGameContainer");
         btnEnd = root.Q<Button>("BtnEnd");
+        pauseMenu = root.Q<VisualElement>("PauseMenu");
+        btnPauseContinue = root.Q<Button>("BtnPauseContinue");
+        btnPauseEnd = root.Q<Button>("BtnPauseEnd");
 
         if (btnEnd != null)
         {
             btnEnd.clicked += OnBtnEndClicked;
         }
 
+        if (btnPauseContinue != null)
+        {
+            btnPauseContinue.clicked += OnPauseContinueClicked;
+        }
+
+        if (btnPauseEnd != null)
+        {
+            btnPauseEnd.clicked += OnPauseEndClicked;
+        }
+
         if (endGameContainer != null)
         {
             endGameContainer.style.display = DisplayStyle.None;
         }
+
+        SetPauseMenuVisible(false);
+    }
+
+    /// <summary>
+    /// Shows or hides the pause menu on this client.
+    /// </summary>
+    /// <param name="visible">True to show the menu, false to hide it.</param>
+    /// <returns>True if the menu is visible after the call.</returns>
+    public bool SetPauseMenuVisible(bool visible)
+    {
+        if (pauseMenu == null)
+        {
+            pauseMenuVisible = false;
+            return false;
+        }
+
+        pauseMenuVisible = visible;
+        pauseMenu.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        return pauseMenuVisible;
+    }
+
+    /// <summary>
+    /// Toggles the pause menu visibility on this client.
+    /// </summary>
+    /// <returns>The new visibility state.</returns>
+    public bool TogglePauseMenu()
+    {
+        return SetPauseMenuVisible(!pauseMenuVisible);
     }
 
     /// <summary>
@@ -170,6 +227,7 @@ public class GameController : NetworkBehaviour
         matchEnded = false;
         // No dynamic chest/flag spawning
         exitTriggered = false;
+        SetPauseMenuVisible(false);
 
         if (endGameContainer != null)
         {
@@ -177,6 +235,7 @@ public class GameController : NetworkBehaviour
         }
 
         UpdateScoreUI();
+        UpdateUIForGameMode();
 
         // Use coroutine to wait for LevelSelectionState.Instance before spawning level
         StartCoroutine(WaitForLevelSelectionAndSpawn());
@@ -553,11 +612,60 @@ public class GameController : NetworkBehaviour
     }
 
     /// <summary>
+    /// Handles the pause menu continue button.
+    /// </summary>
+    private void OnPauseContinueClicked()
+    {
+        SetPauseMenuVisible(false);
+    }
+
+    /// <summary>
+    /// Handles the pause menu end button.
+    /// </summary>
+    private void OnPauseEndClicked()
+    {
+        SetPauseMenuVisible(false);
+
+        if (exitTriggered)
+        {
+            return;
+        }
+
+        if (IsHost)
+        {
+            TriggerReturnToLobbyRpc();
+        }
+        else
+        {
+            RequestReturnToLobbyRpc();
+        }
+    }
+
+    /// <summary>
     /// Called when btnEnd is clicked. Only host can trigger this.
     /// </summary>
     private void OnBtnEndClicked()
     {
         if (!IsHost)
+        {
+            return;
+        }
+
+        if (exitTriggered)
+        {
+            return;
+        }
+
+        TriggerReturnToLobbyRpc();
+    }
+
+    /// <summary>
+    /// Clients request the host to return everyone to the lobby.
+    /// </summary>
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestReturnToLobbyRpc()
+    {
+        if (!IsServer)
         {
             return;
         }
@@ -582,6 +690,8 @@ public class GameController : NetworkBehaviour
         }
 
         exitTriggered = true;
+
+        SetPauseMenuVisible(false);
 
         if (countdownRoutine != null)
         {
@@ -636,6 +746,28 @@ public class GameController : NetworkBehaviour
     }
 
 #endif
+
+    /// <summary>
+    /// Updates UI layout based on game mode (single-player vs multiplayer).
+    /// In single-player, hides the opposing team's score display and VS label.
+    /// </summary>
+    private void UpdateUIForGameMode()
+    {
+        int playerCount = NetworkManager.Singleton != null ? NetworkManager.Singleton.ConnectedClients.Count : 0;
+        bool isSinglePlayer = playerCount == 1;
+
+        if (otherTeamContainer != null)
+        {
+            otherTeamContainer.style.display = isSinglePlayer ? DisplayStyle.None : DisplayStyle.Flex;
+        }
+
+        if (vsLabel != null)
+        {
+            vsLabel.style.display = isSinglePlayer ? DisplayStyle.None : DisplayStyle.Flex;
+        }
+
+        Debug.Log($"[GameController] Game mode: {(isSinglePlayer ? "Single-Player" : "Multiplayer")} ({playerCount} players connected)");
+    }
 
     /// <summary>
     /// Gets the current score for the specified team.

@@ -8,25 +8,55 @@
     <ui:Style src="LobyUI.uss" />
     <ui:VisualElement name="root" class="lobby-root">
         <ui:VisualElement class="container">
-            <!-- Start Panel: Host / Join options -->
-            <ui:VisualElement name="startPanel" class="card start-panel">
-                <ui:Label text="Lobby" class="header" />
-
-                <ui:TextField name="ipInput" label="Host IP" class="input" value="127.0.0.1" />
-
-                <ui:VisualElement class="row">
-                    <ui:Button name="hostButton" text="Host" class="btn primary" />
-                    <ui:Button name="joinButton" text="Join" class="btn spaced" />
-                </ui:VisualElement>
+            <!-- Main Panel: Start Game Button -->
+            <ui:VisualElement name="mainPanel" class="card start-panel">
+                <ui:Label text="Spy V.S. Spy" class="header" />
+                <ui:Button name="startGameButton" text="Start Game" class="btn primary" />
             </ui:VisualElement>
 
-            <!-- Waiting Panel: player count, level selection, start button -->
-            <ui:VisualElement name="waitingPanel" class="card waiting-panel hidden">
+            <!-- Mode Selector Panel: Single Play / Multi Play -->
+            <ui:VisualElement name="modePanel" class="card start-panel hidden">
+                <ui:Label text="Game Mode" class="header" />
+                <ui:VisualElement class="row">
+                    <ui:Button name="singlePlayButton" text="Single Play" class="btn primary" />
+                    <ui:Button name="multiPlayButton" text="Multi Play" class="btn primary" />
+                </ui:VisualElement>
+                <ui:Button name="backFromModeButton" text="Back" class="btn secondary spaced" />
+            </ui:VisualElement>
+
+            <!-- Single Play Panel: Level Selection and Start -->
+            <ui:VisualElement name="singlePlayPanel" class="card start-panel hidden">
+                <ui:Label text="Single Player" class="header" />
+                <ui:DropdownField name="singleLevelDropdown" label="Select Level" class="dropdown spaced" />
+                <ui:Button name="singleStartButton" text="Start Game" class="btn primary spaced" />
+                <ui:Button name="backFromSingleButton" text="Back" class="btn secondary spaced" />
+            </ui:VisualElement>
+
+            <!-- Multi Play Panel: Host / Join options -->
+            <ui:VisualElement name="multiPlayPanel" class="card start-panel hidden">
+                <ui:Label text="Multi Player" class="header" />
+                <ui:TextField name="ipInput" label="Host IP" class="input" value="127.0.0.1" />
+                <ui:VisualElement class="row">
+                    <ui:Button name="hostButton" text="Host" class="btn primary" />
+                    <ui:Button name="joinButton" text="Join" class="btn primary" />
+                </ui:VisualElement>
+                <ui:Button name="backFromMultiButton" text="Back" class="btn secondary spaced" />
+            </ui:VisualElement>
+
+            <!-- Host Waiting Panel: player count, level selection, start button -->
+            <ui:VisualElement name="hostWaitingPanel" class="card waiting-panel hidden">
+                <ui:Label text="Host Waiting for Players" class="header" />
                 <ui:Label name="playerNumText" text="Joined Players: 0" />
-
                 <ui:DropdownField name="levelDropdown" label="Select Level" class="dropdown spaced" />
-
                 <ui:Button name="startButton" text="Start Game" class="btn primary hidden spaced" />
+                <ui:Button name="backFromHostButton" text="Back" class="btn secondary spaced" />
+            </ui:VisualElement>
+
+            <!-- Client Waiting Panel: just player count -->
+            <ui:VisualElement name="clientWaitingPanel" class="card waiting-panel hidden">
+                <ui:Label text="Waiting for Host" class="header" />
+                <ui:Label name="clientPlayerNumText" text="Joined Players: 0" />
+                <ui:Button name="backFromClientButton" text="Back" class="btn secondary spaced" />
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
