@@ -215,20 +215,23 @@ public class PlacedBomb : NetworkBehaviour
                 continue;
             }
 
-            var rigidbody = playerController.GetComponent<Rigidbody>();
-            if (rigidbody == null)
+            var netObj = playerController.GetComponent<NetworkObject>();
+            if (netObj == null)
             {
-                Debug.LogWarning($"[PlacedBomb] No Rigidbody on {playerController.name}");
                 continue;
             }
 
             hitCount++;
-            Debug.Log($"[PlacedBomb] Applying explosion to {playerController.name}. IsKinematic: {rigidbody.isKinematic}, Constraints: {rigidbody.constraints}");
+            Debug.Log($"[PlacedBomb] Scheduling explosion for {playerController.name} (Owner {netObj.OwnerClientId})");
 
-            // Use built-in explosion force so the player is pushed outward naturally
-            rigidbody.linearVelocity = Vector3.zero;  // Clear existing velocity first
-            rigidbody.AddExplosionForce(explosionForce, transform.position, explosionRadius, explosionUpforce, ForceMode.Impulse);
-            Debug.Log($"[PlacedBomb] ExplosionForce {explosionForce} (radius {explosionRadius}, up {explosionUpforce}) applied to {playerController.name}. New velocity: {rigidbody.linearVelocity}");
+            var rpcParams = new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams
+                {
+                    TargetClientIds = new ulong[] { netObj.OwnerClientId }
+                }
+            };
+            ApplyExplosionToPlayerClientRpc(netObj.NetworkObjectId, transform.position, explosionForce, explosionRadius, explosionUpforce, rpcParams);
         }
 
         if (hitCount == 0)
@@ -241,6 +244,35 @@ public class PlacedBomb : NetworkBehaviour
 
         // Despawn the bomb
         DespawnBomb();
+    }
+
+    /// <summary>
+    /// Client-targeted RPC to apply explosion force to the owning client's player.
+    /// </summary>
+    [ClientRpc]
+    private void ApplyExplosionToPlayerClientRpc(ulong playerNetworkObjectId, Vector3 origin, float force, float radius, float upModifier, ClientRpcParams rpcParams = default)
+    {
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerNetworkObjectId, out var netObj))
+        {
+            Debug.LogWarning($"[PlacedBomb] Target player {playerNetworkObjectId} not found on client.");
+            return;
+        }
+
+        var playerController = netObj.GetComponent<PlayerController>();
+        if (playerController == null)
+        {
+            return;
+        }
+
+        var rb = playerController.GetComponent<Rigidbody>();
+        if (rb == null)
+        {
+            return;
+        }
+
+        rb.linearVelocity = Vector3.zero;
+        rb.AddExplosionForce(force, origin, radius, upModifier, ForceMode.Impulse);
+        Debug.Log($"[PlacedBomb] (Client) ExplosionForce {force} applied to {playerController.name}.");
     }
 
     /// <summary>
