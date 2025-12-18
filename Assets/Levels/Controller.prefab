@@ -18,7 +18,25 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+<<<<<<< Updated upstream:Assets/Levels/Controller.prefab
 --- !u!4 &8560688654485624297
+=======
+--- !u!114 &549635432
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 549635431}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b5664df76bf9a240b8c0731b13b61a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  availableMiniGamePrefabs:
+  - {fileID: 4359575161078315479, guid: 0a46250cca3614a4eba2429cb603fd57, type: 3}
+--- !u!4 &549635433
+>>>>>>> Stashed changes:Assets/Scenes/GameScene.unity
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
