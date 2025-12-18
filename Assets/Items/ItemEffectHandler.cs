@@ -143,6 +143,9 @@ public class ItemEffectHandler : NetworkBehaviour
             case "teleport":
                 TeleportToSpawnServerRpc();
                 break;
+            case "poop":
+                // Handled by PoopItem.Consume() spawning projectile.
+                break;
             case "bomb":
                 // Bomb is handled by Bomb.cs Consume() method
                 // No additional effect needed here
