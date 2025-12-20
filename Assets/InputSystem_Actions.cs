@@ -838,92 +838,125 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             ""id"": ""e82810d9-69b6-468c-9f39-f03b45ef8442"",
             ""actions"": [
                 {
-                    ""name"": ""UPDownLeftRight"",
-                    ""type"": ""Button"",
-                    ""id"": ""e23348a1-20e3-4d3c-a52f-5f15796a4bfc"",
-                    ""expectedControlType"": """",
+                    ""name"": ""Arrow"",
+                    ""type"": ""PassThrough"",
+                    ""id"": ""42bcd1ef-6273-46ff-8d80-8e10c2d0e2eb"",
+                    ""expectedControlType"": ""Dpad"",
                     ""processors"": """",
                     ""interactions"": """",
-                    ""initialStateCheck"": true
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
                 {
-                    ""name"": ""Arrow"",
-                    ""id"": ""014b9e55-f4d2-4c1a-9fc4-90279713f559"",
-                    ""path"": ""Dpad(mode=1)"",
+                    ""name"": ""2D Vector"",
+                    ""id"": ""b2aab0c8-dee0-4359-ab58-1cc6397b76d9"",
+                    ""path"": ""2DVector(mode=1)"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""UPDownLeftRight"",
+                    ""action"": ""Arrow"",
                     ""isComposite"": true,
                     ""isPartOfComposite"": false
                 },
                 {
-                    ""name"": ""left"",
-                    ""id"": ""70b3c137-30de-400b-9881-6f0df83ede16"",
+                    ""name"": ""up"",
+                    ""id"": ""cae87b2c-0d31-4c12-a9bb-d55a837cb3d9"",
                     ""path"": ""<Keyboard>/upArrow"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Keyboard&Mouse"",
-                    ""action"": ""UPDownLeftRight"",
+                    ""groups"": """",
+                    ""action"": ""Arrow"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
                 },
                 {
-                    ""name"": ""right"",
-                    ""id"": ""5048c1b6-c496-4cae-a913-ceb6e9e14379"",
+                    ""name"": ""down"",
+                    ""id"": ""680ababa-e9ef-42b2-8475-d304a48fcee3"",
                     ""path"": ""<Keyboard>/downArrow"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Keyboard&Mouse"",
-                    ""action"": ""UPDownLeftRight"",
+                    ""groups"": """",
+                    ""action"": ""Arrow"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
                 },
                 {
-                    ""name"": ""right"",
-                    ""id"": ""6e352f95-624a-4d88-8a34-cc02483375cb"",
+                    ""name"": ""left"",
+                    ""id"": ""e467b4eb-fba8-4fd3-9045-86701e6ed31d"",
                     ""path"": ""<Keyboard>/leftArrow"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Keyboard&Mouse"",
-                    ""action"": ""UPDownLeftRight"",
+                    ""groups"": """",
+                    ""action"": ""Arrow"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
                 },
                 {
                     ""name"": ""right"",
-                    ""id"": ""d717d0de-7f9f-4f4f-aac5-5a2ba0e815ea"",
+                    ""id"": ""c8444f1a-a125-4399-b745-3e3c0622052f"",
                     ""path"": ""<Keyboard>/rightArrow"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": "";Keyboard&Mouse"",
-                    ""action"": ""UPDownLeftRight"",
+                    ""groups"": """",
+                    ""action"": ""Arrow"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
                 },
                 {
-                    ""name"": """",
-                    ""id"": ""8964cf43-ff3c-4590-9d3e-b75a9d54fb51"",
-                    ""path"": ""<XRController>/{Primary2DAxis}"",
+                    ""name"": ""2D Vector"",
+                    ""id"": ""c958cef5-bb87-4d6d-af1a-750bf472e6fc"",
+                    ""path"": ""2DVector(mode=1)"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": ""XR"",
-                    ""action"": ""UPDownLeftRight"",
-                    ""isComposite"": false,
+                    ""groups"": """",
+                    ""action"": ""Arrow"",
+                    ""isComposite"": true,
                     ""isPartOfComposite"": false
                 },
                 {
-                    ""name"": """",
-                    ""id"": ""96174afe-5206-4dc8-9bcd-58ea8685ab07"",
-                    ""path"": ""<Joystick>/stick"",
+                    ""name"": ""up"",
+                    ""id"": ""6d004b3e-5bfa-4a7c-b52f-ed64569d25fc"",
+                    ""path"": ""<Gamepad>/dpad/up"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": ""Joystick"",
-                    ""action"": ""UPDownLeftRight"",
+                    ""groups"": """",
+                    ""action"": ""Arrow"",
                     ""isComposite"": false,
-                    ""isPartOfComposite"": false
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""down"",
+                    ""id"": ""9e07ceb5-659d-4093-afe9-124296a873ef"",
+                    ""path"": ""<Gamepad>/dpad/down"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Arrow"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""left"",
+                    ""id"": ""fcf4d18c-c6e9-4f01-a56a-79b0f99323ca"",
+                    ""path"": ""<Gamepad>/dpad/left"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Arrow"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""right"",
+                    ""id"": ""622e4ee9-ea52-4e6d-9c86-bc28f5ce0d29"",
+                    ""path"": ""<Gamepad>/dpad/right"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Arrow"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
                 }
             ]
         }
@@ -1012,7 +1045,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         m_UI_TrackedDeviceOrientation = m_UI.FindAction("TrackedDeviceOrientation", throwIfNotFound: true);
         // Mini Game
         m_MiniGame = asset.FindActionMap("Mini Game", throwIfNotFound: true);
-        m_MiniGame_UPDownLeftRight = m_MiniGame.FindAction("UPDownLeftRight", throwIfNotFound: true);
+        m_MiniGame_Arrow = m_MiniGame.FindAction("Arrow", throwIfNotFound: true);
     }
 
     ~@InputSystem_Actions()
@@ -1430,7 +1463,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
     // Mini Game
     private readonly InputActionMap m_MiniGame;
     private List<IMiniGameActions> m_MiniGameActionsCallbackInterfaces = new List<IMiniGameActions>();
-    private readonly InputAction m_MiniGame_UPDownLeftRight;
+    private readonly InputAction m_MiniGame_Arrow;
     /// <summary>
     /// Provides access to input actions defined in input action map "Mini Game".
     /// </summary>
@@ -1443,9 +1476,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// </summary>
         public MiniGameActions(@InputSystem_Actions wrapper) { m_Wrapper = wrapper; }
         /// <summary>
-        /// Provides access to the underlying input action "MiniGame/UPDownLeftRight".
+        /// Provides access to the underlying input action "MiniGame/Arrow".
         /// </summary>
-        public InputAction @UPDownLeftRight => m_Wrapper.m_MiniGame_UPDownLeftRight;
+        public InputAction @Arrow => m_Wrapper.m_MiniGame_Arrow;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -1472,9 +1505,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         {
             if (instance == null || m_Wrapper.m_MiniGameActionsCallbackInterfaces.Contains(instance)) return;
             m_Wrapper.m_MiniGameActionsCallbackInterfaces.Add(instance);
-            @UPDownLeftRight.started += instance.OnUPDownLeftRight;
-            @UPDownLeftRight.performed += instance.OnUPDownLeftRight;
-            @UPDownLeftRight.canceled += instance.OnUPDownLeftRight;
+            @Arrow.started += instance.OnArrow;
+            @Arrow.performed += instance.OnArrow;
+            @Arrow.canceled += instance.OnArrow;
         }
 
         /// <summary>
@@ -1486,9 +1519,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// <seealso cref="MiniGameActions" />
         private void UnregisterCallbacks(IMiniGameActions instance)
         {
-            @UPDownLeftRight.started -= instance.OnUPDownLeftRight;
-            @UPDownLeftRight.performed -= instance.OnUPDownLeftRight;
-            @UPDownLeftRight.canceled -= instance.OnUPDownLeftRight;
+            @Arrow.started -= instance.OnArrow;
+            @Arrow.performed -= instance.OnArrow;
+            @Arrow.canceled -= instance.OnArrow;
         }
 
         /// <summary>
@@ -1716,11 +1749,11 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
     public interface IMiniGameActions
     {
         /// <summary>
-        /// Method invoked when associated input action "UPDownLeftRight" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "Arrow" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnUPDownLeftRight(InputAction.CallbackContext context);
+        void OnArrow(InputAction.CallbackContext context);
     }
 }

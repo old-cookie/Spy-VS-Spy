@@ -203,16 +203,20 @@ public class DualSync : MiniGame
             return;
         }
 
-        // Directly check keyboard keys
-        if (Keyboard.current != null)
+        // Read arrow input from InputSystem
+        if (inputActions != null)
         {
-            if (Keyboard.current.leftArrowKey.isPressed)
+            Vector2 arrowInput = inputActions.MiniGame.Arrow.ReadValue<Vector2>();
+
+            // Left arrow (negative X)
+            if (arrowInput.x < 0)
             {
                 bar1FillValue += fillSpeed * Time.deltaTime;
                 bar1FillValue = Mathf.Clamp01(bar1FillValue);
             }
 
-            if (Keyboard.current.rightArrowKey.isPressed)
+            // Right arrow (positive X)
+            if (arrowInput.x > 0)
             {
                 bar2FillValue += fillSpeed * Time.deltaTime;
                 bar2FillValue = Mathf.Clamp01(bar2FillValue);

@@ -190,7 +190,7 @@ public class UPDownLeftRight : MiniGame
         }
 
         inputActions = new InputSystem_Actions();
-        directionAction = inputActions.MiniGame.UPDownLeftRight;
+        directionAction = inputActions.MiniGame.Arrow;
         directionAction.performed += OnDirectionPerformed;
     }
 
@@ -221,26 +221,6 @@ public class UPDownLeftRight : MiniGame
             return;
         }
 
-        var controlPath = context.control?.path ?? string.Empty;
-
-        // First try to map by specific control path (works for arrows and d-pad part names)
-        switch (controlPath)
-        {
-            case "/Keyboard/upArrow":
-                CheckInput(0);
-                return;
-            case "/Keyboard/downArrow":
-                CheckInput(1);
-                return;
-            case "/Keyboard/leftArrow":
-                CheckInput(2);
-                return;
-            case "/Keyboard/rightArrow":
-                CheckInput(3);
-                return;
-        }
-
-        // Fallback: interpret a vector value (gamepad/joystick/XR primary 2D axis)
         var dir = context.ReadValue<Vector2>();
         if (dir == Vector2.zero)
         {
