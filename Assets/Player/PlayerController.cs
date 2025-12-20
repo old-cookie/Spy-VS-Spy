@@ -553,7 +553,11 @@ public class PlayerController : NetworkBehaviour
         {
             newItem = currentChest.HandlePickStarted(transform);
         }
-        RegisterHeldItem(newItem);
+        // Chest spawns items via network callbacks; immediate return is null by design
+        if (newItem != null)
+        {
+            RegisterHeldItem(newItem);
+        }
     }
 
     /// <summary>
