@@ -20,6 +20,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Levels/Lv3.unity
     guid: 7bb34999e5e03cf449c040cdb4f81074
+  - enabled: 1
+    path: Assets/Levels/Lv4.unity
+    guid: ef55f2e17fb0fb34bacbd1bed3bba2a2
   m_configObjects:
     com.unity.adaptivePerformance.basic.provider_settings: {fileID: 11400000, guid: 0db24ca1ae6750849add34db7e326c93, type: 2}
     com.unity.adaptiveperformance.loader_settings: {fileID: 11400000, guid: a5c78f7235d4f5d44810308857f8cdad, type: 2}
