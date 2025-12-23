@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEngine.InputSystem;
 using Unity.Netcode;
 using UnityEngine.SceneManagement;
 using System.Collections;
@@ -99,6 +100,9 @@ public class GameController : NetworkBehaviour
     private VisualElement pauseMenu;
     private Button btnPauseContinue;
     private Button btnPauseEnd;
+    private VisualElement itemInfoPanel;
+    private Label itemNameText;
+    private Label itemDescriptionText;
 
     [SerializeField]
     private float buttonRevealDelay = 3f;
@@ -117,6 +121,7 @@ public class GameController : NetworkBehaviour
     private Coroutine countdownRoutine;
     private bool exitTriggered;
     private bool pauseMenuVisible;
+    private InputSystem_Actions inputActions;
 
     /// <summary>
     /// Whether the pause menu is currently open on this client.
@@ -135,6 +140,7 @@ public class GameController : NetworkBehaviour
         }
 
         InitializeUI();
+        InitializeInput();
     }
 
     private void InitializeUI()
@@ -156,6 +162,9 @@ public class GameController : NetworkBehaviour
         pauseMenu = root.Q<VisualElement>("PauseMenu");
         btnPauseContinue = root.Q<Button>("BtnPauseContinue");
         btnPauseEnd = root.Q<Button>("BtnPauseEnd");
+        itemInfoPanel = root.Q<VisualElement>("ItemInfoPanel");
+        itemNameText = root.Q<Label>("ItemNameText");
+        itemDescriptionText = root.Q<Label>("ItemDescriptionText");
 
         if (btnEnd != null)
         {
@@ -178,6 +187,125 @@ public class GameController : NetworkBehaviour
         }
 
         SetPauseMenuVisible(false);
+
+        // Ensure item info panel starts hidden
+        if (itemInfoPanel != null)
+        {
+            itemInfoPanel.style.display = DisplayStyle.None;
+        }
+    }
+
+    public override void OnDestroy()
+    {
+        base.OnDestroy();
+        TeardownInput();
+    }
+
+    private void InitializeInput()
+    {
+        if (inputActions != null)
+        {
+            return;
+        }
+
+        inputActions = new InputSystem_Actions();
+        // Only need the UI map for this controller
+        inputActions.UI.Enable();
+        inputActions.UI.ItemDescription.performed += OnItemDescriptionPerformed;
+        inputActions.UI.ItemDescription.canceled += OnItemDescriptionCanceled;
+    }
+
+    private void TeardownInput()
+    {
+        if (inputActions == null)
+        {
+            return;
+        }
+
+        inputActions.UI.ItemDescription.performed -= OnItemDescriptionPerformed;
+        inputActions.UI.ItemDescription.canceled -= OnItemDescriptionCanceled;
+        inputActions.UI.Disable();
+        inputActions.Dispose();
+        inputActions = null;
+    }
+
+    private void OnItemDescriptionPerformed(InputAction.CallbackContext ctx)
+    {
+        ShowItemInfo();
+    }
+
+    private void OnItemDescriptionCanceled(InputAction.CallbackContext ctx)
+    {
+        HideItemInfo();
+    }
+
+    private PlayerController GetLocalPlayerController()
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClient != null)
+        {
+            var playerObj = NetworkManager.Singleton.LocalClient.PlayerObject;
+            if (playerObj != null)
+            {
+                var pc = playerObj.GetComponent<PlayerController>();
+                if (pc != null)
+                {
+                    return pc;
+                }
+            }
+        }
+
+        // Fallback: search for local player
+        var players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+        foreach (var p in players)
+        {
+            if (p != null && p.IsLocalPlayer)
+            {
+                return p;
+            }
+        }
+        return null;
+    }
+
+    private void ShowItemInfo()
+    {
+        if (itemInfoPanel == null)
+        {
+            return;
+        }
+
+        var pc = GetLocalPlayerController();
+        if (pc == null)
+        {
+            return;
+        }
+
+        var item = pc.GetHeldItem();
+        if (item == null)
+        {
+            // No item: ignore per requirement
+            return;
+        }
+
+        if (itemNameText != null)
+        {
+            itemNameText.text = item.ItemType;
+        }
+
+        if (itemDescriptionText != null)
+        {
+            itemDescriptionText.text = item.ItemDescription;
+        }
+
+        itemInfoPanel.style.display = DisplayStyle.Flex;
+    }
+
+    private void HideItemInfo()
+    {
+        if (itemInfoPanel == null)
+        {
+            return;
+        }
+        itemInfoPanel.style.display = DisplayStyle.None;
     }
 
     /// <summary>

@@ -1377,6 +1377,14 @@ public class PlayerController : NetworkBehaviour
     }
 
     /// <summary>
+    /// Gets the currently held item instance. Returns null if none.
+    /// </summary>
+    public Item GetHeldItem()
+    {
+        return heldItem;
+    }
+
+    /// <summary>
     /// Executes item stealing on the server (called directly from ItemEffectHandler).
     /// </summary>
     /// <param name="stealerNetworkObjectId">The network object ID of the player stealing the item.</param>

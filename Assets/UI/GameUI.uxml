@@ -39,5 +39,11 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
+
+        <!-- Item Info Panel (shown via input hold) -->
+        <ui:VisualElement name="ItemInfoPanel" picking-mode="Ignore" style="position: absolute; top: 24px; right: 24px; display: none; flex-direction: column; gap: 8px; padding: 20px 24px; border-radius: 12px; background-color: rgba(18, 26, 36, 0.92); box-shadow: 0px 12px 36px rgba(0, 0, 0, 0.4); min-width: 420px; max-width: 720px;">
+            <ui:Label name="ItemNameText" text="" picking-mode="Ignore" style="font-size: 36px; -unity-font-style: bold; color: white; -unity-text-outline-width: 3px; -unity-text-outline-color: rgba(0, 0, 0, 0.8);" />
+            <ui:Label name="ItemDescriptionText" text="" picking-mode="Ignore" style="font-size: 24px; color: white; -unity-text-outline-width: 2px; -unity-text-outline-color: rgba(0, 0, 0, 0.8); opacity: 0.95; white-space: normal;" />
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
