@@ -133,6 +133,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   ShowTopMostFoldoutHeaderGroup: 1
   itemType: teleport
+  itemDescription: Instantly teleports you back to your spawn point
 --- !u!64 &5433963408805260026
 MeshCollider:
   m_ObjectHideFlags: 0

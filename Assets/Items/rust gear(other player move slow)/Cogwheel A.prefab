@@ -132,6 +132,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   ShowTopMostFoldoutHeaderGroup: 1
   itemType: rust gear
+  itemDescription: Reduces the movement speed of other players within range for a
+    short time
 --- !u!114 &6147936213744299802
 MonoBehaviour:
   m_ObjectHideFlags: 0
