@@ -19,9 +19,20 @@ public class Item : NetworkBehaviour
     private string itemType = "item";
 
     /// <summary>
+    /// The player-facing description of what the item does.
+    /// </summary>
+    [SerializeField]
+    private string itemDescription = string.Empty;
+
+    /// <summary>
     /// Gets the item type identifier.
     /// </summary>
     public virtual string ItemType => itemType;
+
+    /// <summary>
+    /// Gets the player-facing description for UI display.
+    /// </summary>
+    public virtual string ItemDescription => itemDescription;
 
     /// <summary>
     /// Initializes the item with a reference to its owning chest controller.

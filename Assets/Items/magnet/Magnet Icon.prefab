@@ -132,6 +132,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   ShowTopMostFoldoutHeaderGroup: 1
   itemType: magnet
+  itemDescription: Temporarily attracts items carried by opponents
 --- !u!114 &-2563100903543909861
 MonoBehaviour:
   m_ObjectHideFlags: 0

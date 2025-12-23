@@ -179,6 +179,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Bomb
   ShowTopMostFoldoutHeaderGroup: 1
   itemType: bomb
+  itemDescription: Places a mine that deals damage and explodes when stepped on
   placedBombPrefab: {fileID: 5023802899982058342, guid: 95bd6653498b4674db2769218e1019ca, type: 3}
   placementHeightOffset: 0.5
 --- !u!114 &4965971247305622616
@@ -195,3 +196,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   ShowTopMostFoldoutHeaderGroup: 1
   itemType: bomb
+  itemDescription: Places a mine that deals damage and explodes when stepped on
