@@ -8,10 +8,29 @@ Fast local-network multiplayer for two players. One hosts, one joins, and both r
 - Keyboards or controllers (controls below assume keyboard)
 
 ## Setup and Lobby
-1) Launch the game on both devices.
-2) In the lobby, Player 1 selects **Host**.
-3) Player 2 selects **Client** and connects to the host on the same network.
-4) When both are connected, start the match.
+
+### Single Player Mode
+1) Launch the game.
+2) Click **Start Game** in the main menu.
+3) Select **Single Play**.
+4) Choose a level from the dropdown menu.
+5) Click **Start Game** to begin.
+
+### Multiplayer Mode
+1) Launch the game on both devices (both must be on the same local network).
+2) Click **Start Game** in the main menu.
+3) Select **Multi Play**.
+
+**For the Host:**
+4) Enter the host IP (or leave default).
+5) Click **Host** to start hosting.
+6) Select a level from the dropdown menu while waiting.
+7) Once Player 2 joins (Joined Players: 2), click **Start Game** to begin.
+
+**For the Client:**
+4) Enter the host's IP address.
+5) Click **Join** to connect to the host.
+6) Wait for the host to start the game.
 
 ## Core Controls
 - `A` move left
@@ -24,12 +43,6 @@ Fast local-network multiplayer for two players. One hosts, one joins, and both r
 - Move, jump, and collect items to gain advantages.
 - Use items at key moments to disrupt your opponent or secure objectives.
 - Some rounds include mini-games; follow on-screen prompts to complete them.
-
-## Quick Tips
-- Stay near item spawns so you can grab them with `E` as soon as they appear.
-- Time `Q` for momentum swings (interrupt jumps, deny pickups, or escape).
-- Keep moving; short hops with `Space` help dodge and reposition.
-- Communicate with your partner about hosting/joining to avoid connection confusion.
 
 ## Troubleshooting
 - Both players must be on the same LAN; verify firewalls are not blocking the game.
