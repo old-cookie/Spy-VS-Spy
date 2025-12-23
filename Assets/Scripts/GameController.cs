@@ -91,6 +91,7 @@ public class GameController : NetworkBehaviour
 
     private VisualElement ownFlagParent;
     private VisualElement otherFlagParent;
+    private VisualElement scoreContainer;
     private VisualElement otherTeamContainer;
     private Label ownScoreText;
     private Label otherScoreText;
@@ -122,6 +123,7 @@ public class GameController : NetworkBehaviour
     private bool exitTriggered;
     private bool pauseMenuVisible;
     private InputSystem_Actions inputActions;
+    private bool lastMiniGameActive;
 
     /// <summary>
     /// Whether the pause menu is currently open on this client.
@@ -151,6 +153,7 @@ public class GameController : NetworkBehaviour
         }
 
         var root = uiDocument.rootVisualElement;
+        scoreContainer = root.Q<VisualElement>("ScoreContainer");
         ownFlagParent = root.Q<VisualElement>("OwnFlagParent");
         otherFlagParent = root.Q<VisualElement>("OtherFlagParent");
         otherTeamContainer = root.Q<VisualElement>("OtherTeamContainer");
@@ -193,6 +196,9 @@ public class GameController : NetworkBehaviour
         {
             itemInfoPanel.style.display = DisplayStyle.None;
         }
+
+        // Initialize mini game UI state
+        UpdateMiniGameUI(force:true);
     }
 
     public override void OnDestroy()
@@ -357,6 +363,7 @@ public class GameController : NetworkBehaviour
 
         UpdateScoreUI();
         UpdateUIForGameMode();
+        UpdateMiniGameUI(force:true);
 
         // Use coroutine to wait for LevelSelectionState.Instance before spawning level
         StartCoroutine(WaitForLevelSelectionAndSpawn());
@@ -904,5 +911,28 @@ public class GameController : NetworkBehaviour
             return redTeamScore.Value;
         }
         return 0;
+    }
+
+    private void Update()
+    {
+        UpdateMiniGameUI();
+    }
+
+    private void UpdateMiniGameUI(bool force = false)
+    {
+        var pc = GetLocalPlayerController();
+        bool isInMiniGame = pc != null && pc.IsPlayingMiniGame();
+
+        if (!force && isInMiniGame == lastMiniGameActive)
+        {
+            return;
+        }
+
+        lastMiniGameActive = isInMiniGame;
+
+        if (scoreContainer != null)
+        {
+            scoreContainer.style.display = isInMiniGame ? DisplayStyle.None : DisplayStyle.Flex;
+        }
     }
 }
