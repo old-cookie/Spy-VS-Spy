@@ -155,6 +155,11 @@ Technical documentation for core systems and components:
 - [ClientNetworkAnimator](docs/ClientNetworkAnimator.md) – Client-authoritative animator for network-synced animations
 - [CameraController](docs/CameraController.md) – Camera following with smooth interpolation
 
+### Items & Effects
+- [Item](docs/Item.md) – Base class for pickable items with consumption and network despawning
+- [ItemEffectHandler](docs/ItemEffectHandler.md) – Applies and manages item effects: speed/jump boosts, slow downs, stealing, teleport
+- [ItemSpawnManager](docs/ItemSpawnManager.md) – Networked item spawning, following, and ownership transfer
+
 ### Mini Games
 - [MiniGame](docs/MiniGame.md) – Base class for mini games with lifecycle and event system
 - [MiniGameManager](docs/MiniGameManager.md) – Singleton for mini-game selection, spawning, and state management
