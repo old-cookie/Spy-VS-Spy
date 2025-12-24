@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 6326acfeb0f85814699650a87c7c07b7
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - numberDisplay: {instanceID: 0}
+  - readyText: {instanceID: 0}
+  - text1: {instanceID: 0}
+  - timeText: {instanceID: 0}
+  - endText: {instanceID: 0}
+  - startButton: {instanceID: 0}
+  - gameTimer: {fileID: 7627666883124015942, guid: 2e9ced71234e6a74cb63ddf197a76978, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
