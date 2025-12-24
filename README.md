@@ -170,9 +170,13 @@ Technical documentation for core systems and components:
 ### Game Logic & Scoring
 - [GameController](docs/GameController.md) – Match controller: spawning, teams, scoring, pause menu, outcome flow
 - [ScoreZone](docs/ScoreZone.md) – Flag delivery trigger that awards team points
+- [FlagTrigger](docs/FlagTrigger.md) – Team-gated flag pickup trigger that starts mini-games and awards flags on success
 - [TeamMember](docs/TeamMember.md) – Networked team/flag state with RPCs for syncing
 - [Team](docs/Team.md) – Team enum and usage context
 - [LevelSelectionState](docs/LevelSelectionState.md) – Networked level and winning-team state across scenes
+
+### Chests & Spawning
+- [ChestController](docs/ChestController.md) – Chest interaction that requests networked item spawns via ItemSpawnManager
 
 ### Lobby & Networking
 - [LobbyUIManager](docs/LobbyUIManager.md) – UI flows for mode/level selection, hosting, joining
