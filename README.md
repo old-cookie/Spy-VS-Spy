@@ -67,13 +67,13 @@ Fast local-network multiplayer for two players. One hosts, one joins, and both r
 - Speed and jump items are useful for mobility and escaping
 
 ### Items Available
-[*] Cookie (move fast) – increases movement speed
-[*] Super Drink (increase jump) – increases jump height
-[*] Rust Gear (other player move slow) – slows opponent
-[*] Magnet – attracts nearby items
-[*] Bomb – explosive trap item
-[*] Poop – blinds/disorients opponent
-[*] Teleport (back to spawn) – returns player to spawn point
+- [x] Cookie (move fast) – increases movement speed
+- [x] Super Drink (increase jump) – increases jump height
+- [x] Rust Gear (other player move slow) – slows opponent
+- [x] Magnet – attracts nearby items
+- [x] Bomb – explosive trap item
+- [x] Poop – blinds/disorients opponent
+- [x] Teleport (back to spawn) – returns player to spawn point
 
 ## Mini-Game System
 
@@ -94,11 +94,11 @@ Mini-games are automatically started when a player picks up a **flag**. The pick
 - Custom mini-games can be created by extending the `MiniGame` base class and adding unique gameplay
 
 ### Available Mini-Games
-[*] Demo – Simple button-based mini-game with timer
-[*] DualSync – Dual-player synchronization challenge
-[*] NumberMemory – Memory matching game
-[*] UPDownLeftRight – Direction input sequence game
-[*] WhackAMole – Classic whack-a-mole mechanics
+- [x] Demo – Simple button-based mini-game with timer
+- [x] DualSync – Dual-player synchronization challenge
+- [x] NumberMemory – Memory matching game
+- [x] UPDownLeftRight – Direction input sequence game
+- [x] WhackAMole – Classic whack-a-mole mechanics
 
 ### Adding Custom Mini-Games
 1. Create a new C# script inheriting from `MiniGame`
@@ -123,11 +123,11 @@ Levels contain:
 - **Platforms and obstacles**: Environmental layout for movement challenges
 
 ### Available Levels
-[*] Demo – Tutorial/demo level for testing
-[*] Lv1 – Level 1 - basic arena
-[*] Lv2 – Level 2 - intermediate obstacles
-[*] Lv3 – Level 3 - advanced layout
-[*] Lv4 – Level 4 - challenging design
+- [x] Demo – Tutorial/demo level for testing
+- [x] Lv1 – Level 1
+- [x] Lv2 – Level 2
+- [x] Lv3 – Level 3
+- [x] Lv4 – Level 4
 
 ### Level Requirements
 - Each level prefab must include spawn transforms matching the `GameController.spawnPos` list
