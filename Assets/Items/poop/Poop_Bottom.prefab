@@ -16,7 +16,6 @@ GameObject:
   - component: {fileID: 6431530744821082327}
   - component: {fileID: 5688390785772224902}
   - component: {fileID: -8872776715494603642}
-  - component: {fileID: 5268559378744670370}
   - component: {fileID: 5431388951525333048}
   m_Layer: 0
   m_Name: Poop_Bottom
@@ -109,7 +108,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3870549151
+  GlobalObjectIdHash: 3317392857
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -228,18 +227,6 @@ MonoBehaviour:
   speed: 10
   maxLifetime: 5
   blindDuration: 2.5
---- !u!114 &5268559378744670370
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6384368713777333232}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b4c40a4e81cda2e409e401663134d169, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PoopBlindEffect
 --- !u!65 &5431388951525333048
 BoxCollider:
   m_ObjectHideFlags: 0

@@ -2,8 +2,6 @@ using UnityEngine;
 using Unity.Netcode;
 
 [RequireComponent(typeof(NetworkObject))]
-[RequireComponent(typeof(Rigidbody))]
-[RequireComponent(typeof(Collider))]
 public class PoopProjectile : NetworkBehaviour
 {
     [SerializeField]
@@ -18,16 +16,30 @@ public class PoopProjectile : NetworkBehaviour
     private ulong shooterClientId;
     private float lifeTimer;
     private Rigidbody rb;
+    private Rigidbody2D rb2d;
     private Vector3 shootDirection;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        rb2d = GetComponent<Rigidbody2D>();
+
         if (rb != null)
         {
-            rb.useGravity = false; // Disable gravity for straight shot
-            rb.linearDamping = 0f; // No air resistance
+            rb.useGravity = true; // fall to the ground
+            rb.linearDamping = 0f;
             rb.angularDamping = 0f;
+            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        }
+
+        if (rb2d != null)
+        {
+            // fall to the ground in 2D
+            if (rb2d.bodyType == RigidbodyType2D.Dynamic)
+            {
+                rb2d.gravityScale = Mathf.Max(0.01f, rb2d.gravityScale);
+            }
+            rb2d.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         }
     }
 
@@ -35,10 +47,8 @@ public class PoopProjectile : NetworkBehaviour
     {
         base.OnNetworkSpawn();
         lifeTimer = maxLifetime;
-        if (rb != null)
-        {
-            rb.useGravity = false; // Ensure gravity is off
-        }
+        if (rb != null) rb.useGravity = true;
+        // Rigidbody2D gravity handled via gravityScale
         TryInitVelocity();
     }
 
@@ -54,15 +64,34 @@ public class PoopProjectile : NetworkBehaviour
 
     private void TryInitVelocity()
     {
-        if (rb == null) return;
-        
-        // Use horizontal direction only (remove vertical component for straight shot)
-        var dir = shootDirection != Vector3.zero ? shootDirection : transform.forward;
-        dir.y = 0f; // Force horizontal only
-        dir = dir.normalized;
-        
-        rb.linearVelocity = dir * speed;
-        Debug.Log($"[PoopProjectile] Velocity set to {rb.linearVelocity} (horizontal only, no gravity)");
+        // We want it to move forward but also fall due to gravity.
+        // So: initial velocity is forward only; gravity handles the fall.
+
+        var dir3 = shootDirection != Vector3.zero ? shootDirection : transform.forward;
+        dir3.y = 0f;
+        if (dir3.sqrMagnitude < 0.0001f)
+        {
+            // If the prefab's forward is vertical, fall back to right.
+            dir3 = transform.right;
+            dir3.y = 0f;
+        }
+        dir3 = dir3.normalized;
+
+        if (rb != null)
+        {
+            rb.linearVelocity = dir3 * speed;
+            Debug.Log($"[PoopProjectile] Velocity set (3D) to {rb.linearVelocity} (gravity on)");
+            return;
+        }
+
+        if (rb2d != null)
+        {
+            var dir2 = new Vector2(dir3.x, dir3.y);
+            if (dir2.sqrMagnitude < 0.0001f) dir2 = Vector2.right;
+            dir2 = dir2.normalized;
+            rb2d.linearVelocity = dir2 * speed;
+            Debug.Log($"[PoopProjectile] Velocity set (2D) to {rb2d.linearVelocity} (gravity on)");
+        }
     }
 
     private void Update()
@@ -79,10 +108,38 @@ public class PoopProjectile : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        var player = collision.gameObject.GetComponent<PlayerController>();
+        HandleHit(collision.gameObject);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!IsServer) return;
+
+        HandleHit(other.gameObject);
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (!IsServer) return;
+
+        HandleHit(collision.gameObject);
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (!IsServer) return;
+
+        HandleHit(other.gameObject);
+    }
+
+    private void HandleHit(GameObject hitObject)
+    {
+        if (hitObject == null) return;
+
+        var player = hitObject.GetComponent<PlayerController>();
         if (player == null)
         {
-            player = collision.gameObject.GetComponentInParent<PlayerController>();
+            player = hitObject.GetComponentInParent<PlayerController>();
         }
 
         if (player != null)
@@ -92,7 +149,7 @@ public class PoopProjectile : NetworkBehaviour
             {
                 Debug.Log($"[PoopProjectile] Hit player {player.name} (Owner: {playerNet.OwnerClientId})");
                 
-                // Blind the hit player
+                // Blind only the hit player
                 var hitRpcParams = new ClientRpcParams
                 {
                     Send = new ClientRpcSendParams
@@ -101,32 +158,22 @@ public class PoopProjectile : NetworkBehaviour
                     }
                 };
                 ApplyBlindClientRpc(playerNet.NetworkObjectId, blindDuration, hitRpcParams);
-
-                // Also blind the shooter
-                var shooterRpcParams = new ClientRpcParams
-                {
-                    Send = new ClientRpcSendParams
-                    {
-                        TargetClientIds = new ulong[] { shooterClientId }
-                    }
-                };
-                ApplyBlindClientRpc(0, blindDuration, shooterRpcParams); // 0 = unused for shooter
                 
-                Debug.Log($"[PoopProjectile] Blinded both shooter ({shooterClientId}) and hit player ({playerNet.OwnerClientId})");
+                Debug.Log($"[PoopProjectile] Blinded hit player ({playerNet.OwnerClientId})");
             }
             Despawn();
             return;
         }
 
         // Hit anything else: just despawn
-        Debug.Log($"[PoopProjectile] Hit {collision.gameObject.name}, despawning");
+        Debug.Log($"[PoopProjectile] Hit {hitObject.name}, despawning");
         Despawn();
     }
 
     [ClientRpc]
     private void ApplyBlindClientRpc(ulong playerNetworkObjectId, float duration, ClientRpcParams rpcParams = default)
     {
-        // Only the owning client will execute this
+        Debug.Log($"[PoopProjectile] ApplyBlindClientRpc received. duration={duration}");
         PoopBlindEffect.Show(duration);
     }
 

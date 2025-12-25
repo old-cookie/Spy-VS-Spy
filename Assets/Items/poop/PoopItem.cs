@@ -10,6 +10,16 @@ public class PoopItem : Item
     [SerializeField]
     private GameObject poopProjectilePrefab;
 
+    [Header("Spawn Offset")]
+    [SerializeField]
+    private float forwardSpawnOffset = 0.3f;
+
+    [SerializeField, Range(0f, 1f)]
+    private float spawnHeight01 = 0.55f; // 0=feet, 1=head (relative to collider bounds)
+
+    [SerializeField]
+    private float verticalSpawnOffset = -0.5f; // lower from the collider center
+
     [SerializeField, Min(0.1f)]
     private float shootSpeed = 12f;
 
@@ -64,13 +74,51 @@ public class PoopItem : Item
             shootDirection = playerTransform.right;
         }
 
-        // Spawn at player's position slightly in front in shoot direction
-        var origin = playerTransform.position + shootDirection * 0.6f + Vector3.up * 0.8f;
+        // Spawn using collider bounds (independent of pivot), at a normalized body height.
+        var basePos = playerTransform.position;
+        var usedBounds = false;
+        var col3d = playerTransform.GetComponentInChildren<Collider>();
+        if (col3d != null)
+        {
+            var b = col3d.bounds;
+            basePos = new Vector3(b.center.x, b.min.y + b.size.y * spawnHeight01, b.center.z);
+            usedBounds = true;
+        }
+        else
+        {
+            var col2d = playerTransform.GetComponentInChildren<Collider2D>();
+            if (col2d != null)
+            {
+                var b = col2d.bounds;
+                basePos = new Vector3(b.center.x, b.min.y + b.size.y * spawnHeight01, b.center.z);
+                usedBounds = true;
+            }
+        }
+
+        if (!usedBounds)
+        {
+            // Fallback if no collider found
+            basePos = playerTransform.position;
+        }
+
+        var origin = basePos + shootDirection * forwardSpawnOffset + Vector3.up * verticalSpawnOffset;
         var rotation = Quaternion.LookRotation(shootDirection, Vector3.up);
         
         Debug.Log($"[PoopItem] Instantiating at position: {origin}, rotation: {rotation.eulerAngles}");
         var go = Instantiate(poopProjectilePrefab, origin, rotation);
         Debug.Log($"[PoopItem] GameObject created: {go.name}");
+
+        // Configure before spawning so OnNetworkSpawn can initialize with correct direction.
+        var proj = go.GetComponent<PoopProjectile>();
+        if (proj != null)
+        {
+            Debug.Log($"[PoopItem] Configuring projectile with speed={speed}, direction={shootDirection}");
+            proj.Configure(shootDirection, speed, lifetime, blindTime, OwnerClientId);
+        }
+        else
+        {
+            Debug.LogError("[PoopItem] PoopProjectile component NOT FOUND on projectile prefab!");
+        }
 
         var netObj = go.GetComponent<NetworkObject>();
         if (netObj != null)
@@ -82,17 +130,6 @@ public class PoopItem : Item
         else
         {
             Debug.LogError("[PoopItem] NetworkObject component NOT FOUND on projectile prefab!");
-        }
-
-        var proj = go.GetComponent<PoopProjectile>();
-        if (proj != null)
-        {
-            Debug.Log($"[PoopItem] Configuring projectile with speed={speed}, direction={shootDirection}");
-            proj.Configure(shootDirection, speed, lifetime, blindTime, OwnerClientId);
-        }
-        else
-        {
-            Debug.LogError("[PoopItem] PoopProjectile component NOT FOUND on projectile prefab!");
         }
 
         Debug.Log($"[PoopItem] Poop projectile setup complete from {playerTransform.name}");
