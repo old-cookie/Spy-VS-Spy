@@ -19,12 +19,12 @@ public class NumberMemory : MiniGame
     private static readonly Key[] NumberKeys =
     {
         Key.Digit0, Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4,
-        Key.Digit5
+        Key.Digit5,Key.Digit6,Key.Digit7,Key.Digit8,Key.Digit9
     };
     [Header("Game Settings")]
     [SerializeField] private float showDuration = 2.5f;
     [SerializeField] private float timeLimit = 2.5f;
-    private readonly int numberCount = NumberKeys.Length;
+    private readonly int numberCount = 6;
     [SerializeField] private float blinkSpeed = 10f;
     private readonly string inputPromptText = "Type the numbers (0-9 keys)";
     private readonly List<int> targetNumbers = new();
