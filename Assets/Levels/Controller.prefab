@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1631496108
+  GlobalObjectIdHash: 3369583191
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -79,6 +79,7 @@ MonoBehaviour:
   - {fileID: 7900918461794760295, guid: 37f58bb0930b0a14496f2fc16f4d15ff, type: 3}
   - {fileID: 9168143709068529533, guid: 14b69d8593ff6d644892781e63a526c2, type: 3}
   - {fileID: 5188382998888103147, guid: f0983d76d65f2bf44a14a3cd25d686c4, type: 3}
+  - {fileID: 1912105335735116042, guid: 6ae10f6acab0df94e9cb2be2ffd74782, type: 3}
   itemFollowHeight: 3
   itemMoveDuration: 0.75
   itemFollowSmoothSpeed: 8
@@ -465,7 +466,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2128053971
+  GlobalObjectIdHash: 928740445
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1

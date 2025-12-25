@@ -1508,5 +1508,29 @@ public class PlayerController : NetworkBehaviour
             Debug.LogWarning("[PlayerController] Rigidbody not found. Cannot teleport player.");
         }
     }
+
+    /// <summary>
+    /// Teleports the player to a specific world position.
+    /// Used by networked item effects such as Swap Remote.
+    /// </summary>
+    public void TeleportToPosition(Vector3 position)
+    {
+        if (playerRigidbody == null)
+        {
+            CacheRigidbodyReference();
+        }
+
+        if (playerRigidbody != null)
+        {
+            playerRigidbody.linearVelocity = Vector3.zero;
+            transform.position = position;
+            Debug.Log($"[PlayerController] Player teleported to position: {position}");
+        }
+        else
+        {
+            transform.position = position;
+            Debug.LogWarning("[PlayerController] Rigidbody not found. Teleported by setting transform.position only.");
+        }
+    }
 }
 

@@ -64,8 +64,11 @@ public class ItemEffectHandler : NetworkBehaviour
     /// Radius to search for nearby players to steal items from. Set to 0 or negative for unlimited range.
     /// </summary>
     [Header("Magnet Settings (Item Stealing)")]
-    [SerializeField, Min(0f)]
     //private float itemStealRadius = 0f;
+
+    [Header("Swap Remote Settings")]
+    [SerializeField, Min(0f)]
+    private float swapRemoteRange = 0f; // 0 = unlimited
 
     private float speedBoostTimer;
     private float slowDownTimer;
@@ -142,6 +145,9 @@ public class ItemEffectHandler : NetworkBehaviour
                 break;
             case "teleport":
                 TeleportToSpawnServerRpc();
+                break;
+            case "swap remote":
+                SwapRemoteServerRpc(swapRemoteRange);
                 break;
             case "poop":
                 // Handled by PoopItem.Consume() spawning projectile.
@@ -428,6 +434,125 @@ public class ItemEffectHandler : NetworkBehaviour
 
         // Teleport the player back to spawn
         targetPlayerController.TeleportToSpawn();
+    }
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void SwapRemoteServerRpc(float range)
+    {
+        CachePlayerController();
+        if (playerController == null)
+        {
+            Debug.LogWarning("[ItemEffectHandler] PlayerController not found. Cannot swap.");
+            return;
+        }
+
+        var myNetObj = playerController.GetComponent<NetworkObject>() ?? playerController.GetComponentInParent<NetworkObject>();
+        if (myNetObj == null)
+        {
+            Debug.LogWarning("[ItemEffectHandler] NetworkObject not found on player. Cannot swap.");
+            return;
+        }
+
+        var myTeamMember = playerController.GetComponent<TeamMember>() ?? playerController.GetComponentInChildren<TeamMember>() ?? playerController.GetComponentInParent<TeamMember>();
+        if (myTeamMember == null || myTeamMember.CurrentTeam == Team.None)
+        {
+            Debug.LogWarning("[ItemEffectHandler] TeamMember not found or Team.None. Cannot swap.");
+            return;
+        }
+
+        var myPos = playerController.transform.position;
+        var rangeSqr = range <= 0f ? float.MaxValue : range * range;
+
+        PlayerController bestEnemyTarget = null;
+        float bestEnemyDistSqr = float.MaxValue;
+
+        PlayerController bestAnyTarget = null;
+        float bestAnyDistSqr = float.MaxValue;
+
+        PlayerController[] allPlayers;
+    #if UNITY_2023_1_OR_NEWER
+        allPlayers = Object.FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+    #else
+        allPlayers = Object.FindObjectsOfType<PlayerController>();
+    #endif
+        foreach (var otherPc in allPlayers)
+        {
+            if (otherPc == null || otherPc == playerController) continue;
+
+            var otherNet = otherPc.GetComponent<NetworkObject>() ?? otherPc.GetComponentInParent<NetworkObject>();
+            if (otherNet == null) continue;
+
+            var d = otherPc.transform.position - myPos;
+            var distSqr = d.sqrMagnitude;
+            if (distSqr > rangeSqr) continue;
+
+            // Track nearest player regardless of team (fallback)
+            if (distSqr < bestAnyDistSqr)
+            {
+                bestAnyDistSqr = distSqr;
+                bestAnyTarget = otherPc;
+            }
+
+            var otherTeam = otherPc.GetComponent<TeamMember>() ?? otherPc.GetComponentInChildren<TeamMember>() ?? otherPc.GetComponentInParent<TeamMember>();
+            if (otherTeam == null) continue;
+            if (otherTeam.CurrentTeam == Team.None) continue;
+            if (otherTeam.CurrentTeam == myTeamMember.CurrentTeam) continue;
+
+            if (distSqr < bestEnemyDistSqr)
+            {
+                bestEnemyDistSqr = distSqr;
+                bestEnemyTarget = otherPc;
+            }
+        }
+
+        var bestTarget = bestEnemyTarget != null ? bestEnemyTarget : bestAnyTarget;
+        if (bestTarget == null)
+        {
+            Debug.Log($"[ItemEffectHandler] Swap Remote: no valid target found. myTeam={myTeamMember.CurrentTeam} playersFound={allPlayers.Length}");
+            return;
+        }
+
+        if (bestEnemyTarget == null)
+        {
+            Debug.LogWarning($"[ItemEffectHandler] Swap Remote: no enemy found (teams may be unset). Swapping with nearest player instead.");
+        }
+
+        var targetNetObj = bestTarget.GetComponent<NetworkObject>() ?? bestTarget.GetComponentInParent<NetworkObject>();
+        if (targetNetObj == null)
+        {
+            Debug.LogWarning("[ItemEffectHandler] Swap Remote: target has no NetworkObject.");
+            return;
+        }
+
+        var myNewPos = bestTarget.transform.position;
+        var targetNewPos = myPos;
+
+        Debug.Log($"[ItemEffectHandler] Swap Remote: swapping {myNetObj.NetworkObjectId} <-> {targetNetObj.NetworkObjectId}");
+        SwapRemoteClientRpc(myNetObj.NetworkObjectId, targetNetObj.NetworkObjectId, myNewPos, targetNewPos);
+    }
+
+    [ClientRpc]
+    private void SwapRemoteClientRpc(ulong aPlayerNetworkObjectId, ulong bPlayerNetworkObjectId, Vector3 aNewPosition, Vector3 bNewPosition)
+    {
+        if (NetworkManager.Singleton == null) return;
+
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(aPlayerNetworkObjectId, out var aObj))
+        {
+            var aPc = aObj.GetComponent<PlayerController>();
+            if (aPc != null)
+            {
+                aPc.TeleportToPosition(aNewPosition);
+            }
+        }
+
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(bPlayerNetworkObjectId, out var bObj))
+        {
+            var bPc = bObj.GetComponent<PlayerController>();
+            if (bPc != null)
+            {
+                bPc.TeleportToPosition(bNewPosition);
+            }
+        }
     }
 }
 
