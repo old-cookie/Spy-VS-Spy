@@ -185,14 +185,291 @@ Technical documentation for core systems and components:
 - [GameUI](docs/GameUI.md) – In-game UI: score display, pause menu, item info panel
 - [LobbyUI](docs/LobbyUI.md) – Lobby UI structure, panels, and stylesheet with animations
 
+## System Overview Diagram
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        UI[UI Layer<br/>LobbyUI, GameUI<br/>UI Toolkit]
+        Input[Input System<br/>InputSystem_Actions<br/>Player/UI/MiniGame Maps]
+        PlayerCtrl[PlayerController<br/>Movement, Interaction<br/>Client Authority]
+        ItemEffect[ItemEffectHandler<br/>Effect Application<br/>Timer Management]
+        Animator[ClientNetworkAnimator<br/>Animation Sync<br/>Client Authority]
+    end
+
+    subgraph "Game Logic Layer"
+        GameCtrl[GameController<br/>Match Orchestration<br/>Score Tracking<br/>Singleton]
+        MiniGameMgr[MiniGameManager<br/>Mini-Game Lifecycle<br/>Singleton]
+        ItemSpawnMgr[ItemSpawnManager<br/>Server Spawning<br/>Follow System<br/>Singleton]
+        LevelState[LevelSelectionState<br/>Persistent State<br/>DontDestroyOnLoad]
+    end
+
+    subgraph "Network Layer"
+        NetMgr[NetworkManager<br/>Netcode for GameObjects<br/>Connection Management]
+        NetVars[NetworkVariables<br/>- Team Scores<br/>- Team Assignment<br/>- Level Selection]
+        RPCs[RPCs<br/>- ServerRpc<br/>- ClientRpc]
+    end
+
+    subgraph "Gameplay Components"
+        Team[TeamMember<br/>Team Assignment<br/>Flag State]
+        Flag[FlagTrigger<br/>Capture Zones<br/>Mini-Game Gate]
+        Chest[ChestController<br/>Item Pickup<br/>Spawn Request]
+        ScoreZone[ScoreZone<br/>Scoring Areas<br/>Team Validation]
+        Item[Item Classes<br/>Consumables<br/>Network Objects]
+    end
+
+    subgraph "Mini-Game Framework"
+        MiniGameBase[MiniGame<br/>Abstract Base<br/>Lifecycle Management]
+        MiniGameTimer[MiniGameTimer<br/>Countdown Logic<br/>Timeout Events]
+        DemoGame[DemoMiniGame<br/>Concrete Implementation]
+    end
+
+    subgraph "Environment"
+        Platforms[Moving Platforms<br/>Elevators, Sliders]
+        Traps[Environmental Hazards<br/>Fake Floors]
+        Indicators[UI Helpers<br/>Floating Arrows]
+    end
+
+    %% Client Layer Connections
+    Input -->|Action Events| PlayerCtrl
+    Input -->|UI Events| UI
+    PlayerCtrl -->|Animation Triggers| Animator
+    PlayerCtrl -->|Apply Effects| ItemEffect
+    UI -->|State Updates| GameCtrl
+
+    %% Player to Gameplay
+    PlayerCtrl -->|Pick Action| Flag
+    PlayerCtrl -->|Pick Action| Chest
+    PlayerCtrl -->|Held Item| Item
+    PlayerCtrl -->|Enter Zone| ScoreZone
+
+    %% Game Logic Connections
+    GameCtrl -->|Spawn Players| NetMgr
+    GameCtrl -->|Update Scores| NetVars
+    GameCtrl -->|Team Assignment| Team
+    MiniGameMgr -->|Instantiate| MiniGameBase
+    MiniGameMgr -->|Player State| PlayerCtrl
+    ItemSpawnMgr -->|Request Spawn| NetMgr
+    ItemSpawnMgr -->|Follow Target| PlayerCtrl
+
+    %% Gameplay Interactions
+    Flag -->|Start Mini-Game| MiniGameMgr
+    Flag -->|Award Flag| Team
+    Chest -->|Request Item| ItemSpawnMgr
+    Item -->|Register Held| PlayerCtrl
+    Item -->|Apply Effect| ItemEffect
+    ScoreZone -->|Validate & Score| Team
+    ScoreZone -->|Add Points| GameCtrl
+    Team -->|Notify Team| GameCtrl
+
+    %% Mini-Game Framework
+    MiniGameBase -->|Use Timer| MiniGameTimer
+    DemoGame -.->|Inherits| MiniGameBase
+    MiniGameBase -->|End Event| MiniGameMgr
+
+    %% Network Synchronization
+    NetMgr -->|Spawn Objects| Item
+    NetMgr -->|Replicate State| NetVars
+    NetMgr -->|Execute RPCs| RPCs
+    RPCs -->|Server Authority| GameCtrl
+    RPCs -->|Server Authority| ItemSpawnMgr
+    RPCs -->|Client Callbacks| PlayerCtrl
+
+    %% Persistent State
+    LevelState -->|Selected Level| NetMgr
+    LevelState -->|Winning Team| GameCtrl
+    GameCtrl -->|Set Winner| LevelState
+
+    %% Environment Interactions
+    PlayerCtrl -->|Ride Platform| Platforms
+    PlayerCtrl -->|Trigger Trap| Traps
+
+    %% Styling
+    classDef clientLayer fill:#4A90E2,stroke:#2E5C8A,stroke-width:2px,color:#fff
+    classDef gameLogic fill:#50C878,stroke:#2E7D4E,stroke-width:2px,color:#fff
+    classDef network fill:#E94B3C,stroke:#A63328,stroke-width:2px,color:#fff
+    classDef gameplay fill:#F5A623,stroke:#C17D11,stroke-width:2px,color:#fff
+    classDef miniGame fill:#BD10E0,stroke:#7B0B92,stroke-width:2px,color:#fff
+    classDef environment fill:#8B572A,stroke:#5C3A1C,stroke-width:2px,color:#fff
+
+    class UI,Input,PlayerCtrl,ItemEffect,Animator clientLayer
+    class GameCtrl,MiniGameMgr,ItemSpawnMgr,LevelState gameLogic
+    class NetMgr,NetVars,RPCs network
+    class Team,Flag,Chest,ScoreZone,Item gameplay
+    class MiniGameBase,MiniGameTimer,DemoGame miniGame
+    class Platforms,Traps,Indicators environment
+```
+
+## Component Interaction
+```mermaid
+sequenceDiagram
+    participant Player as PlayerController
+    participant Input as Input System
+    participant Chest as ChestController
+    participant Flag as FlagTrigger
+    participant Team as TeamMember
+    participant ItemSpawn as ItemSpawnManager
+    participant MiniGame as MiniGameManager
+    participant GameCtrl as GameController
+    participant ScoreZone as ScoreZone
+    participant ItemEffect as ItemEffectHandler
+    participant NetMgr as NetworkManager
+    participant Item as Item (NetworkObject)
+
+    Note over Player,NetMgr: Match Initialization Flow
+    GameCtrl->>NetMgr: Spawn Players at spawnPos[]
+    NetMgr->>Player: Instantiate with NetworkObject
+    NetMgr->>Team: Assign team via SetTeamRpc()
+    Team->>GameCtrl: SetLocalPlayerTeam() notification
+    GameCtrl->>GameCtrl: Update UI with team scores
+
+    Note over Player,NetMgr: Item Acquisition Flow
+    Input->>Player: Pick action pressed
+    Player->>Player: Check nearby chest (proximity/trigger)
+    Player->>Chest: HandlePickStarted(transform)
+    Chest->>Chest: Validate IsLocalPlayer
+    Chest->>ItemSpawn: RequestSpawnItem(playerNetworkObjectId, chestCenter)
+    
+    alt Non-Server Client
+        ItemSpawn->>NetMgr: RequestSpawnItemRpc() to server
+    end
+    
+    ItemSpawn->>ItemSpawn: Select random prefab from itemPrefabs[]
+    ItemSpawn->>Item: Instantiate at chest position
+    ItemSpawn->>NetMgr: NetworkObject.Spawn(true)
+    NetMgr-->>Player: Replicate spawn to all clients
+    ItemSpawn->>Player: NotifyItemSpawnedClientRpc() to owner
+    
+    Player->>Player: Wait one frame for spawn completion
+    Player->>Player: RegisterHeldItemFromNetwork(item)
+    ItemSpawn->>ItemSpawn: Start ItemFollowRoutine() coroutine
+    
+    loop Item Follow
+        ItemSpawn->>ItemSpawn: Lerp item to player anchor + itemFollowHeight
+    end
+
+    Note over Player,NetMgr: Flag Capture Flow (with Mini-Game)
+    Player->>Flag: OnTriggerEnter (Player tag)
+    Flag->>Team: Check IsOnTeam(flagTeam) && !HasFlag
+    Flag->>Player: SetCurrentFlag(this)
+    
+    Input->>Player: Pick action pressed
+    Player->>Player: Play pick animation
+    Player->>Flag: PerformPickup()
+    
+    Flag->>Flag: Determine IsLocalPlayer
+    
+    alt Local Player
+        Flag->>MiniGame: StartRandomMiniGame(player, onSuccess)
+        MiniGame->>MiniGame: Select random prefab from availableMiniGamePrefabs
+        MiniGame->>MiniGame: Instantiate mini-game prefab
+        MiniGame->>Player: SetPlayingMiniGame(true)
+        MiniGame->>MiniGame: Subscribe to OnMiniGameEnded event
+        MiniGame->>MiniGame: StartGame(player)
+        
+        alt Mini-Game Success (result == 1)
+            MiniGame->>Flag: Execute onSuccess callback
+            Flag->>Team: PickUpFlagRpc()
+            Team->>GameCtrl: Notify flag state change
+        else Mini-Game Failure (result == -1)
+            MiniGame->>MiniGame: No flag awarded
+        else ESC Exit (result == 0)
+            MiniGame->>MiniGame: Exit without flag
+        end
+        
+        MiniGame->>Player: SetPlayingMiniGame(false)
+        MiniGame->>Player: OnMiniGameResult(result)
+        MiniGame->>MiniGame: Destroy mini-game instance
+    else Non-Local Player
+        Flag->>Team: PickUpFlagRpc() directly
+    end
+
+    Note over Player,NetMgr: Item Usage Flow
+    Input->>Player: Use action pressed
+    Player->>Player: Check HasHeldItem()
+    Player->>Item: Consume()
+    Item->>ItemEffect: ApplyEffect(itemType)
+    
+    alt Speed Boost (cookie)
+        ItemEffect->>ItemEffect: Set activeBoostMultiplier & timer
+    else Slow Down (banana/rust gear)
+        ItemEffect->>NetMgr: ApplySlowDownToOthersServerRpc()
+        NetMgr->>ItemEffect: ApplySlowDownClientRpc() on opponents
+    else Jump Boost (super drink)
+        ItemEffect->>ItemEffect: Set activeJumpMultiplier & timer
+    else Item Steal (magnet)
+        ItemEffect->>NetMgr: ApplyItemStealServerRpc()
+        NetMgr->>Player: ExecuteItemSteal() on opponent
+        Player->>ItemSpawn: ChangeItemOwner() notification
+        ItemSpawn->>ItemSpawn: Update follow target to stealer
+    else Teleport
+        ItemEffect->>NetMgr: TeleportToSpawnServerRpc()
+        NetMgr->>Player: TeleportToSpawnClientRpc() on all clients
+    end
+    
+    Item->>Chest: NotifyItemConsumed()
+    Item->>NetMgr: DespawnItem()
+    ItemSpawn->>ItemSpawn: StopItemFollow(itemNetworkObjectId)
+
+    Note over Player,NetMgr: Scoring Flow
+    Player->>ScoreZone: OnTriggerEnter (with flag)
+    ScoreZone->>Team: Check IsOnTeam(scoreTeam) && HasFlag
+    ScoreZone->>Team: TryScoreFlag()
+    Team->>Team: Clear flag state via ClearFlagRpc()
+    ScoreZone->>GameCtrl: AddScoreRpc(scoreTeam, pointsPerScore)
+    GameCtrl->>GameCtrl: Update NetworkVariable scores
+    GameCtrl->>GameCtrl: Update UI score display
+    
+    alt Score Reaches pointsToWin
+        GameCtrl->>GameCtrl: Set matchEnded = true
+        GameCtrl->>Player: PlayOutcomeAnimation() for all players
+        
+        alt Owner Client (Client Authority)
+            Player->>Player: Freeze Rigidbody, lock rotation
+            Player->>Player: Play win/lose animator state
+        else Non-Owner Client
+            Player->>NetMgr: PlayOutcomeAnimationClientRpc()
+            NetMgr->>Player: Owner plays animation locally
+        end
+        
+        GameCtrl->>GameCtrl: Show EndGameContainer with countdown
+        GameCtrl->>GameCtrl: SetWinningTeam() in LevelSelectionState
+        GameCtrl->>NetMgr: Return to lobby scene
+    end
+
+    Note over Player,NetMgr: Pause Flow
+    Input->>Player: ESC pressed
+    
+    alt In Mini-Game
+        Player->>MiniGame: ExitCurrentMiniGame()
+        MiniGame->>MiniGame: Call ExitGame() on active instance
+    else Normal Gameplay
+        Player->>GameCtrl: TogglePauseMenu()
+        GameCtrl->>GameCtrl: Show/hide PauseMenu UI
+        GameCtrl->>GameCtrl: Set IsPauseMenuOpen flag
+        Player->>Player: Check IsPauseMenuOpen before input
+    end
+
+    Note over Player,NetMgr: Effect Timer Update (Per Frame)
+    loop Every Frame
+        ItemEffect->>ItemEffect: Decrement active timers (speedBoost, slowDown, jumpBoost)
+        
+        alt Timer Expired
+            ItemEffect->>ItemEffect: Reset multiplier to 1.0
+        end
+        
+        Player->>ItemEffect: Read CurrentSpeedMultiplier for movement
+        Player->>ItemEffect: Read CurrentJumpMultiplier for jump
+    end
+```
+
 ## Assets
-[3D Icons - Game Basic1](https://assetstore.unity.com/packages/3d/gui/3d-icons-game-basic1-258130)
-[Casual Game Music Pack](https://assetstore.unity.com/packages/audio/music/casual-game-music-pack-53575)
-[Direction arrows](https://sketchfab.com/3d-models/direction-arrows-75c7bf0dcbf041769aff1296b7b1cbf0)
-[GUI Pro - Simple Casual](https://assetstore.unity.com/packages/2d/gui/gui-pro-simple-casual-203399)
-[Hyper Casual Chests](https://assetstore.unity.com/packages/3d/props/hyper-casual-chests-211250)
-[Junk Food Pack](https://assetstore.unity.com/packages/3d/props/food/junk-food-pack-184367)
-[KayKit - Prototype Bits (for Unity)](https://assetstore.unity.com/packages/3d/environments/kaykit-prototype-bits-for-unity-285107)
+- [3D Icons - Game Basic1](https://assetstore.unity.com/packages/3d/gui/3d-icons-game-basic1-258130)
+- [Casual Game Music Pack](https://assetstore.unity.com/packages/audio/music/casual-game-music-pack-53575)
+- [Direction arrows](https://sketchfab.com/3d-models/direction-arrows-75c7bf0dcbf041769aff1296b7b1cbf0)
+- [GUI Pro - Simple Casual](https://assetstore.unity.com/packages/2d/gui/gui-pro-simple-casual-203399)
+- [Hyper Casual Chests](https://assetstore.unity.com/packages/3d/props/hyper-casual-chests-211250)
+- [Junk Food Pack](https://assetstore.unity.com/packages/3d/props/food/junk-food-pack-184367)
+- [KayKit - Prototype Bits (for Unity)](https://assetstore.unity.com/packages/3d/environments/kaykit-prototype-bits-for-unity-285107)
 
 ---
 
