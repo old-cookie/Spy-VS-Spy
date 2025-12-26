@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ebb5e43ce875abb4cb852a6059e8fd2b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TestTimerStarter
-  prefabToSpawn: {fileID: 2560423170853170011, guid: 8f173b55202d0234bb2a23941e0fda92, type: 3}
+  prefabToSpawn: {fileID: 1727748364836688372, guid: 0a0886a4dcda1c14484fc1d033195b3a, type: 3}
   startOnSceneLoad: 1
   ensureDisplayVisible: 1
 --- !u!4 &108730568

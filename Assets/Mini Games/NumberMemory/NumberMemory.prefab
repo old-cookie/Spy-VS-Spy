@@ -238,7 +238,6 @@ MonoBehaviour:
   gameTimer: {fileID: 819790368284956202}
   showDuration: 2.5
   timeLimit: 22
-  numberCount: 6
   blinkSpeed: 10
 --- !u!1 &928349328178356617
 GameObject:
