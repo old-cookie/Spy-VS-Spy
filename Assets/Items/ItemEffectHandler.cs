@@ -39,13 +39,13 @@ public class ItemEffectHandler : NetworkBehaviour
     /// </summary>
     [Header("Jump Boost Settings (Super Drink)")]
     [SerializeField, Range(1f, 5f)]
-    private float jumpBoostMultiplier = 1.5f;
+    private float jumpBoostMultiplier = 6f;
 
     /// <summary>
     /// Duration in seconds for the jump boost effect.
     /// </summary>
     [SerializeField, Min(0f)]
-    private float jumpBoostDuration = 4f;
+    private float jumpBoostDuration = 5f;
 
     /// <summary>
     /// Multiplier applied to slow down other players when rust gear is used.

@@ -12,8 +12,13 @@ GameObject:
   - component: {fileID: -5754084199372789682}
   - component: {fileID: -7511558181221131132}
   - component: {fileID: 4444527283219672849}
+  - component: {fileID: 5960092985509605097}
   - component: {fileID: 6022651382086077611}
   - component: {fileID: 5859882603872583287}
+  - component: {fileID: 6150810903927452236}
+  - component: {fileID: 2875033672216704599}
+  - component: {fileID: 6351713176069401505}
+  - component: {fileID: 65121427860288530}
   m_Layer: 0
   m_Name: Can_A
   m_TagString: Untagged
@@ -118,6 +123,28 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &5960092985509605097
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1afef7060eb94a84d9fc8b5b7fc09a4b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemEffectHandler
+  ShowTopMostFoldoutHeaderGroup: 1
+  speedBoostMultiplier: 2
+  speedBoostDuration: 5
+  slowDownMultiplier: 0.5
+  slowDownDuration: 3
+  jumpBoostMultiplier: 2.5
+  jumpBoostDuration: 20
+  rustGearSlowDownMultiplier: 0.2
+  rustGearSlowDownDuration: 10
+  swapRemoteRange: 0
 --- !u!114 &6022651382086077611
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -133,6 +160,12 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   itemType: super drink
   itemDescription: Briefly increases jump height and aerial mobility
+  useVfxPrefab: {fileID: 4597324245859296335, guid: d20be45c9c74f15448186674946c1bc7, type: 3}
+  attachUseVfxToPlayer: 1
+  useVfxLocalOffset: {x: 0, y: 0.1, z: 0}
+  matchUseVfxRotationToPlayer: 1
+  useVfxLocalEulerOffset: {x: -90, y: 0, z: 0}
+  useVfxDestroyAfterSeconds: 0
 --- !u!114 &5859882603872583287
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -179,3 +212,100 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!95 &6150810903927452236
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 0}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!54 &2875033672216704599
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!114 &6351713176069401505
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e281286a62e4e384c9949315583c60ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TeamMember
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &65121427860288530
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149155446097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3acd11b0bf98e504d9a67c47b5c0cf76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
+  ShowTopMostFoldoutHeaderGroup: 1
+  playerSpeed: 5
+  jumpForce: 6
+  playerRenderers: []
+  blueTeamMaterial: {fileID: 2100000, guid: fd090030d4db9c44589d8400e6cb5c95, type: 2}
+  redTeamMaterial: {fileID: 2100000, guid: 1ecc1fe2942d2ae4e83386fd56fba1b9, type: 2}
+  groundCheckPos: {fileID: 0}
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 0
+  groundDistance: 0.4
+  isGround: 0
+  stepHeight: 0.5
+  stepCheckDistance: 0.3
+  stepSmoothSpeed: 10
+  rotationSmoothSpeed: 10
+  pickLockDuration: 1.3
+  chestPickupRadius: 1.25
+  flagPickupRadius: 1.25
+  fallResetThreshold: -20
+  floorSnapHeightOffset: 2
+  animator: {fileID: 3674305575702069602, guid: 97bd4365f2fbca24c9612105f55946ec, type: 3}
+  isLand: 1

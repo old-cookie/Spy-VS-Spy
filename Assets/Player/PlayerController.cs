@@ -910,6 +910,13 @@ public class PlayerController : NetworkBehaviour
         }
 
         var consumedType = heldItemType;
+
+        var netObj = GetComponent<NetworkObject>();
+        if (netObj != null)
+        {
+            heldItem.PlayUseVfxForPlayer(netObj.NetworkObjectId);
+        }
+
         heldItem.Consume();
         heldItem = null;
         heldItemType = null;

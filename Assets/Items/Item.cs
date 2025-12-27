@@ -24,6 +24,25 @@ public class Item : NetworkBehaviour
     [SerializeField]
     private string itemDescription = string.Empty;
 
+    [Header("Use VFX")]
+    [SerializeField]
+    private GameObject useVfxPrefab;
+
+    [SerializeField]
+    private bool attachUseVfxToPlayer = true;
+
+    [SerializeField]
+    private Vector3 useVfxLocalOffset = Vector3.zero;
+
+    [SerializeField]
+    private bool matchUseVfxRotationToPlayer = true;
+
+    [SerializeField]
+    private Vector3 useVfxLocalEulerOffset = Vector3.zero;
+
+    [SerializeField, Min(0f)]
+    private float useVfxDestroyAfterSeconds = 2f;
+
     /// <summary>
     /// Gets the item type identifier.
     /// </summary>
@@ -59,6 +78,90 @@ public class Item : NetworkBehaviour
     {
         NotifyOwnerConsumed();
         DespawnItem();
+    }
+
+    /// <summary>
+    /// Plays the optional "use" VFX on a player (all clients). Safe to call even if no VFX is assigned.
+    /// Call this BEFORE Consume/Discard so the RPC arrives before despawn.
+    /// </summary>
+    public void PlayUseVfxForPlayer(ulong playerNetworkObjectId)
+    {
+        if (useVfxPrefab == null)
+        {
+            return;
+        }
+
+        if (IsServer)
+        {
+            PlayUseVfxClientRpc(playerNetworkObjectId);
+        }
+        else
+        {
+            RequestPlayUseVfxServerRpc(playerNetworkObjectId);
+        }
+    }
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestPlayUseVfxServerRpc(ulong playerNetworkObjectId)
+    {
+        PlayUseVfxClientRpc(playerNetworkObjectId);
+    }
+
+    [ClientRpc]
+    private void PlayUseVfxClientRpc(ulong playerNetworkObjectId)
+    {
+        if (useVfxPrefab == null)
+        {
+            return;
+        }
+
+        if (NetworkManager.Singleton == null)
+        {
+            return;
+        }
+
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerNetworkObjectId, out var playerObj))
+        {
+            return;
+        }
+
+        var parent = attachUseVfxToPlayer ? playerObj.transform : null;
+        var worldPos = playerObj.transform.TransformPoint(useVfxLocalOffset);
+
+        var baseRot = matchUseVfxRotationToPlayer ? playerObj.transform.rotation : Quaternion.identity;
+        var worldRot = baseRot * Quaternion.Euler(useVfxLocalEulerOffset);
+
+        var go = Instantiate(useVfxPrefab, worldPos, worldRot, parent);
+        if (go == null)
+        {
+            return;
+        }
+
+        var ps = go.GetComponentInChildren<ParticleSystem>();
+        if (ps != null)
+        {
+            var main = ps.main;
+            var lifetime = main.duration;
+
+            if (main.startLifetime.mode == ParticleSystemCurveMode.Constant)
+            {
+                lifetime += main.startLifetime.constant;
+            }
+
+            if (lifetime <= 0f)
+            {
+                lifetime = useVfxDestroyAfterSeconds;
+            }
+
+            if (lifetime > 0f)
+            {
+                Destroy(go, lifetime);
+            }
+        }
+        else if (useVfxDestroyAfterSeconds > 0f)
+        {
+            Destroy(go, useVfxDestroyAfterSeconds);
+        }
     }
 
     /// <summary>

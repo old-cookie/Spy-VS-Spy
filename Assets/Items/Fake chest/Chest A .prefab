@@ -226,6 +226,12 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   itemType: fake chest
   itemDescription: 
+  useVfxPrefab: {fileID: 7414423688252830081, guid: 343bcde30a7b80548a49df464c00dc5a, type: 3}
+  attachUseVfxToPlayer: 1
+  useVfxLocalOffset: {x: 0, y: 3.2, z: 0}
+  matchUseVfxRotationToPlayer: 1
+  useVfxLocalEulerOffset: {x: 0, y: 0, z: 0}
+  useVfxDestroyAfterSeconds: 2
   fakeChestPrefab: {fileID: 1318005759483055872, guid: bc0a44eadcfd6b94e82560adc80576ba, type: 3}
   forwardOffset: 0.5
   heightOffset: 0
