@@ -369,7 +369,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a366b0c7e044054da1df616ea5d8627, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MemoryMatchGame
-  miniGameName: Mini Game
+  miniGameName: Memory Match
   gridColumns: 4
   gridRows: 3
   matchDelay: 0.5
