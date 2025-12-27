@@ -840,16 +840,6 @@ public class GameController : NetworkBehaviour
     /// </summary>
     private void ShutdownNetworkAndLoadLobby()
     {
-        // Unload any loaded level scenes before returning to lobby
-        for (int i = 0; i < SceneManager.sceneCount; i++)
-        {
-            Scene scene = SceneManager.GetSceneAt(i);
-            if (scene.isLoaded && scene.name != "GameScene" && scene.name != lobbySceneName)
-            {
-                SceneManager.UnloadSceneAsync(scene);
-            }
-        }
-
         if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.Shutdown();
@@ -858,6 +848,7 @@ public class GameController : NetworkBehaviour
 
         if (!string.IsNullOrWhiteSpace(lobbySceneName))
         {
+            // Load the lobby scene, which will automatically unload other scenes
             SceneManager.LoadScene(lobbySceneName);
         }
     }
