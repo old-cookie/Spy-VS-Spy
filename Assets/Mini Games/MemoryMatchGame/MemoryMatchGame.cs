@@ -33,6 +33,9 @@ public class MemoryMatchGame : MiniGame
     private Text matchesText;
 
     [SerializeField]
+    private Text endText;  // 加這一行
+
+    [SerializeField]
     private Button restartButton;
 
     [Header("Prefabs")]
@@ -73,6 +76,20 @@ public class MemoryMatchGame : MiniGame
         {
             restartButton.onClick.RemoveAllListeners();
             restartButton.onClick.AddListener(RestartGame);
+        }
+
+        // 隱藏 endText，顯示其他 UI
+        if (endText != null)
+        {
+            endText.gameObject.SetActive(false);
+        }
+        if (timeText != null)
+        {
+            timeText.gameObject.SetActive(true);
+        }
+        if (matchesText != null)
+        {
+            matchesText.gameObject.SetActive(true);
         }
 
         InitializeGame();
@@ -266,19 +283,41 @@ public class MemoryMatchGame : MiniGame
     private void EndGameWin()
     {
         gameActive = false;
-
         StartCoroutine(ShowResultThenComplete(true));
     }
 
     private void EndGameFail()
     {
         gameActive = false;
-
         StartCoroutine(ShowResultThenComplete(false));
     }
 
     private IEnumerator ShowResultThenComplete(bool success)
     {
+        // 隱藏遊戲 UI
+        if (timeText != null)
+        {
+            timeText.gameObject.SetActive(false);
+        }
+        if (matchesText != null)
+        {
+            matchesText.gameObject.SetActive(false);
+        }
+
+        // 顯示結束文字
+        if (endText != null)
+        {
+            endText.gameObject.SetActive(true);
+            if (success)
+            {
+                endText.text = $"Success!\nMatches: {matchedPairs}/{gridColumns * gridRows / 2}";
+            }
+            else
+            {
+                endText.text = $"Time's Up!\nMatches: {matchedPairs}/{gridColumns * gridRows / 2}";
+            }
+        }
+
         yield return waitForSeconds1_5;
 
         if (success)
