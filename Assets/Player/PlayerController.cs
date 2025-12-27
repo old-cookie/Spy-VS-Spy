@@ -150,6 +150,7 @@ public class PlayerController : NetworkBehaviour
     private bool wasFacingRightBeforePick;
     private bool canPickChest;
     private ChestController currentChest;
+    private FakeChestTrap currentFakeChest;
     private Item heldItem;
     private string heldItemType;
     private ItemEffectHandler itemEffectHandler;
@@ -549,7 +550,11 @@ public class PlayerController : NetworkBehaviour
         StartPickLock();
         
         Item newItem = null;
-        if (currentChest != null)
+        if (currentFakeChest != null)
+        {
+            currentFakeChest.HandlePickStarted(transform);
+        }
+        else if (currentChest != null)
         {
             newItem = currentChest.HandlePickStarted(transform);
         }
@@ -597,7 +602,7 @@ public class PlayerController : NetworkBehaviour
     /// </summary>
     private void TryFindNearbyChest()
     {
-        if (canPickChest && currentChest != null)
+        if (canPickChest && (currentChest != null || currentFakeChest != null))
         {
             return;
         }
@@ -605,6 +610,19 @@ public class PlayerController : NetworkBehaviour
         int hitCount = Physics.OverlapSphereNonAlloc(transform.position, chestPickupRadius, overlapResults, ~0, QueryTriggerInteraction.Collide);
         for (int i = 0; i < hitCount; i++)
         {
+            var fakeChest = overlapResults[i].GetComponentInParent<FakeChestTrap>();
+            if (fakeChest == null)
+            {
+                fakeChest = overlapResults[i].GetComponent<FakeChestTrap>();
+            }
+            if (fakeChest != null)
+            {
+                canPickChest = true;
+                currentFakeChest = fakeChest;
+                currentChest = null;
+                return;
+            }
+
             var chest = overlapResults[i].GetComponentInParent<ChestController>();
             if (chest == null)
             {
@@ -614,6 +632,7 @@ public class PlayerController : NetworkBehaviour
             {
                 canPickChest = true;
                 currentChest = chest;
+                currentFakeChest = null;
                 return;
             }
         }
@@ -1073,6 +1092,20 @@ public class PlayerController : NetworkBehaviour
     /// <param name="other">The collider that was entered.</param>
     private void OnTriggerEnter(Collider other)
     {
+        var fakeChest = other.GetComponentInParent<FakeChestTrap>();
+        if (fakeChest == null)
+        {
+            fakeChest = other.GetComponent<FakeChestTrap>();
+        }
+
+        if (fakeChest != null)
+        {
+            canPickChest = true;
+            currentFakeChest = fakeChest;
+            currentChest = null;
+            return;
+        }
+
         // Accept either a tagged chest or any collider under a ChestController to avoid tag mismatch issues
         var chest = other.GetComponentInParent<ChestController>();
         if (chest == null)
@@ -1087,6 +1120,7 @@ public class PlayerController : NetworkBehaviour
 
         canPickChest = true;
         currentChest = chest;
+        currentFakeChest = null;
     }
 
     /// <summary>
@@ -1095,6 +1129,22 @@ public class PlayerController : NetworkBehaviour
     /// <param name="other">The collider that was exited.</param>
     private void OnTriggerExit(Collider other)
     {
+        var fakeChest = other.GetComponentInParent<FakeChestTrap>();
+        if (fakeChest == null)
+        {
+            fakeChest = other.GetComponent<FakeChestTrap>();
+        }
+
+        if (fakeChest != null)
+        {
+            if (fakeChest == currentFakeChest)
+            {
+                canPickChest = false;
+                currentFakeChest = null;
+            }
+            return;
+        }
+
         var chest = other.GetComponentInParent<ChestController>();
         if (chest == null)
         {

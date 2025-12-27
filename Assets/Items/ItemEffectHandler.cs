@@ -149,6 +149,9 @@ public class ItemEffectHandler : NetworkBehaviour
             case "swap remote":
                 SwapRemoteServerRpc(swapRemoteRange);
                 break;
+            case "fake chest":
+                // Handled by FakeChestItem.Consume() placing the trap.
+                break;
             case "poop":
                 // Handled by PoopItem.Consume() spawning projectile.
                 break;
@@ -159,6 +162,31 @@ public class ItemEffectHandler : NetworkBehaviour
             default:
                 break;
         }
+    }
+
+    /// <summary>
+    /// Client-targeted RPC for traps/debuffs to slow (or fully stun) the local player.
+    /// Use slowMultiplier=0 for full stun, or e.g. 0.2 for heavy slow.
+    /// </summary>
+    [ClientRpc]
+    public void ApplyForcedSlowClientRpc(float slowMultiplier, float duration, ClientRpcParams rpcParams = default)
+    {
+        if (!IsLocalPlayer)
+        {
+            return;
+        }
+
+        // Cannot be affected by effects while playing mini game
+        if (IsPlayingMiniGame())
+        {
+            return;
+        }
+
+        slowMultiplier = Mathf.Clamp01(slowMultiplier);
+        duration = Mathf.Max(0f, duration);
+
+        activeSlowMultiplier = slowMultiplier;
+        slowDownTimer = duration;
     }
 
     /// <summary>
