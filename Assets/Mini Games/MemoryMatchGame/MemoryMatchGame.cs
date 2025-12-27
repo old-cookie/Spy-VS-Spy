@@ -1,16 +1,15 @@
 using UnityEngine;
 using UnityEngine.UI;
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// Memory Match Mini Game - 配對記憶遊戲
+/// Memory Match Mini Game - A memory matching card game
 /// </summary>
 public class MemoryMatchGame : MiniGame
 {
-    [Header("遊戲設定")]
+    [Header("Game Settings")]
     [SerializeField]
     private int gridColumns = 4;
 
@@ -26,7 +25,7 @@ public class MemoryMatchGame : MiniGame
     [SerializeField]
     private float gameTimeLimit = 60f;
 
-    [Header("UI 參考")]
+    [Header("UI References")]
     [SerializeField]
     private Transform gameBoard;
 
@@ -39,15 +38,15 @@ public class MemoryMatchGame : MiniGame
     [SerializeField]
     private Button restartButton;
 
-    [Header("預製體")]
+    [Header("Prefabs")]
     [SerializeField]
     private GameObject cardPrefab;
 
-    [Header("圖片列表")]
+    [Header("Image List")]
     [SerializeField]
     private Sprite[] imageList = new Sprite[12];
 
-    private List<MemoryCard> cards = new List<MemoryCard>();
+    private readonly List<MemoryCard> cards = new();
     private Sprite[] images;
     private float remainingTime;
     private int matchedPairs = 0;
@@ -56,16 +55,12 @@ public class MemoryMatchGame : MiniGame
     private bool isCheckingMatch = false;
     private bool gameActive = true;
 
-    private WaitForSeconds waitForFlipDuration;
     private WaitForSeconds waitForMatchDelay;
     private WaitForSeconds waitForSeconds1_5;
 
     protected override void OnGameStart()
     {
-        Debug.Log("=== Memory Match Game Started ===");
-
-        // 初始化 WaitForSeconds
-        waitForFlipDuration = new WaitForSeconds(flipDuration);
+        // Initialize WaitForSeconds
         waitForMatchDelay = new WaitForSeconds(matchDelay);
         waitForSeconds1_5 = new WaitForSeconds(1.5f);
 
@@ -76,7 +71,7 @@ public class MemoryMatchGame : MiniGame
         firstFlippedCard = null;
         secondFlippedCard = null;
 
-        // 設定重新開始按鈕
+        // Setup restart button
         if (restartButton != null)
         {
             restartButton.onClick.RemoveAllListeners();
@@ -88,19 +83,17 @@ public class MemoryMatchGame : MiniGame
 
     private void InitializeGame()
     {
-        Debug.Log("=== 遊戲初始化開始 ===");
-
         if (cardPrefab == null)
         {
-            Debug.LogError("cardPrefab 未指定！");
+            Debug.LogError("cardPrefab not assigned!");
             FailGame();
             return;
         }
 
-        // 檢查圖片
+        // Check images
         if (imageList == null || imageList.Length == 0)
         {
-            Debug.LogError("圖片列表為空！");
+            Debug.LogError("Image list is empty!");
             FailGame();
             return;
         }
@@ -108,7 +101,7 @@ public class MemoryMatchGame : MiniGame
         ResetGameState();
         ResetUITexts();
 
-        // 清空舊卡片
+        // Clear old cards
         foreach (Transform child in gameBoard)
         {
             Destroy(child.gameObject);
@@ -116,11 +109,11 @@ public class MemoryMatchGame : MiniGame
 
         cards.Clear();
 
-        // 初始化 images 陣列
+        // Initialize images array
         int totalCards = gridColumns * gridRows;
         images = new Sprite[totalCards];
 
-        // 建立卡片對
+        // Create card pairs
         int pairsCount = totalCards / 2;
         for (int i = 0; i < pairsCount; i++)
         {
@@ -129,7 +122,7 @@ public class MemoryMatchGame : MiniGame
             images[pairsCount + i] = imageList[imageIndex];
         }
 
-        // 打亂順序
+        // Shuffle order
         for (int i = images.Length - 1; i > 0; i--)
         {
             int randomIndex = UnityEngine.Random.Range(0, i + 1);
@@ -138,7 +131,7 @@ public class MemoryMatchGame : MiniGame
             images[randomIndex] = temp;
         }
 
-        // 建立卡片物件
+        // Create card objects
         for (int i = 0; i < images.Length; i++)
         {
             GameObject cardObj = Instantiate(cardPrefab, gameBoard);
@@ -146,17 +139,13 @@ public class MemoryMatchGame : MiniGame
 
             if (card == null)
             {
-                Debug.LogError($"卡片 {i} 沒有 MemoryCard 腳本！");
+                Debug.LogError($"Card {i} does not have MemoryCard script!");
                 continue;
             }
 
             card.Initialize(i, images[i], OnCardFlipped);
             cards.Add(card);
-
-            Debug.Log($"建立卡片 {i}");
         }
-
-        Debug.Log($"遊戲已初始化，共 {cards.Count} 張卡片");
     }
 
     private void ResetGameState()
@@ -189,7 +178,7 @@ public class MemoryMatchGame : MiniGame
         if (!IsActive || !gameActive)
             return;
 
-        // 更新計時器
+        // Update timer
         remainingTime -= Time.deltaTime;
 
         if (remainingTime <= 0)
@@ -200,13 +189,13 @@ public class MemoryMatchGame : MiniGame
             return;
         }
 
-        // 更新 UI
+        // Update UI
         if (timeText != null)
         {
             timeText.text = $"Time: {Mathf.RoundToInt(remainingTime)}s";
         }
 
-        // ESC 鍵退出 - 使用新 Input System
+        // Exit with ESC key - using new Input System
         if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
         {
             ExitGame();
@@ -221,21 +210,21 @@ public class MemoryMatchGame : MiniGame
         if (card.IsFlipped || card.IsMatched)
             return;
 
-        // 翻轉卡片
+        // Flip card
         card.Flip();
 
         if (firstFlippedCard == null)
         {
-            // 第一張卡片
+            // First card
             firstFlippedCard = card;
         }
         else if (secondFlippedCard == null)
         {
-            // 第二張卡片
+            // Second card
             secondFlippedCard = card;
             isCheckingMatch = true;
 
-            // 檢查是否配對
+            // Check if matched
             StartCoroutine(CheckMatch());
         }
     }
@@ -246,20 +235,18 @@ public class MemoryMatchGame : MiniGame
 
         if (firstFlippedCard.GetImage() == secondFlippedCard.GetImage())
         {
-            // 配對成功
+            // Match successful
             firstFlippedCard.SetMatched();
             secondFlippedCard.SetMatched();
             matchedPairs++;
 
-            Debug.Log($"配對成功！ {matchedPairs}/{gridColumns * gridRows / 2}");
-
-            // 更新 UI
+            // Update UI
             if (matchesText != null)
             {
                 matchesText.text = $"Matches: {matchedPairs}/{gridColumns * gridRows / 2}";
             }
 
-            // 檢查是否全部配對
+            // Check if all matched
             if (matchedPairs == gridColumns * gridRows / 2)
             {
                 gameActive = false;
@@ -268,14 +255,12 @@ public class MemoryMatchGame : MiniGame
         }
         else
         {
-            // 配對失敗，翻回去
+            // Match failed, flip back
             firstFlippedCard.UnFlip();
             secondFlippedCard.UnFlip();
-
-            Debug.Log("配對失敗！");
         }
 
-        // 重置狀態
+        // Reset state
         firstFlippedCard = null;
         secondFlippedCard = null;
         isCheckingMatch = false;
@@ -283,7 +268,6 @@ public class MemoryMatchGame : MiniGame
 
     private void EndGameWin()
     {
-        Debug.Log("=== 遊戲成功 ===");
         gameActive = false;
 
         StartCoroutine(ShowResultThenComplete(true));
@@ -291,7 +275,6 @@ public class MemoryMatchGame : MiniGame
 
     private void EndGameFail()
     {
-        Debug.Log("=== 遊戲失敗 ===");
         gameActive = false;
 
         StartCoroutine(ShowResultThenComplete(false));
@@ -313,7 +296,6 @@ public class MemoryMatchGame : MiniGame
 
     private void RestartGame()
     {
-        Debug.Log("重新開始遊戲");
         InitializeGame();
     }
 }
