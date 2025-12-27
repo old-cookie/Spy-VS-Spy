@@ -228,7 +228,10 @@ MonoBehaviour:
   slowDuration: 3
   slowMultiplier: 0
   maxPickDistance: 2.5
-  triggerVfxPrefab: {fileID: 498699320747605045, guid: 9d0b97952673d8241839ad0c40034667, type: 3}
+  playPlacementVfxOnSpawn: 1
+  placementVfxPrefab: {fileID: 3432958286849152088, guid: cb8f34474a4e3f2408bd6ec7adf238f8, type: 3}
+  placementVfxDestroyAfterSeconds: 3
+  triggerVfxPrefab: {fileID: 4266394424014300170, guid: 7c4288529d3884a408f57c63b03497b9, type: 3}
   triggerVfxDestroyAfterSeconds: 3
   despawnAfterSeconds: 0
 --- !u!114 &2587882535008686512

@@ -180,10 +180,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlacedBomb
   ShowTopMostFoldoutHeaderGroup: 1
-  explosionForce: 20
+  explosionForce: 15
   explosionRadius: 3
   explosionUpforce: 10
-  transparencyStartTime: 2
+  transparencyStartTime: 60
   semiTransparentAlpha: 0.5
   fadeOutDuration: 1
 --- !u!65 &-5335073896637113975

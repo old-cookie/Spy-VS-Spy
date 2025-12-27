@@ -135,7 +135,13 @@ public class ItemSpawnManager : NetworkBehaviour
         }
 
         // Spawn item at chest position
+        // Some items need a different visual orientation while being held/following.
         var spawnRotation = Quaternion.Euler(-45f, 0f, 0f);
+        var prefabItem = selectedPrefab.GetComponent<Item>();
+        if (prefabItem != null && string.Equals(prefabItem.ItemType, "fake chest", System.StringComparison.OrdinalIgnoreCase))
+        {
+            spawnRotation = Quaternion.Euler(0f, 180f, 0f);
+        }
         var itemObject = Instantiate(selectedPrefab, chestPosition, spawnRotation);
         itemObject.name = $"Item_{playerNetworkObjectId}";
 

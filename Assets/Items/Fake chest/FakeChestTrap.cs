@@ -23,6 +23,15 @@ public class FakeChestTrap : NetworkBehaviour
 
     [Header("VFX")]
     [SerializeField]
+    private bool playPlacementVfxOnSpawn = true;
+
+    [SerializeField]
+    private GameObject placementVfxPrefab;
+
+    [SerializeField, Min(0f)]
+    private float placementVfxDestroyAfterSeconds = 3f;
+
+    [SerializeField]
     private GameObject triggerVfxPrefab;
 
     [SerializeField, Min(0f)]
@@ -45,6 +54,12 @@ public class FakeChestTrap : NetworkBehaviour
         base.OnNetworkSpawn();
         spawnTime = Time.time;
         triggered = false;
+
+        // Play placement VFX once when the trap appears (client-side visual only).
+        if (IsClient && playPlacementVfxOnSpawn && placementVfxPrefab != null)
+        {
+            SpawnLocalVfx(placementVfxPrefab, transform.position, placementVfxDestroyAfterSeconds);
+        }
     }
 
     private void Update()
@@ -151,7 +166,17 @@ public class FakeChestTrap : NetworkBehaviour
             return;
         }
 
-        var go = Instantiate(triggerVfxPrefab, worldPosition, Quaternion.identity);
+        SpawnLocalVfx(triggerVfxPrefab, worldPosition, triggerVfxDestroyAfterSeconds);
+    }
+
+    private void SpawnLocalVfx(GameObject vfxPrefab, Vector3 worldPosition, float fallbackDestroyAfterSeconds)
+    {
+        if (vfxPrefab == null)
+        {
+            return;
+        }
+
+        var go = Instantiate(vfxPrefab, worldPosition, Quaternion.identity);
         if (go == null)
         {
             return;
@@ -163,19 +188,26 @@ public class FakeChestTrap : NetworkBehaviour
         {
             var main = ps.main;
             var lifetime = main.duration;
+
+            // Add some common lifetime contributions when using constant lifetimes.
             if (main.startLifetime.mode == ParticleSystemCurveMode.Constant)
             {
                 lifetime += main.startLifetime.constant;
             }
+
             if (lifetime <= 0f)
             {
-                lifetime = triggerVfxDestroyAfterSeconds;
+                lifetime = fallbackDestroyAfterSeconds;
             }
-            Destroy(go, lifetime);
+
+            if (lifetime > 0f)
+            {
+                Destroy(go, lifetime);
+            }
         }
-        else if (triggerVfxDestroyAfterSeconds > 0f)
+        else if (fallbackDestroyAfterSeconds > 0f)
         {
-            Destroy(go, triggerVfxDestroyAfterSeconds);
+            Destroy(go, fallbackDestroyAfterSeconds);
         }
     }
 

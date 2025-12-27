@@ -67,7 +67,7 @@ public class FakeChestItem : Item
         var pos = SnapToNearestFloor(desiredPos);
 
         // Rotate 180 degrees horizontally (Y axis) to face the opposite direction.
-        var rot = Quaternion.Euler(0f, playerTransform.eulerAngles.y + 180f, 0f);
+        var rot = Quaternion.Euler(0f, playerTransform.eulerAngles.y + 0f, 0f);
         var go = Instantiate(fakeChestPrefab, pos, rot);
 
         var netObj = go.GetComponent<NetworkObject>();
