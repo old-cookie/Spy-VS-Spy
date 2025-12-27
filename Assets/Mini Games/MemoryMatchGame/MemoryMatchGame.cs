@@ -17,9 +17,6 @@ public class MemoryMatchGame : MiniGame
     private int gridRows = 3;
 
     [SerializeField]
-    private float flipDuration = 0.3f;
-
-    [SerializeField]
     private float matchDelay = 0.5f;
 
     [SerializeField]
