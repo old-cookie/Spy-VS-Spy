@@ -106,7 +106,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2541250793
+  GlobalObjectIdHash: 442133759
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -136,7 +136,7 @@ MonoBehaviour:
   itemDescription: Instantly teleports you back to your spawn point
   useVfxPrefab: {fileID: 5004019269174722963, guid: 2e8d2b4387e2b964493239bb919a2def, type: 3}
   attachUseVfxToPlayer: 1
-  useVfxLocalOffset: {x: 0, y: 0, z: 0}
+  useVfxLocalOffset: {x: 0, y: 1.2, z: 0}
   matchUseVfxRotationToPlayer: 1
   useVfxLocalEulerOffset: {x: 0, y: 0, z: 0}
   useVfxDestroyAfterSeconds: 2

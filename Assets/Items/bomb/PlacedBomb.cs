@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using System.Collections;
 
 /// <summary>
 /// The actual bomb placed on the ground that explodes on contact.
@@ -45,9 +46,41 @@ public class PlacedBomb : NetworkBehaviour
     [SerializeField]
     private float fadeOutDuration = 1f;
 
+    [Header("VFX")]
+    [SerializeField]
+    private bool playPlacementVfxOnSpawn = true;
+
+    [SerializeField]
+    private GameObject placementVfxPrefab;
+
+    [SerializeField]
+    private Vector3 placementVfxLocalOffset = Vector3.zero;
+
+    [SerializeField]
+    private Vector3 placementVfxLocalEulerOffset = Vector3.zero;
+
+    [SerializeField, Min(0f)]
+    private float placementVfxDestroyAfterSeconds = 3f;
+
+    [SerializeField]
+    private GameObject triggerVfxPrefab;
+
+    [SerializeField]
+    private Vector3 triggerVfxLocalOffset = Vector3.zero;
+
+    [SerializeField]
+    private Vector3 triggerVfxLocalEulerOffset = Vector3.zero;
+
+    [SerializeField, Min(0f)]
+    private float triggerVfxDestroyAfterSeconds = 3f;
+
+    [SerializeField, Min(0f)]
+    private float despawnDelayAfterTriggerSeconds = 0.1f;
+
     private float deploymentTime;
     private bool hasExploded;
     private bool startedFadeOut;
+    private bool despawnScheduled;
     private Renderer bombRenderer;
     private Color originalColor;
     private Collider cachedCollider;
@@ -64,8 +97,15 @@ public class PlacedBomb : NetworkBehaviour
         deploymentTime = Time.time;
         hasExploded = false;
         startedFadeOut = false;
+        despawnScheduled = false;
         CacheRenderer();
         CacheCollider();
+
+        // Placement VFX: runs on every client because this object is network-spawned.
+        if (IsClient && playPlacementVfxOnSpawn && placementVfxPrefab != null)
+        {
+            SpawnLocalVfx(placementVfxPrefab, placementVfxLocalOffset, placementVfxLocalEulerOffset, placementVfxDestroyAfterSeconds);
+        }
     }
 
     private void Update()
@@ -153,6 +193,10 @@ public class PlacedBomb : NetworkBehaviour
         }
 
         Debug.Log($"[PlacedBomb] PlayerController found: {playerController.name}");
+
+        // Play VFX immediately when stepped on.
+        PlaySteppedOnVfxClientRpc();
+
         // Explode and blow away nearby players
         ExplodeBomb();
     }
@@ -184,7 +228,20 @@ public class PlacedBomb : NetworkBehaviour
             return;
         }
 
+        // Play VFX immediately when stepped on.
+        PlaySteppedOnVfxClientRpc();
+
         ExplodeBomb();
+    }
+
+    [ClientRpc]
+    private void PlaySteppedOnVfxClientRpc()
+    {
+        // Trigger VFX should show on the bomb itself.
+        if (triggerVfxPrefab != null)
+        {
+            SpawnLocalVfx(triggerVfxPrefab, triggerVfxLocalOffset, triggerVfxLocalEulerOffset, triggerVfxDestroyAfterSeconds);
+        }
     }
 
     /// <summary>
@@ -242,7 +299,31 @@ public class PlacedBomb : NetworkBehaviour
         // Play explosion effect on all clients
         PlayExplosionEffectClientRpc();
 
-        // Despawn the bomb
+        // Despawn slightly later so ClientRpcs (including stepped-on VFX) are reliably delivered.
+        ScheduleDespawn();
+    }
+
+    private void ScheduleDespawn()
+    {
+        if (!IsServer || despawnScheduled)
+        {
+            return;
+        }
+
+        despawnScheduled = true;
+        if (despawnDelayAfterTriggerSeconds <= 0f)
+        {
+            DespawnBomb();
+        }
+        else
+        {
+            StartCoroutine(DespawnAfterDelay(despawnDelayAfterTriggerSeconds));
+        }
+    }
+
+    private IEnumerator DespawnAfterDelay(float seconds)
+    {
+        yield return new WaitForSeconds(seconds);
         DespawnBomb();
     }
 
@@ -297,8 +378,47 @@ public class PlacedBomb : NetworkBehaviour
     [ClientRpc]
     private void PlayExplosionEffectClientRpc()
     {
-        // You can add visual/audio effects here (particle system, sound, etc.)
         Debug.Log("[PlacedBomb] Explosion effect played");
+    }
+
+    private void SpawnLocalVfx(GameObject vfxPrefab, Vector3 localOffset, Vector3 localEulerOffset, float fallbackDestroyAfterSeconds)
+    {
+        if (vfxPrefab == null)
+        {
+            return;
+        }
+
+        var worldPos = transform.TransformPoint(localOffset);
+        var worldRot = transform.rotation * Quaternion.Euler(localEulerOffset);
+        var go = Instantiate(vfxPrefab, worldPos, worldRot, transform);
+        if (go == null)
+        {
+            return;
+        }
+
+        // If it has a ParticleSystem, destroy after it finishes; otherwise use a fixed timeout.
+        var ps = go.GetComponentInChildren<ParticleSystem>();
+        if (ps != null)
+        {
+            var main = ps.main;
+            var lifetime = main.duration;
+            if (main.startLifetime.mode == ParticleSystemCurveMode.Constant)
+            {
+                lifetime += main.startLifetime.constant;
+            }
+            if (lifetime <= 0f)
+            {
+                lifetime = fallbackDestroyAfterSeconds;
+            }
+            if (lifetime > 0f)
+            {
+                Destroy(go, lifetime);
+            }
+        }
+        else if (fallbackDestroyAfterSeconds > 0f)
+        {
+            Destroy(go, fallbackDestroyAfterSeconds);
+        }
     }
 
     /// <summary>

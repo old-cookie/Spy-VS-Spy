@@ -134,6 +134,12 @@ MonoBehaviour:
   itemType: rust gear
   itemDescription: Reduces the movement speed of other players within range for a
     short time
+  useVfxPrefab: {fileID: 7414423688252830081, guid: 9de3538c71ed37a4daffed81665f77a2, type: 3}
+  attachUseVfxToPlayer: 1
+  useVfxLocalOffset: {x: 0, y: 3.2, z: 0}
+  matchUseVfxRotationToPlayer: 1
+  useVfxLocalEulerOffset: {x: 0, y: 0, z: 0}
+  useVfxDestroyAfterSeconds: 2
 --- !u!114 &6147936213744299802
 MonoBehaviour:
   m_ObjectHideFlags: 0
