@@ -236,6 +236,12 @@ MonoBehaviour:
   endText: {fileID: 3402267717817817423}
   startButton: {fileID: 2707318476817578201}
   gameTimer: {fileID: 819790368284956202}
+  bgMusic: {fileID: 8300000, guid: 2cd81d0c5cf3572419c90c8186af8c6f, type: 3}
+  winSfx: {fileID: 8300000, guid: b4525556fbec394449656132a3fc4e6a, type: 3}
+  loseSfx: {fileID: 8300000, guid: 1c781f80e01c9db4c95bff6e3c5938a1, type: 3}
+  bgMusicVolume: 0.3
+  winVolume: 1
+  loseVolume: 1
   showDuration: 2.5
   timeLimit: 22
   blinkSpeed: 10

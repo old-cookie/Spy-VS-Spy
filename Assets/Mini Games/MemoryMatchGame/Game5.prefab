@@ -387,6 +387,16 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 55b4c391ed251694c9232d82b37c3664, type: 3}
   - {fileID: 21300000, guid: 2fcc73d8cc3e92546a6f3c37aa637a9a, type: 3}
   - {fileID: 21300000, guid: fc67b42e5e034e641bc401802a359441, type: 3}
+  bgMusic: {fileID: 8300000, guid: 8159a24d735eeb6438a3d98bce719aaa, type: 3}
+  matchSfx: {fileID: 8300000, guid: 2186f2410c88d9a4ea4334ad3d4218b7, type: 3}
+  mismatchSfx: {fileID: 8300000, guid: 1c781f80e01c9db4c95bff6e3c5938a1, type: 3}
+  winSfx: {fileID: 8300000, guid: b4525556fbec394449656132a3fc4e6a, type: 3}
+  loseSfx: {fileID: 0}
+  bgMusicVolume: 0.3
+  matchVolume: 1
+  mismatchVolume: 1
+  winVolume: 1
+  loseVolume: 1
 --- !u!1 &1025413127194533400
 GameObject:
   m_ObjectHideFlags: 0

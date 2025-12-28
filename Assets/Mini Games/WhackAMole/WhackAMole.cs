@@ -44,12 +44,26 @@ public class WhackAMole : MiniGame
     public int targetScore = 30;
     /// <summary>Time limit for the round in seconds.</summary>
     public float timeLimit = 30f;
+
+    [Header("Audio")]
+    /// <summary>Background music clip.</summary>
+    public AudioClip bgMusic;
     /// <summary>Sound played when hitting a good mole.</summary>
     public AudioClip goodSfx;
     /// <summary>Sound played when hitting a bad mole.</summary>
     public AudioClip badSfx;
     /// <summary>Sound played when the round completes.</summary>
     public AudioClip completeSfx;
+
+    [Header("Audio Volume")]
+    /// <summary>Background music volume (0.3 = 30%).</summary>
+    public float bgMusicVolume = 0.3f;
+    /// <summary>Good mole sound effect volume.</summary>
+    public float goodVolume = 1.0f;
+    /// <summary>Bad mole sound effect volume.</summary>
+    public float badVolume = 1.0f;
+    /// <summary>Complete sound effect volume.</summary>
+    public float completeVolume = 1.0f;
 
     private int currentScore = 0;
     private float remainingTime = 0f;
@@ -76,20 +90,44 @@ public class WhackAMole : MiniGame
     /// </summary>
     void Start()
     {
+        Debug.Log("[WhackAMole] Start() 被調用");
+        
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
         {
+            Debug.Log("[WhackAMole] 沒有找到 AudioSource，正在創建新的");
             audioSource = gameObject.AddComponent<AudioSource>();
         }
+        else
+        {
+            Debug.Log("[WhackAMole] 找到現有的 AudioSource");
+        }
+
+        Debug.Log($"[WhackAMole] bgMusic: {(bgMusic != null ? bgMusic.name : "null")}");
+        Debug.Log($"[WhackAMole] bgMusicVolume: {bgMusicVolume}");
+
+        audioSource.volume = bgMusicVolume;
 
         if (holePrefab == null)
         {
+            Debug.LogWarning("[WhackAMole] holePrefab 沒有設定！");
             return;
         }
 
         UpdateScoreDisplay();
         UpdateTimerDisplay();
         ShowResult("");
+    }
+
+    /// <summary>
+    /// Play a sound effect with the specified volume.
+    /// </summary>
+    void PlaySfx(AudioClip clip, float volume = 1.0f)
+    {
+        if (clip != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(clip, volume);
+        }
     }
 
     /// <summary>
@@ -105,6 +143,21 @@ public class WhackAMole : MiniGame
     /// </summary>
     protected override void OnGameStart()
     {
+        Debug.Log("[WhackAMole] OnGameStart() 被調用");
+        
+        // 重新確保 audioSource 存在
+        if (audioSource == null)
+        {
+            Debug.Log("[WhackAMole] audioSource 為 null，重新獲取");
+            audioSource = GetComponent<AudioSource>();
+            
+            if (audioSource == null)
+            {
+                Debug.Log("[WhackAMole] 仍然沒有 AudioSource，創建新的");
+                audioSource = gameObject.AddComponent<AudioSource>();
+            }
+        }
+        
         currentScore = 0;
         remainingTime = timeLimit;
         gameRunning = true;
@@ -113,6 +166,31 @@ public class WhackAMole : MiniGame
         UpdateScoreDisplay();
         UpdateTimerDisplay();
         ShowResult("");
+
+        // 開始播放背景音樂
+        if (audioSource != null)
+        {
+            Debug.Log("[WhackAMole] audioSource 不為 null");
+            
+            if (bgMusic != null)
+            {
+                Debug.Log($"[WhackAMole] 開始播放背景音樂: {bgMusic.name}");
+                audioSource.clip = bgMusic;
+                audioSource.loop = true;
+                audioSource.volume = bgMusicVolume;
+                Debug.Log($"[WhackAMole] 設定音量: {audioSource.volume}");
+                audioSource.Play();
+                Debug.Log($"[WhackAMole] 播放狀態: {audioSource.isPlaying}");
+            }
+            else
+            {
+                Debug.LogError("[WhackAMole] bgMusic 為 null！");
+            }
+        }
+        else
+        {
+            Debug.LogError("[WhackAMole] audioSource 仍為 null！");
+        }
 
         if (timerText != null)
         {
@@ -314,25 +392,25 @@ public class WhackAMole : MiniGame
 
         int points = 0;
         AudioClip sfx = null;
+        float volume = 1.0f;
 
         if (hole.type == MoleType.Good)
         {
             points = 10;
             sfx = goodSfx;
+            volume = goodVolume;
         }
         else if (hole.type == MoleType.Bad)
         {
             points = -10;
             sfx = badSfx;
+            volume = badVolume;
         }
 
         currentScore += points;
         currentScore = Mathf.Max(0, currentScore);
 
-        if (sfx != null && audioSource != null)
-        {
-            audioSource.PlayOneShot(sfx);
-        }
+        PlaySfx(sfx, volume);
 
         if (hole.button != null)
         {
@@ -352,6 +430,8 @@ public class WhackAMole : MiniGame
     /// </summary>
     void CompleteGame(bool success)
     {
+        Debug.Log("[WhackAMole] CompleteGame() 被調用");
+        
         gameRunning = false;
         gameFinished = true;
 
@@ -360,11 +440,14 @@ public class WhackAMole : MiniGame
             StopCoroutine(moleSpawnerCoroutine);
         }
 
-        if (completeSfx != null && audioSource != null)
+        // 停止背景音樂並播放完成音效
+        if (audioSource != null && audioSource.isPlaying)
         {
-            audioSource.PlayOneShot(completeSfx);
+            Debug.Log("[WhackAMole] 停止背景音樂");
+            audioSource.Stop();
         }
 
+        PlaySfx(completeSfx, completeVolume);
         ClearActiveHoles();
 
         if (gamePanel != null)
@@ -372,7 +455,7 @@ public class WhackAMole : MiniGame
             gamePanel.gameObject.SetActive(false);
         }
 
-        ShowResult(success ? "Finished" : "Failed");
+        ShowResult(success ? "You Win!!!" : "Failed");
 
         if (timerText != null)
         {

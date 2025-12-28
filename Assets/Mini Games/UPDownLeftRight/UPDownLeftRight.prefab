@@ -208,7 +208,7 @@ MonoBehaviour:
   endText: {fileID: 4774291940252692245}
   gameTimer: {fileID: 1072387175685162874}
   timeLimit: 20
-  bgMusic: {fileID: 8300000, guid: 01b94f69e7204ab4287f87bfd640da33, type: 3}
+  bgMusic: {fileID: 8300000, guid: 8159a24d735eeb6438a3d98bce719aaa, type: 3}
   correctDirectionSfx: {fileID: 8300000, guid: 2186f2410c88d9a4ea4334ad3d4218b7, type: 3}
   completeSequenceSfx: {fileID: 8300000, guid: b4525556fbec394449656132a3fc4e6a, type: 3}
   wrongDirectionSfx: {fileID: 8300000, guid: 1c781f80e01c9db4c95bff6e3c5938a1, type: 3}

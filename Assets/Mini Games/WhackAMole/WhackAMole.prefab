@@ -133,9 +133,14 @@ MonoBehaviour:
   spawnPadding: {x: 40, y: 40}
   targetScore: 70
   timeLimit: 20
+  bgMusic: {fileID: 8300000, guid: 8159a24d735eeb6438a3d98bce719aaa, type: 3}
   goodSfx: {fileID: 8300000, guid: 2186f2410c88d9a4ea4334ad3d4218b7, type: 3}
   badSfx: {fileID: 8300000, guid: 1c781f80e01c9db4c95bff6e3c5938a1, type: 3}
   completeSfx: {fileID: 8300000, guid: b4525556fbec394449656132a3fc4e6a, type: 3}
+  bgMusicVolume: 0.3
+  goodVolume: 1
+  badVolume: 1
+  completeVolume: 1
 --- !u!82 &4733268420486064727
 AudioSource:
   m_ObjectHideFlags: 0

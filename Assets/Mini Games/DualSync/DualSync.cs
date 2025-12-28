@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
+using System.Collections;
 
 /// <summary>
 /// Mini-game where players synchronize two power bars by holding
@@ -9,8 +10,11 @@ using UnityEngine.InputSystem;
 /// for required time; the game ends when reaching the score goal
 /// or when time runs out.
 /// </summary>
+[RequireComponent(typeof(AudioSource))]
 public class DualSync : MiniGame
 {
+    private static readonly WaitForSeconds _waitForSeconds1_5 = new(1.5f);
+
     /// <summary>
     /// The fill Image for the first power bar.
     /// </summary>
@@ -44,6 +48,27 @@ public class DualSync : MiniGame
     /// </summary>
     public MiniGameTimer gameTimer;
 
+    [Header("Audio")]
+    /// <summary>
+    /// Background music clip to play during gameplay.
+    /// </summary>
+    public AudioClip bgMusic;
+    /// <summary>
+    /// Sound effect when score is earned.
+    /// </summary>
+    public AudioClip scoreAchievedSfx;
+
+    [Header("Audio Volume")]
+    /// <summary>
+    /// Background music volume (0.3 = 30%).
+    /// </summary>
+    public float bgMusicVolume = 0.3f;
+    /// <summary>
+    /// Score achieved sound effect volume.
+    /// </summary>
+    public float scoreVolume = 1.0f;
+
+    [Header("Game Settings")]
     /// <summary>
     /// Fill speed per second while the key is held.
     /// </summary>
@@ -72,6 +97,10 @@ public class DualSync : MiniGame
     /// Overall game time limit in seconds.
     /// </summary>
     public float gameTimeLimit = 30f;
+    /// <summary>
+    /// Required score to win the game.
+    /// </summary>
+    public int scoreGoal = 5;
 
     private float bar1FillValue = 0f;
     private float bar2FillValue = 0f;
@@ -80,7 +109,9 @@ public class DualSync : MiniGame
     private bool gameEnded = false;
     private float timeInTarget = 0f;
     private int score = 0;
+    private bool gameActive = true;
 
+    private AudioSource audioSource;
     private InputSystem_Actions inputActions;
 
     /// <summary>
@@ -90,6 +121,7 @@ public class DualSync : MiniGame
     {
         // Reset game state
         gameEnded = false;
+        gameActive = true;
         bar1FillValue = 0f;
         bar2FillValue = 0f;
         timeInTarget = 0f;
@@ -116,13 +148,29 @@ public class DualSync : MiniGame
         {
             statusText.gameObject.SetActive(true);
         }
+        if (scoreText != null)
+        {
+            scoreText.gameObject.SetActive(true);
+        }
+
+        // Play background music
+        PlayBackgroundMusic();
     }
 
     /// <summary>
-    /// Unity Start: initialize input, randomize targets, and refresh UI.
+    /// Unity Start: initialize audio, input, randomize targets, and refresh UI.
     /// </summary>
     void Start()
     {
+        // Initialize AudioSource
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+        }
+
+        audioSource.volume = bgMusicVolume;
+
         SetupInput();
 
         // Randomize target fill values
@@ -135,6 +183,9 @@ public class DualSync : MiniGame
         {
             endText.gameObject.SetActive(false);
         }
+
+        // Play background music
+        PlayBackgroundMusic();
     }
 
     /// <summary>
@@ -152,6 +203,7 @@ public class DualSync : MiniGame
     private void OnDisable()
     {
         DisableInput();
+        StopBackgroundMusic();
     }
 
     /// <summary>
@@ -186,11 +238,49 @@ public class DualSync : MiniGame
     }
 
     /// <summary>
-    /// Timer timeout callback: declare failure and end the flow.
+    /// Play the background music on loop.
+    /// </summary>
+    private void PlayBackgroundMusic()
+    {
+        if (audioSource != null && bgMusic != null)
+        {
+            audioSource.clip = bgMusic;
+            audioSource.loop = true;
+            audioSource.Play();
+        }
+    }
+
+    /// <summary>
+    /// Stop the background music.
+    /// </summary>
+    private void StopBackgroundMusic()
+    {
+        if (audioSource != null && audioSource.isPlaying)
+        {
+            audioSource.Stop();
+        }
+    }
+
+    /// <summary>
+    /// Play a sound effect with the specified volume.
+    /// </summary>
+    /// <param name="clip">The audio clip to play.</param>
+    /// <param name="volume">The volume level (default is 1.0).</param>
+    private void PlaySfx(AudioClip clip, float volume = 1.0f)
+    {
+        if (clip != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(clip, volume);
+        }
+    }
+
+    /// <summary>
+    /// Timer timeout callback: end the game.
     /// </summary>
     private void OnTimerEnded()
     {
-        FailGame();
+        gameActive = false;
+        EndGameFail();
     }
 
     /// <summary>
@@ -198,7 +288,7 @@ public class DualSync : MiniGame
     /// </summary>
     private void HandleLongPressInput()
     {
-        if (gameEnded)
+        if (gameEnded || !gameActive)
         {
             return;
         }
@@ -229,7 +319,7 @@ public class DualSync : MiniGame
     /// </summary>
     protected override void Update()
     {
-        if (gameEnded) return;
+        if (gameEnded || !gameActive) return;
 
         // Handle long-press input (per frame)
         HandleLongPressInput();
@@ -241,7 +331,7 @@ public class DualSync : MiniGame
         bar1FillValue = Mathf.Clamp01(bar1FillValue);
         bar2FillValue = Mathf.Clamp01(bar2FillValue);
 
-        // Check whether both bars are within target ranges (lenient: ±0.15)
+        // Check whether both bars are within target ranges
         bool bar1InTarget = bar1FillValue >= targetFill1 - 0.05f && bar1FillValue <= targetFill1 + 0.15f;
         bool bar2InTarget = bar2FillValue >= targetFill2 - 0.05f && bar2FillValue <= targetFill2 + 0.15f;
 
@@ -256,10 +346,14 @@ public class DualSync : MiniGame
                 score += 1;  // Add 1 point per trigger
                 timeInTarget -= targetTimeRequired;  // Subtract counted time, allow continuous counting
 
-                // If reaching 5 points, complete the game
-                if (score >= 5)
+                // Play score achieved sound effect
+                PlaySfx(scoreAchievedSfx, scoreVolume);
+
+                // Check if score goal is reached
+                if (score >= scoreGoal)
                 {
-                    CompleteGame();
+                    gameActive = false;
+                    EndGameWin();
                     return;
                 }
 
@@ -318,7 +412,68 @@ public class DualSync : MiniGame
         // Update score text
         if (scoreText != null)
         {
-            scoreText.text = $"Score: {score}";
+            scoreText.text = $"Score: {score} / {scoreGoal}";
+        }
+    }
+
+    /// <summary>
+    /// End game with win result.
+    /// </summary>
+    private void EndGameWin()
+    {
+        gameEnded = true;
+        StartCoroutine(ShowResultThenComplete(true));
+    }
+
+    /// <summary>
+    /// End game with fail result.
+    /// </summary>
+    private void EndGameFail()
+    {
+        gameEnded = true;
+        StartCoroutine(ShowResultThenComplete(false));
+    }
+
+    /// <summary>
+    /// Show result text then complete or fail the game.
+    /// </summary>
+    private IEnumerator ShowResultThenComplete(bool success)
+    {
+        // Hide game UI
+        if (statusText != null)
+        {
+            statusText.gameObject.SetActive(false);
+        }
+        if (scoreText != null)
+        {
+            scoreText.gameObject.SetActive(false);
+        }
+
+        // Show end text
+        if (endText != null)
+        {
+            endText.gameObject.SetActive(true);
+            if (success)
+            {
+                endText.text = "YOU WIN!";
+                endText.color = Color.green;
+            }
+            else
+            {
+                endText.text = "YOU LOSE!";
+                endText.color = Color.red;
+            }
+        }
+
+        yield return _waitForSeconds1_5;
+
+        if (success)
+        {
+            CompleteGame();
+        }
+        else
+        {
+            FailGame();
         }
     }
 }
