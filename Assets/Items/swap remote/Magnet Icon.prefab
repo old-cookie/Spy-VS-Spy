@@ -133,6 +133,20 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   itemType: swap remote
   itemDescription: 
+  useVfxPrefab: {fileID: 6722337076884923292, guid: 58bacb894c84efc42a52ff63e50064f8, type: 3}
+  attachUseVfxToPlayer: 1
+  useVfxLocalOffset: {x: 0, y: 2.3, z: 0}
+  matchUseVfxRotationToPlayer: 1
+  useVfxLocalEulerOffset: {x: 90, y: 0, z: 0}
+  useVfxDestroyAfterSeconds: 2
+  range: 0
+  swapVfxPrefab: {fileID: 6722337076884923292, guid: 58bacb894c84efc42a52ff63e50064f8, type: 3}
+  debugLogs: 0
+  avoidInheritingPlayerScale: 1
+  swapVfxLocalOffset: {x: 0, y: 2.3, z: 0}
+  swapVfxLocalEulerOffset: {x: 90, y: 0, z: 0}
+  swapVfxDestroyAfterSeconds: 2
+  despawnDelaySeconds: 0.1
 --- !u!114 &-2563100903543909861
 MonoBehaviour:
   m_ObjectHideFlags: 0
