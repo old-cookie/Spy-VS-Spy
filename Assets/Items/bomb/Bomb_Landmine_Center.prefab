@@ -180,6 +180,12 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   itemType: bomb
   itemDescription: Places a mine that deals damage and explodes when stepped on
+  useVfxPrefab: {fileID: 7414423688252830081, guid: 569bd6a001068a443b2cc871af151cab, type: 3}
+  attachUseVfxToPlayer: 1
+  useVfxLocalOffset: {x: 0, y: 3.2, z: 0}
+  matchUseVfxRotationToPlayer: 1
+  useVfxLocalEulerOffset: {x: 0, y: 0, z: 0}
+  useVfxDestroyAfterSeconds: 2
   placedBombPrefab: {fileID: 5023802899982058342, guid: 95bd6653498b4674db2769218e1019ca, type: 3}
   placementHeightOffset: 0.5
 --- !u!114 &4965971247305622616
@@ -197,3 +203,9 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   itemType: bomb
   itemDescription: Places a mine that deals damage and explodes when stepped on
+  useVfxPrefab: {fileID: 0}
+  attachUseVfxToPlayer: 1
+  useVfxLocalOffset: {x: 0, y: 0, z: 0}
+  matchUseVfxRotationToPlayer: 1
+  useVfxLocalEulerOffset: {x: 0, y: 0, z: 0}
+  useVfxDestroyAfterSeconds: 2

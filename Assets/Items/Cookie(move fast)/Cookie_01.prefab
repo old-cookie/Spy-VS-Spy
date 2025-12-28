@@ -133,11 +133,11 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   itemType: cookie
   itemDescription: Greatly increases movement speed for a short time
-  useVfxPrefab: {fileID: 6861167293607587675, guid: 17dbac9397d9c8c4baec5f29389101a8, type: 3}
+  useVfxPrefab: {fileID: 8764043878647920493, guid: 8f0870387335477408303fc437366c31, type: 3}
   attachUseVfxToPlayer: 1
-  useVfxLocalOffset: {x: 0, y: 0.9, z: 0}
+  useVfxLocalOffset: {x: 0, y: 0.3, z: 0}
   matchUseVfxRotationToPlayer: 1
-  useVfxLocalEulerOffset: {x: -90, y: 0, z: 0}
+  useVfxLocalEulerOffset: {x: 180, y: 0, z: 0}
   useVfxDestroyAfterSeconds: 10
 --- !u!114 &8183202770754531946
 MonoBehaviour:

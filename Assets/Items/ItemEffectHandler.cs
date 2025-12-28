@@ -70,6 +70,22 @@ public class ItemEffectHandler : NetworkBehaviour
     [SerializeField, Min(0f)]
     private float swapRemoteRange = 0f; // 0 = unlimited
 
+    [Header("Effect VFX (When Player Is Affected)")]
+    [SerializeField]
+    private GameObject receivedEffectVfxPrefab;
+
+    [SerializeField]
+    private bool receivedEffectVfxAttachToPlayer = true;
+
+    [SerializeField]
+    private Vector3 receivedEffectVfxLocalOffset = Vector3.zero;
+
+    [SerializeField]
+    private Vector3 receivedEffectVfxLocalEulerOffset = Vector3.zero;
+
+    [SerializeField, Min(0f)]
+    private float receivedEffectVfxDestroyAfterSeconds = 2f;
+
     private float speedBoostTimer;
     private float slowDownTimer;
     private float jumpBoostTimer;
@@ -77,6 +93,70 @@ public class ItemEffectHandler : NetworkBehaviour
     private float activeSlowMultiplier = 1f;
     private float activeJumpMultiplier = 1f;
     private PlayerController playerController;
+
+    private void PlayReceivedEffectVfx()
+    {
+        if (receivedEffectVfxPrefab == null)
+        {
+            return;
+        }
+
+        if (IsServer)
+        {
+            PlayReceivedEffectVfxClientRpc();
+        }
+        else
+        {
+            RequestPlayReceivedEffectVfxServerRpc();
+        }
+    }
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void RequestPlayReceivedEffectVfxServerRpc()
+    {
+        PlayReceivedEffectVfxClientRpc();
+    }
+
+    [ClientRpc]
+    private void PlayReceivedEffectVfxClientRpc()
+    {
+        if (receivedEffectVfxPrefab == null)
+        {
+            return;
+        }
+
+        var parent = receivedEffectVfxAttachToPlayer ? transform : null;
+        var worldPos = transform.TransformPoint(receivedEffectVfxLocalOffset);
+        var worldRot = transform.rotation * Quaternion.Euler(receivedEffectVfxLocalEulerOffset);
+        var go = Instantiate(receivedEffectVfxPrefab, worldPos, worldRot, parent);
+        if (go == null)
+        {
+            return;
+        }
+
+        var ps = go.GetComponentInChildren<ParticleSystem>();
+        if (ps != null)
+        {
+            var main = ps.main;
+            var lifetime = main.duration;
+            if (main.startLifetime.mode == ParticleSystemCurveMode.Constant)
+            {
+                lifetime += main.startLifetime.constant;
+            }
+            if (lifetime <= 0f)
+            {
+                lifetime = receivedEffectVfxDestroyAfterSeconds;
+            }
+            if (lifetime > 0f)
+            {
+                Destroy(go, lifetime);
+            }
+        }
+        else if (receivedEffectVfxDestroyAfterSeconds > 0f)
+        {
+            Destroy(go, receivedEffectVfxDestroyAfterSeconds);
+        }
+    }
 
     /// <summary>
     /// Gets the current combined speed multiplier from all active effects.
@@ -187,6 +267,9 @@ public class ItemEffectHandler : NetworkBehaviour
 
         activeSlowMultiplier = slowMultiplier;
         slowDownTimer = duration;
+
+        // Ask the server to broadcast a VFX on this player so everyone can see it.
+        PlayReceivedEffectVfx();
     }
 
     /// <summary>
@@ -240,6 +323,8 @@ public class ItemEffectHandler : NetworkBehaviour
     {
         activeBoostMultiplier = speedBoostMultiplier;
         speedBoostTimer = speedBoostDuration;
+
+        PlayReceivedEffectVfx();
     }
 
     /// <summary>
@@ -254,6 +339,7 @@ public class ItemEffectHandler : NetworkBehaviour
             var handler = player.GetComponent<ItemEffectHandler>();
             if (handler != null && handler != this)
             {
+                handler.PlayReceivedEffectVfxClientRpc();
                 handler.ApplySlowDownClientRpc();
             }
         }
@@ -286,6 +372,8 @@ public class ItemEffectHandler : NetworkBehaviour
     {
         activeSlowMultiplier = slowDownMultiplier;
         slowDownTimer = slowDownDuration;
+
+        PlayReceivedEffectVfx();
     }
 
     /// <summary>
@@ -295,6 +383,8 @@ public class ItemEffectHandler : NetworkBehaviour
     {
         activeJumpMultiplier = jumpBoostMultiplier;
         jumpBoostTimer = jumpBoostDuration;
+
+        PlayReceivedEffectVfx();
     }
 
     /// <summary>
@@ -309,6 +399,7 @@ public class ItemEffectHandler : NetworkBehaviour
             var handler = player.GetComponent<ItemEffectHandler>();
             if (handler != null && handler != this)
             {
+                handler.PlayReceivedEffectVfxClientRpc();
                 handler.ApplyRustGearSlowDownClientRpc();
             }
         }
@@ -341,6 +432,8 @@ public class ItemEffectHandler : NetworkBehaviour
     {
         activeSlowMultiplier = rustGearSlowDownMultiplier;
         slowDownTimer = rustGearSlowDownDuration;
+
+        PlayReceivedEffectVfx();
     }
 
     /// <summary>
