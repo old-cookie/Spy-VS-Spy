@@ -227,6 +227,13 @@ MonoBehaviour:
   speed: 10
   maxLifetime: 5
   blindDuration: 2.5
+  hitVfxPrefab: {fileID: 6167149232108212709, guid: bcb0fc81ac2bd7447a6a9323a2846775, type: 3}
+  debugLogs: 0
+  avoidInheritingPlayerScale: 1
+  hitVfxLocalOffset: {x: 2, y: 1.2, z: -1}
+  hitVfxLocalEulerOffset: {x: 0, y: 0, z: 0}
+  hitVfxDestroyAfterSeconds: 2
+  despawnDelaySeconds: 0.1
 --- !u!65 &5431388951525333048
 BoxCollider:
   m_ObjectHideFlags: 0

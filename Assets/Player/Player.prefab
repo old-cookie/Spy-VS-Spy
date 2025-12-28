@@ -1179,7 +1179,6 @@ GameObject:
   - component: {fileID: -7448598495626001250}
   - component: {fileID: -4573537263802563937}
   - component: {fileID: 5338884774265878999}
-  - component: {fileID: -798586444723913065}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -1433,7 +1432,7 @@ MonoBehaviour:
   rustGearSlowDownMultiplier: 0.2
   rustGearSlowDownDuration: 10
   swapRemoteRange: 0
-  receivedEffectVfxPrefab: {fileID: 100000, guid: 0d5458d56a6e7714dad245aa65650922, type: 3}
+  receivedEffectVfxPrefab: {fileID: 0}
   receivedEffectVfxAttachToPlayer: 1
   receivedEffectVfxLocalOffset: {x: 0, y: 0, z: 0}
   receivedEffectVfxLocalEulerOffset: {x: 0, y: 0, z: 0}
@@ -1487,37 +1486,6 @@ MonoBehaviour:
     TriggerNameHash: 125937960
     TransitionIndex: 1
   m_Animator: {fileID: 3674305575702069602}
---- !u!114 &-798586444723913065
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7287134322769121558}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d6baf9a9317878848a249eca9dde045e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerEffectVfxBroadcaster
-  ShowTopMostFoldoutHeaderGroup: 1
-  receivedEffectVfxPrefab: {fileID: 0}
-  slowEffectVfxPrefab: {fileID: 100000, guid: 0d5458d56a6e7714dad245aa65650922, type: 3}
-  speedEffectVfxPrefab: {fileID: 0}
-  jumpEffectVfxPrefab: {fileID: 0}
-  attachToPlayer: 1
-  avoidInheritingPlayerScale: 1
-  localOffset: {x: 0, y: 0, z: 0}
-  matchVfxRotationToPlayer: 1
-  localEulerOffset: {x: 0, y: 0, z: 0}
-  slowLocalOffset: {x: 0, y: 180, z: 0}
-  slowLocalEulerOffset: {x: 0, y: 180, z: 0}
-  speedLocalOffset: {x: 0, y: 0, z: 0}
-  speedLocalEulerOffset: {x: 0, y: 0, z: 0}
-  jumpLocalOffset: {x: 0, y: 0, z: 0}
-  jumpLocalEulerOffset: {x: 0, y: 0, z: 0}
-  destroyAfterSeconds: 2
-  debugLogs: 1
-  minSecondsBetweenTriggers: 0.15
 --- !u!1 &7596816857919860561
 GameObject:
   m_ObjectHideFlags: 0

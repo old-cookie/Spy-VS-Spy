@@ -42,6 +42,51 @@ public class ItemSpawnManager : NetworkBehaviour
     /// </summary>
     private readonly Dictionary<ulong, Coroutine> activeItemCoroutines = new();
 
+    private static int GetInheritanceDepth(System.Type type)
+    {
+        var depth = 0;
+        while (type != null)
+        {
+            depth++;
+            type = type.BaseType;
+        }
+        return depth;
+    }
+
+    private static Item PickMostDerivedItemComponent(GameObject gameObject)
+    {
+        if (gameObject == null)
+        {
+            return null;
+        }
+
+        var items = gameObject.GetComponents<Item>();
+        if (items == null || items.Length == 0)
+        {
+            return null;
+        }
+
+        Item best = null;
+        var bestDepth = -1;
+        for (int i = 0; i < items.Length; i++)
+        {
+            var candidate = items[i];
+            if (candidate == null)
+            {
+                continue;
+            }
+
+            var depth = GetInheritanceDepth(candidate.GetType());
+            if (depth > bestDepth)
+            {
+                best = candidate;
+                bestDepth = depth;
+            }
+        }
+
+        return best;
+    }
+
     private void Awake()
     {
         if (Instance == null)
@@ -137,7 +182,7 @@ public class ItemSpawnManager : NetworkBehaviour
         // Spawn item at chest position
         // Some items need a different visual orientation while being held/following.
         var spawnRotation = Quaternion.Euler(-45f, 0f, 0f);
-        var prefabItem = selectedPrefab.GetComponent<Item>();
+        var prefabItem = PickMostDerivedItemComponent(selectedPrefab);
         if (prefabItem != null && string.Equals(prefabItem.ItemType, "fake chest", System.StringComparison.OrdinalIgnoreCase))
         {
             spawnRotation = Quaternion.Euler(0f, 180f, 0f);
@@ -195,7 +240,7 @@ public class ItemSpawnManager : NetworkBehaviour
             yield break;
         }
 
-        var item = itemNetworkObject.GetComponent<Item>();
+        var item = PickMostDerivedItemComponent(itemNetworkObject.gameObject);
         if (item == null)
         {
             Debug.LogWarning("[ItemSpawnManager] Spawned object has no Item component.");

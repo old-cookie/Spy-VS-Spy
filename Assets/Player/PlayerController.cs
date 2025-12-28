@@ -2,6 +2,7 @@ using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.InputSystem;
 using System.Collections;
+using System;
 
 /// <summary>
 /// Controls player movement, jumping, facing direction, item interaction, and chest picking.
@@ -166,6 +167,51 @@ public class PlayerController : NetworkBehaviour
     private InputAction useAction;
     private bool isOutcomeAnimationPlaying;
     private Quaternion lockedOutcomeRotation;
+
+    private static int GetInheritanceDepth(Type type)
+    {
+        var depth = 0;
+        while (type != null)
+        {
+            depth++;
+            type = type.BaseType;
+        }
+        return depth;
+    }
+
+    private static Item PickMostDerivedItemComponent(GameObject gameObject)
+    {
+        if (gameObject == null)
+        {
+            return null;
+        }
+
+        var items = gameObject.GetComponents<Item>();
+        if (items == null || items.Length == 0)
+        {
+            return null;
+        }
+
+        Item best = null;
+        var bestDepth = -1;
+        for (int i = 0; i < items.Length; i++)
+        {
+            var candidate = items[i];
+            if (candidate == null)
+            {
+                continue;
+            }
+
+            var depth = GetInheritanceDepth(candidate.GetType());
+            if (depth > bestDepth)
+            {
+                best = candidate;
+                bestDepth = depth;
+            }
+        }
+
+        return best;
+    }
 
     private void Awake()
     {
@@ -877,6 +923,13 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
+        // If a prefab has both Item + a derived Item (e.g., RustGearItem), prefer the most-derived.
+        var bestItem = PickMostDerivedItemComponent(newItem.gameObject);
+        if (bestItem != null)
+        {
+            newItem = bestItem;
+        }
+
         if (heldItem != null && heldItem != newItem)
         {
             Debug.Log($"Player {name} is discarding item {heldItem.ItemType} to register new item {newItem.ItemType}.");
@@ -1531,7 +1584,7 @@ public class PlayerController : NetworkBehaviour
             yield break;
         }
 
-        var item = itemNetworkObject.GetComponent<Item>();
+        var item = PickMostDerivedItemComponent(itemNetworkObject.gameObject);
         if (item == null)
         {
             Debug.LogWarning("[PlayerController] Stolen item has no Item component.");

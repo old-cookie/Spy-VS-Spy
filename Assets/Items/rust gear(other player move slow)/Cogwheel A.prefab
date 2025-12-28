@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 3704046389091197588}
   - component: {fileID: -1052171236543761827}
   - component: {fileID: 228119354625560964}
+  - component: {fileID: 8502087140012683690}
   - component: {fileID: 6147936213744299802}
   m_Layer: 0
   m_Name: Cogwheel A
@@ -140,6 +141,36 @@ MonoBehaviour:
   matchUseVfxRotationToPlayer: 1
   useVfxLocalEulerOffset: {x: 0, y: 0, z: 0}
   useVfxDestroyAfterSeconds: 2
+--- !u!114 &8502087140012683690
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2911461576491320129}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b2a7ecbf1e56f4448dd80bcbf91fd35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RustGearItem
+  ShowTopMostFoldoutHeaderGroup: 1
+  itemType: rust gear
+  itemDescription: 
+  useVfxPrefab: {fileID: 0}
+  attachUseVfxToPlayer: 1
+  useVfxLocalOffset: {x: 0, y: 0, z: 0}
+  matchUseVfxRotationToPlayer: 1
+  useVfxLocalEulerOffset: {x: 0, y: 0, z: 0}
+  useVfxDestroyAfterSeconds: 2
+  slowMultiplier: 0.2
+  slowDuration: 10
+  slowVfxPrefab: {fileID: 5566973534206861085, guid: 0805f3b5e52482b44aa87b159dce6675, type: 3}
+  debugLogs: 1
+  avoidInheritingPlayerScale: 1
+  slowVfxLocalOffset: {x: 0, y: 1.2, z: 0}
+  slowVfxLocalEulerOffset: {x: 0, y: 0, z: 0}
+  slowVfxDestroyAfterSeconds: 2
+  despawnDelaySeconds: 0.5
 --- !u!114 &6147936213744299802
 MonoBehaviour:
   m_ObjectHideFlags: 0

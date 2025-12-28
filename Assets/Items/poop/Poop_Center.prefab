@@ -132,7 +132,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PoopItem
   ShowTopMostFoldoutHeaderGroup: 1
   itemType: poop
+  itemDescription: 
+  useVfxPrefab: {fileID: 4792314946727229683, guid: 1aa9039129f295c4a80a052cdf14c275, type: 3}
+  attachUseVfxToPlayer: 1
+  useVfxLocalOffset: {x: 0, y: 3.2, z: 0}
+  matchUseVfxRotationToPlayer: 1
+  useVfxLocalEulerOffset: {x: 0, y: 0, z: 0}
+  useVfxDestroyAfterSeconds: 2
   poopProjectilePrefab: {fileID: 6384368713777333232, guid: ac588efb080f3394cbd0ab254b9e57b9, type: 3}
+  forwardSpawnOffset: 0.3
+  spawnHeight01: 0.55
+  verticalSpawnOffset: -0.5
   shootSpeed: 12
   projectileLifetime: 5
   blindDuration: 2.5
