@@ -42,6 +42,12 @@ public class ItemSpawnManager : NetworkBehaviour
     /// </summary>
     private readonly Dictionary<ulong, Coroutine> activeItemCoroutines = new();
 
+    /// <summary>
+    /// Server-side: tracks current owner player NetworkObjectId for each spawned item.
+    /// Enables server-authoritative item transfers (steal/swap) even when the owner is not host.
+    /// </summary>
+    private readonly Dictionary<ulong, ulong> itemOwnerByItemId = new();
+
     private static int GetInheritanceDepth(System.Type type)
     {
         var depth = 0;
@@ -112,6 +118,7 @@ public class ItemSpawnManager : NetworkBehaviour
             }
         }
         activeItemCoroutines.Clear();
+        itemOwnerByItemId.Clear();
     }
 
     /// <summary>
@@ -200,6 +207,15 @@ public class ItemSpawnManager : NetworkBehaviour
 
         // Spawn on network
         itemNetworkObject.Spawn(true);
+
+        // Server must also track who holds what so effects (steal/swap) work for non-host players.
+        itemOwnerByItemId[itemNetworkObject.NetworkObjectId] = playerNetworkObjectId;
+        var serverItem = PickMostDerivedItemComponent(itemObject);
+        var serverPc = playerNetworkObject.GetComponent<PlayerController>() ?? playerNetworkObject.GetComponentInChildren<PlayerController>() ?? playerNetworkObject.GetComponentInParent<PlayerController>();
+        if (serverPc != null && serverItem != null)
+        {
+            serverPc.SetHeldItemServer(serverItem);
+        }
 
         // Notify the owning client about their item
         NotifyItemSpawnedClientRpc(itemNetworkObject.NetworkObjectId, playerNetworkObjectId);
@@ -336,6 +352,8 @@ public class ItemSpawnManager : NetworkBehaviour
             }
             activeItemCoroutines.Remove(itemNetworkObjectId);
         }
+
+        itemOwnerByItemId.Remove(itemNetworkObjectId);
     }
 
     /// <summary>
@@ -348,6 +366,19 @@ public class ItemSpawnManager : NetworkBehaviour
         if (!IsServer)
         {
             return;
+        }
+
+        // Clear server-side held item reference on the previous owner (if known)
+        if (itemOwnerByItemId.TryGetValue(itemNetworkObjectId, out var oldOwnerPlayerNetworkObjectId))
+        {
+            if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(oldOwnerPlayerNetworkObjectId, out var oldOwnerNetworkObject))
+            {
+                var oldOwnerPc = oldOwnerNetworkObject.GetComponent<PlayerController>() ?? oldOwnerNetworkObject.GetComponentInChildren<PlayerController>() ?? oldOwnerNetworkObject.GetComponentInParent<PlayerController>();
+                if (oldOwnerPc != null)
+                {
+                    oldOwnerPc.ClearHeldItemServer();
+                }
+            }
         }
 
         // Stop the existing follow coroutine
@@ -365,6 +396,15 @@ public class ItemSpawnManager : NetworkBehaviour
         {
             Debug.LogWarning($"[ItemSpawnManager] New owner player {newOwnerPlayerNetworkObjectId} not found.");
             return;
+        }
+
+        // Update server-side owner mapping + held item reference
+        itemOwnerByItemId[itemNetworkObjectId] = newOwnerPlayerNetworkObjectId;
+        var newOwnerPc = newOwnerNetworkObject.GetComponent<PlayerController>() ?? newOwnerNetworkObject.GetComponentInChildren<PlayerController>() ?? newOwnerNetworkObject.GetComponentInParent<PlayerController>();
+        var item = PickMostDerivedItemComponent(itemNetworkObject.gameObject);
+        if (newOwnerPc != null && item != null)
+        {
+            newOwnerPc.SetHeldItemServer(item);
         }
 
         // Start a new follow coroutine with the new owner

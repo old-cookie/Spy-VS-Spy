@@ -1000,6 +1000,7 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
+        var itemToConsume = heldItem;
         var consumedType = heldItemType;
 
         var netObj = GetComponent<NetworkObject>();
@@ -1008,9 +1009,14 @@ public class PlayerController : NetworkBehaviour
             heldItem.PlayUseVfxForPlayer(netObj.NetworkObjectId);
         }
 
-        heldItem.Consume();
-        heldItem = null;
-        heldItemType = null;
+        itemToConsume.Consume();
+
+        // Only clear if nothing replaced the held item during Consume (e.g., a steal/swap ClientRpc)
+        if (heldItem == itemToConsume)
+        {
+            heldItem = null;
+            heldItemType = null;
+        }
 
         ApplyItemEffect(consumedType);
     }
@@ -1594,6 +1600,76 @@ public class PlayerController : NetworkBehaviour
     public Item GetHeldItem()
     {
         return heldItem;
+    }
+
+    /// <summary>
+    /// Server-side: sets the held item reference without discarding/destroying anything.
+    /// Use this for transfers/swaps (e.g., stealing) where the Item NetworkObject should persist.
+    /// </summary>
+    public void SetHeldItemServer(Item newHeldItem)
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        heldItem = newHeldItem;
+        heldItemType = newHeldItem != null ? newHeldItem.ItemType : null;
+    }
+
+    /// <summary>
+    /// Server-side: clears held item reference (no despawn).
+    /// </summary>
+    public void ClearHeldItemServer()
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        heldItem = null;
+        heldItemType = null;
+    }
+
+    /// <summary>
+    /// Targeted: updates the local player's held item reference by item NetworkObjectId.
+    /// Pass hasItem=false to clear.
+    /// </summary>
+    [ClientRpc]
+    public void SetHeldItemClientRpc(bool hasItem, ulong itemNetworkObjectId, ClientRpcParams rpcParams = default)
+    {
+        if (!IsLocalPlayer)
+        {
+            return;
+        }
+
+        if (!hasItem)
+        {
+            heldItem = null;
+            heldItemType = null;
+            return;
+        }
+
+        if (NetworkManager.Singleton == null)
+        {
+            return;
+        }
+
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(itemNetworkObjectId, out var itemNetworkObject))
+        {
+            Debug.LogWarning($"[PlayerController] SetHeldItemClientRpc: item {itemNetworkObjectId} not found on client.");
+            return;
+        }
+
+        var item = PickMostDerivedItemComponent(itemNetworkObject.gameObject);
+        if (item == null)
+        {
+            Debug.LogWarning("[PlayerController] SetHeldItemClientRpc: item has no Item component.");
+            return;
+        }
+
+        heldItem = item;
+        heldItemType = item.ItemType;
     }
 
     /// <summary>
