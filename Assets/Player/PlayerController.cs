@@ -168,6 +168,14 @@ public class PlayerController : NetworkBehaviour
     private bool isOutcomeAnimationPlaying;
     private Quaternion lockedOutcomeRotation;
 
+    [Header("Item Use Lock (e.g., EMP)")]
+    [SerializeField]
+    private bool debugItemUseLockLogs = false;
+
+    private float itemUseLockTimer;
+
+    public bool CanUseItem => itemUseLockTimer <= 0f;
+
     private static int GetInheritanceDepth(Type type)
     {
         var depth = 0;
@@ -289,6 +297,11 @@ public class PlayerController : NetworkBehaviour
         if (!IsLocalPlayer)
         {
             return;
+        }
+
+        if (itemUseLockTimer > 0f)
+        {
+            itemUseLockTimer = Mathf.Max(0f, itemUseLockTimer - Time.deltaTime);
         }
 
         // Handle ESC key for mini game exit or pause menu
@@ -962,6 +975,15 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
+        if (!CanUseItem)
+        {
+            if (debugItemUseLockLogs)
+            {
+                Debug.Log($"[PlayerController] Item use locked for {itemUseLockTimer:0.00}s; cannot use '{heldItemType}'.", this);
+            }
+            return;
+        }
+
         var consumedType = heldItemType;
 
         var netObj = GetComponent<NetworkObject>();
@@ -975,6 +997,28 @@ public class PlayerController : NetworkBehaviour
         heldItemType = null;
 
         ApplyItemEffect(consumedType);
+    }
+
+    [ClientRpc]
+    public void ApplyItemUseLockClientRpc(float durationSeconds, ClientRpcParams rpcParams = default)
+    {
+        if (!IsLocalPlayer)
+        {
+            return;
+        }
+
+        durationSeconds = Mathf.Max(0f, durationSeconds);
+        if (durationSeconds <= 0f)
+        {
+            return;
+        }
+
+        itemUseLockTimer = Mathf.Max(itemUseLockTimer, durationSeconds);
+
+        if (debugItemUseLockLogs)
+        {
+            Debug.Log($"[PlayerController] Item use locked for {durationSeconds:0.00}s (timer now {itemUseLockTimer:0.00}s).", this);
+        }
     }
 
     /// <summary>

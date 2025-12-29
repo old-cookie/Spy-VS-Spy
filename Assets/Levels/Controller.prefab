@@ -81,6 +81,7 @@ MonoBehaviour:
   - {fileID: 5188382998888103147, guid: f0983d76d65f2bf44a14a3cd25d686c4, type: 3}
   - {fileID: 1912105335735116042, guid: 6ae10f6acab0df94e9cb2be2ffd74782, type: 3}
   - {fileID: 1318005759483055872, guid: 8116f2a69f5fc6f42891cbbb6892ae00, type: 3}
+  - {fileID: 1728666328262223490, guid: 163bc296ed503054d877acf492955fb0, type: 3}
   itemFollowHeight: 3
   itemMoveDuration: 0.75
   itemFollowSmoothSpeed: 8
