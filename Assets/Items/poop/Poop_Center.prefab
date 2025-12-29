@@ -132,7 +132,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PoopItem
   ShowTopMostFoldoutHeaderGroup: 1
   itemType: poop
-  itemDescription: 
+  itemDescription: Shoot a poop. If you hit the player, you will lose your vision
+    for a while.
   useVfxPrefab: {fileID: 4792314946727229683, guid: 1aa9039129f295c4a80a052cdf14c275, type: 3}
   useSfxClip: {fileID: 8300000, guid: 23b8ce711dc66d745afaafd06d295f10, type: 3}
   useSfxClips: []

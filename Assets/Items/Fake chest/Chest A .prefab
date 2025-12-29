@@ -225,9 +225,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FakeChestItem
   ShowTopMostFoldoutHeaderGroup: 1
   itemType: fake chest
-  itemDescription: 
+  itemDescription: "Place a fake treasure chest. If the player uses it, it can\u2018t
+    be moved for a short time."
   useVfxPrefab: {fileID: 7414423688252830081, guid: 343bcde30a7b80548a49df464c00dc5a, type: 3}
   useSfxClip: {fileID: 8300000, guid: 576efa9afd61f7d47b63679b0885fc00, type: 3}
+  useSfxClips: []
   useSfxVolume: 1
   attachUseVfxToPlayer: 1
   useVfxLocalOffset: {x: 0, y: 3.2, z: 0}

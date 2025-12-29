@@ -132,7 +132,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SwapRemoteItem
   ShowTopMostFoldoutHeaderGroup: 1
   itemType: swap remote
-  itemDescription: 
+  itemDescription: After using, switch with another player.
   useVfxPrefab: {fileID: 6722337076884923292, guid: 58bacb894c84efc42a52ff63e50064f8, type: 3}
   useSfxClip: {fileID: 8300000, guid: 0a155bf86be35314da0460974a714a4d, type: 3}
   useSfxClips: []
