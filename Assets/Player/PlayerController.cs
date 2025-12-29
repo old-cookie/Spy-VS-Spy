@@ -188,6 +188,22 @@ public class PlayerController : NetworkBehaviour
     [SerializeField, Min(0f)]
     private float empHitVfxDestroyAfterSeconds = 2f;
 
+    [Header("Pickpocket Hit VFX (On Affected Player)")]
+    [SerializeField]
+    private GameObject pickpocketHitVfxPrefab;
+
+    [SerializeField]
+    private bool pickpocketHitVfxAttachToPlayer = true;
+
+    [SerializeField]
+    private Vector3 pickpocketHitVfxLocalOffset = Vector3.zero;
+
+    [SerializeField]
+    private Vector3 pickpocketHitVfxLocalEulerOffset = Vector3.zero;
+
+    [SerializeField, Min(0f)]
+    private float pickpocketHitVfxDestroyAfterSeconds = 2f;
+
     private float itemUseLockTimer;
 
     public bool CanUseItem => itemUseLockTimer <= 0f;
@@ -1082,6 +1098,48 @@ public class PlayerController : NetworkBehaviour
         else if (empHitVfxDestroyAfterSeconds > 0f)
         {
             Destroy(go, empHitVfxDestroyAfterSeconds);
+        }
+    }
+
+    [ClientRpc]
+    public void PlayPickpocketHitVfxClientRpc(ClientRpcParams rpcParams = default)
+    {
+        if (pickpocketHitVfxPrefab == null)
+        {
+            return;
+        }
+
+        var parent = pickpocketHitVfxAttachToPlayer ? transform : null;
+        var worldPos = transform.TransformPoint(pickpocketHitVfxLocalOffset);
+        var worldRot = transform.rotation * Quaternion.Euler(pickpocketHitVfxLocalEulerOffset);
+
+        var go = Instantiate(pickpocketHitVfxPrefab, worldPos, worldRot, parent);
+        if (go == null)
+        {
+            return;
+        }
+
+        var ps = go.GetComponentInChildren<ParticleSystem>();
+        if (ps != null)
+        {
+            var main = ps.main;
+            var lifetime = main.duration;
+            if (main.startLifetime.mode == ParticleSystemCurveMode.Constant)
+            {
+                lifetime += main.startLifetime.constant;
+            }
+            if (lifetime <= 0f)
+            {
+                lifetime = pickpocketHitVfxDestroyAfterSeconds;
+            }
+            if (lifetime > 0f)
+            {
+                Destroy(go, lifetime);
+            }
+        }
+        else if (pickpocketHitVfxDestroyAfterSeconds > 0f)
+        {
+            Destroy(go, pickpocketHitVfxDestroyAfterSeconds);
         }
     }
 

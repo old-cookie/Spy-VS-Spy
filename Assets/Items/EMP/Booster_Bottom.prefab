@@ -134,7 +134,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   ShowTopMostFoldoutHeaderGroup: 1
   itemType: emp
-  itemDescription: 
+  itemDescription: 'Make another player unable to use props for a short time. '
   useVfxPrefab: {fileID: 3681003105057097295, guid: 766fe2c2c51518d45a50e315df1713fe, type: 3}
   useSfxClip: {fileID: 8300000, guid: f58149be1cead0849a1fd5292af65bee, type: 3}
   useSfxClips:

@@ -1353,6 +1353,11 @@ MonoBehaviour:
   empHitVfxLocalOffset: {x: 0, y: 1.2, z: 0}
   empHitVfxLocalEulerOffset: {x: 0, y: 0, z: 0}
   empHitVfxDestroyAfterSeconds: 3
+  pickpocketHitVfxPrefab: {fileID: 6811810496045127516, guid: 8e7b5016dbb94b74fa5b8f0baac1ccb1, type: 3}
+  pickpocketHitVfxAttachToPlayer: 1
+  pickpocketHitVfxLocalOffset: {x: 0, y: 3.2, z: 0}
+  pickpocketHitVfxLocalEulerOffset: {x: 0, y: 0, z: 0}
+  pickpocketHitVfxDestroyAfterSeconds: 2
 --- !u!114 &1313596987946790375
 MonoBehaviour:
   m_ObjectHideFlags: 0

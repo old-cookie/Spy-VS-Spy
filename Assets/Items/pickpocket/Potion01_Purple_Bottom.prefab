@@ -133,13 +133,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PickpocketItem
   ShowTopMostFoldoutHeaderGroup: 1
   itemType: pickpocket
-  itemDescription: 
-  useVfxPrefab: {fileID: 0}
-  useSfxClip: {fileID: 0}
+  itemDescription: Steal the other player's itemse
+  useVfxPrefab: {fileID: 6811810496045127516, guid: 8e7b5016dbb94b74fa5b8f0baac1ccb1, type: 3}
+  useSfxClip: {fileID: 8300000, guid: 8c1c89785fea2964e84bb3c9b222062b, type: 3}
   useSfxClips: []
   useSfxVolume: 1
   attachUseVfxToPlayer: 1
-  useVfxLocalOffset: {x: 0, y: 0, z: 0}
+  useVfxLocalOffset: {x: 0, y: 3.2, z: 0}
   matchUseVfxRotationToPlayer: 1
   useVfxLocalEulerOffset: {x: 0, y: 0, z: 0}
   useVfxDestroyAfterSeconds: 2

@@ -190,9 +190,21 @@ public class ItemSpawnManager : NetworkBehaviour
         // Some items need a different visual orientation while being held/following.
         var spawnRotation = Quaternion.Euler(-45f, 0f, 0f);
         var prefabItem = PickMostDerivedItemComponent(selectedPrefab);
-        if (prefabItem != null && string.Equals(prefabItem.ItemType, "fake chest", System.StringComparison.OrdinalIgnoreCase))
+        if (prefabItem != null)
         {
-            spawnRotation = Quaternion.Euler(0f, 180f, 0f);
+            if (string.Equals(prefabItem.ItemType, "fake chest", System.StringComparison.OrdinalIgnoreCase))
+            {
+                spawnRotation = Quaternion.Euler(0f, 180f, 0f);
+            }
+            else if (string.Equals(prefabItem.ItemType, "pickpocket", System.StringComparison.OrdinalIgnoreCase))
+            {
+                // Display above head (before use) should face the other direction.
+                spawnRotation = Quaternion.Euler(0f, 180f, 0f);
+            }
+            else if (string.Equals(prefabItem.ItemType, "swap remote vfx", System.StringComparison.OrdinalIgnoreCase))
+            {
+                spawnRotation = Quaternion.Euler(0f, 180f, 0f);
+            }
         }
         var itemObject = Instantiate(selectedPrefab, chestPosition, spawnRotation);
         itemObject.name = $"Item_{playerNetworkObjectId}";

@@ -213,6 +213,9 @@ public class PickpocketItem : Item
         senderPc.SetHeldItemClientRpc(true, stolenItemNetworkObjectId, toSender);
         bestTarget.SetHeldItemClientRpc(false, 0, toVictim);
 
+        // Broadcast VFX on the affected (pickpocketed) player so everyone can see it.
+        bestTarget.PlayPickpocketHitVfxClientRpc();
+
         if (debugLogs)
         {
             Debug.Log($"[PickpocketItem] Stole '{stolenItem.ItemType}' from {targetNet.NetworkObjectId} -> {senderNet.NetworkObjectId}", this);
