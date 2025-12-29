@@ -2,9 +2,10 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 
+[RequireComponent(typeof(Image))]
+[RequireComponent(typeof(Button))]
 public class MemoryCard : MonoBehaviour
 {
-    private int cardIndex;
     private Sprite cardImage;
     private bool isFlipped = false;
     private bool isMatched = false;
@@ -12,14 +13,12 @@ public class MemoryCard : MonoBehaviour
     private Image imageDisplay;
     private Image cardBackground;
     private Button cardButton;
-    private Text questionMarkText;  // 加這一行
-
+    private Text questionMarkText;
     public bool IsFlipped => isFlipped;
     public bool IsMatched => isMatched;
 
-    public void Initialize(int index, Sprite image, Action<MemoryCard> callback)
+    public void Initialize(Sprite image, Action<MemoryCard> callback)
     {
-        cardIndex = index;
         cardImage = image;
         onFlipped = callback;
 

@@ -55,15 +55,15 @@ public sealed class CameraController : MonoBehaviour
         foreach (var player in players)
         {
             var netObj = player.GetComponent<NetworkObject>();
-            
+
             if (netObj != null && netObj.IsSpawned && netObj.IsLocalPlayer)
             {
                 target = player.transform;
                 Debug.Log($"[CameraController] Now following: {player.name}");
-                
+
                 // Stop searching
                 CancelInvoke(nameof(TryFindLocalPlayer));
-                
+
                 // Snap to player immediately
                 transform.position = target.position + offset;
                 return;
@@ -78,7 +78,7 @@ public sealed class CameraController : MonoBehaviour
     {
         target = newTarget;
         CancelInvoke(nameof(TryFindLocalPlayer));
-        
+
         if (target != null)
         {
             transform.position = target.position + offset;

@@ -1,6 +1,3 @@
-using UnityEngine;
-using Unity.Netcode;
-
 /// <summary>
 /// Teleport item that teleports the player back to their spawn position when consumed.
 /// </summary>

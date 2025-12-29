@@ -160,7 +160,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RustGearItem
   ShowTopMostFoldoutHeaderGroup: 1
   itemType: rust gear
-  itemDescription: 
+  itemDescription: Reduces the movement speed of other players within range for a
+    short time
   useVfxPrefab: {fileID: 0}
   useSfxClip: {fileID: 8300000, guid: f6451ecd1655cff41b752fcf1907f52e, type: 3}
   useSfxClips:

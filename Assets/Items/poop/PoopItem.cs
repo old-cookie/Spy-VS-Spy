@@ -41,7 +41,7 @@ public class PoopItem : Item
     private void FirePoopServerRpc(float speed, float lifetime, float blindTime)
     {
         Debug.Log($"[PoopItem] FirePoopServerRpc called on server. Prefab assigned: {poopProjectilePrefab != null}");
-        
+
         if (poopProjectilePrefab == null)
         {
             Debug.LogError("[PoopItem] poopProjectilePrefab NOT ASSIGNED in Inspector!");
@@ -59,8 +59,8 @@ public class PoopItem : Item
         Debug.Log($"[PoopItem] Player transform: {playerTransform.name}, position: {playerTransform.position}");
 
         var playerController = playerTransform.GetComponent<PlayerController>();
-        Vector3 shootDirection = playerTransform.forward;
-        
+        _ = playerTransform.forward;
+        Vector3 shootDirection;
         // Use player's facing direction (right/left in 2D platformer)
         if (playerController != null)
         {
@@ -103,14 +103,13 @@ public class PoopItem : Item
 
         var origin = basePos + shootDirection * forwardSpawnOffset + Vector3.up * verticalSpawnOffset;
         var rotation = Quaternion.LookRotation(shootDirection, Vector3.up);
-        
+
         Debug.Log($"[PoopItem] Instantiating at position: {origin}, rotation: {rotation.eulerAngles}");
         var go = Instantiate(poopProjectilePrefab, origin, rotation);
         Debug.Log($"[PoopItem] GameObject created: {go.name}");
 
         // Configure before spawning so OnNetworkSpawn can initialize with correct direction.
-        var proj = go.GetComponent<PoopProjectile>();
-        if (proj != null)
+        if (go.TryGetComponent<PoopProjectile>(out var proj))
         {
             Debug.Log($"[PoopItem] Configuring projectile with speed={speed}, direction={shootDirection}");
             proj.Configure(shootDirection, speed, lifetime, blindTime, OwnerClientId);
@@ -120,8 +119,7 @@ public class PoopItem : Item
             Debug.LogError("[PoopItem] PoopProjectile component NOT FOUND on projectile prefab!");
         }
 
-        var netObj = go.GetComponent<NetworkObject>();
-        if (netObj != null)
+        if (go.TryGetComponent<NetworkObject>(out var netObj))
         {
             Debug.Log("[PoopItem] NetworkObject found, spawning on network...");
             netObj.Spawn();

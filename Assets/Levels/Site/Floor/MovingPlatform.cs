@@ -13,13 +13,13 @@ public class MovingPlatform : MonoBehaviour
     private void Start()
     {
         // Store the starting position
-        startPosition = transform.position; 
+        startPosition = transform.position;
     }
 
     private void OnTriggerEnter(Collider other)
     {
         // Check if the player touches the platform
-        if (other.CompareTag("Player") && !isMoving) 
+        if (other.CompareTag("Player") && !isMoving)
         {
             StartCoroutine(RiseAndReturn());
         }
@@ -33,17 +33,17 @@ public class MovingPlatform : MonoBehaviour
         // Move the platform upward
         while (transform.position.y < targetPosition.y)
         {
-            transform.position += Vector3.up * riseSpeed * Time.deltaTime;
+            transform.position += riseSpeed * Time.deltaTime * Vector3.up;
             yield return null; // Wait for the next frame
         }
 
         // Hold at the top
         yield return new WaitForSeconds(holdTime);
-        
+
         // Move the platform back down
         while (transform.position.y > startPosition.y)
         {
-            transform.position -= Vector3.up * riseSpeed * Time.deltaTime;
+            transform.position -= riseSpeed * Time.deltaTime * Vector3.up;
             yield return null; // Wait for the next frame
         }
 

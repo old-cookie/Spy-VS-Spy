@@ -1,6 +1,7 @@
 using System.Collections; // Necessary for IEnumerator
 using UnityEngine;
 
+[RequireComponent(typeof(Renderer))]
 public class DisappearingFloor : MonoBehaviour
 {
     public float disappearDuration = 2.0f; // Duration the floor disappears
@@ -17,11 +18,11 @@ public class DisappearingFloor : MonoBehaviour
         while (true) // Loop forever
         {
             // Show the floor
-            floorRenderer.enabled = true; 
+            floorRenderer.enabled = true;
             yield return new WaitForSeconds(disappearDuration); // Wait for the disappear duration
-            
+
             // Hide the floor
-            floorRenderer.enabled = false; 
+            floorRenderer.enabled = false;
             yield return new WaitForSeconds(disappearDuration); // Wait before reappearing
         }
     }

@@ -534,8 +534,7 @@ public class ItemEffectHandler : NetworkBehaviour
         }
 
         // Get the player's network object
-        var playerNetworkObject = GetComponent<NetworkObject>();
-        if (playerNetworkObject == null)
+        if (!TryGetComponent<NetworkObject>(out var playerNetworkObject))
         {
             Debug.LogWarning("NetworkObject not found on ItemEffectHandler.");
             return;
@@ -558,8 +557,7 @@ public class ItemEffectHandler : NetworkBehaviour
             return;
         }
 
-        var targetPlayerController = playerNetworkObject.GetComponent<PlayerController>();
-        if (targetPlayerController == null)
+        if (!playerNetworkObject.TryGetComponent<PlayerController>(out var targetPlayerController))
         {
             Debug.LogWarning("[ItemEffectHandler] PlayerController not found on target player.");
             return;
@@ -579,14 +577,24 @@ public class ItemEffectHandler : NetworkBehaviour
             return;
         }
 
-        var myNetObj = playerController.GetComponent<NetworkObject>() ?? playerController.GetComponentInParent<NetworkObject>();
+        if (!playerController.TryGetComponent<NetworkObject>(out var myNetObj))
+        {
+            myNetObj = playerController.GetComponentInParent<NetworkObject>();
+        }
         if (myNetObj == null)
         {
             Debug.LogWarning("[ItemEffectHandler] NetworkObject not found on player. Cannot swap.");
             return;
         }
 
-        var myTeamMember = playerController.GetComponent<TeamMember>() ?? playerController.GetComponentInChildren<TeamMember>() ?? playerController.GetComponentInParent<TeamMember>();
+        if (!playerController.TryGetComponent<TeamMember>(out var myTeamMember))
+        {
+            myTeamMember = playerController.GetComponentInChildren<TeamMember>();
+        }
+        if (myTeamMember == null)
+        {
+            myTeamMember = playerController.GetComponentInParent<TeamMember>();
+        }
         if (myTeamMember == null || myTeamMember.CurrentTeam == Team.None)
         {
             Debug.LogWarning("[ItemEffectHandler] TeamMember not found or Team.None. Cannot swap.");
@@ -603,16 +611,19 @@ public class ItemEffectHandler : NetworkBehaviour
         float bestAnyDistSqr = float.MaxValue;
 
         PlayerController[] allPlayers;
-    #if UNITY_2023_1_OR_NEWER
-        allPlayers = Object.FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
-    #else
+#if UNITY_2023_1_OR_NEWER
+        allPlayers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+#else
         allPlayers = Object.FindObjectsOfType<PlayerController>();
-    #endif
+#endif
         foreach (var otherPc in allPlayers)
         {
             if (otherPc == null || otherPc == playerController) continue;
 
-            var otherNet = otherPc.GetComponent<NetworkObject>() ?? otherPc.GetComponentInParent<NetworkObject>();
+            if (!otherPc.TryGetComponent<NetworkObject>(out var otherNet))
+            {
+                otherNet = otherPc.GetComponentInParent<NetworkObject>();
+            }
             if (otherNet == null) continue;
 
             var d = otherPc.transform.position - myPos;
@@ -626,7 +637,15 @@ public class ItemEffectHandler : NetworkBehaviour
                 bestAnyTarget = otherPc;
             }
 
-            var otherTeam = otherPc.GetComponent<TeamMember>() ?? otherPc.GetComponentInChildren<TeamMember>() ?? otherPc.GetComponentInParent<TeamMember>();
+            var otherTeam = otherPc.GetComponent<TeamMember>();
+            if (otherTeam == null)
+            {
+                otherTeam = otherPc.GetComponentInChildren<TeamMember>();
+            }
+            if (otherTeam == null)
+            {
+                otherTeam = otherPc.GetComponentInParent<TeamMember>();
+            }
             if (otherTeam == null) continue;
             if (otherTeam.CurrentTeam == Team.None) continue;
             if (otherTeam.CurrentTeam == myTeamMember.CurrentTeam) continue;
@@ -650,7 +669,10 @@ public class ItemEffectHandler : NetworkBehaviour
             Debug.LogWarning($"[ItemEffectHandler] Swap Remote: no enemy found (teams may be unset). Swapping with nearest player instead.");
         }
 
-        var targetNetObj = bestTarget.GetComponent<NetworkObject>() ?? bestTarget.GetComponentInParent<NetworkObject>();
+        if (!bestTarget.TryGetComponent<NetworkObject>(out var targetNetObj))
+        {
+            targetNetObj = bestTarget.GetComponentInParent<NetworkObject>();
+        }
         if (targetNetObj == null)
         {
             Debug.LogWarning("[ItemEffectHandler] Swap Remote: target has no NetworkObject.");
@@ -671,8 +693,7 @@ public class ItemEffectHandler : NetworkBehaviour
 
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(aPlayerNetworkObjectId, out var aObj))
         {
-            var aPc = aObj.GetComponent<PlayerController>();
-            if (aPc != null)
+            if (aObj.TryGetComponent<PlayerController>(out var aPc))
             {
                 aPc.TeleportToPosition(aNewPosition);
             }
@@ -680,8 +701,7 @@ public class ItemEffectHandler : NetworkBehaviour
 
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(bPlayerNetworkObjectId, out var bObj))
         {
-            var bPc = bObj.GetComponent<PlayerController>();
-            if (bPc != null)
+            if (bObj.TryGetComponent<PlayerController>(out var bPc))
             {
                 bPc.TeleportToPosition(bNewPosition);
             }

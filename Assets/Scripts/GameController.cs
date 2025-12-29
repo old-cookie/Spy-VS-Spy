@@ -198,7 +198,7 @@ public class GameController : NetworkBehaviour
         }
 
         // Initialize mini game UI state
-        UpdateMiniGameUI(force:true);
+        UpdateMiniGameUI(force: true);
     }
 
     public override void OnDestroy()
@@ -363,7 +363,7 @@ public class GameController : NetworkBehaviour
 
         UpdateScoreUI();
         UpdateUIForGameMode();
-        UpdateMiniGameUI(force:true);
+        UpdateMiniGameUI(force: true);
 
         // Use coroutine to wait for LevelSelectionState.Instance before spawning level
         StartCoroutine(WaitForLevelSelectionAndSpawn());

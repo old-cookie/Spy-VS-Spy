@@ -365,7 +365,7 @@ public class DualSync : MiniGame
             }
         }
         else
-        {            
+        {
             // Reset time in target if either bar is out of range
             timeInTarget = 0f;
         }
