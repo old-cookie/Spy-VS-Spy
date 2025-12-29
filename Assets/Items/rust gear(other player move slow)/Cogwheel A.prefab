@@ -136,6 +136,11 @@ MonoBehaviour:
   itemDescription: Reduces the movement speed of other players within range for a
     short time
   useVfxPrefab: {fileID: 7414423688252830081, guid: 9de3538c71ed37a4daffed81665f77a2, type: 3}
+  useSfxClip: {fileID: 8300000, guid: f6451ecd1655cff41b752fcf1907f52e, type: 3}
+  useSfxClips:
+  - {fileID: 8300000, guid: f6451ecd1655cff41b752fcf1907f52e, type: 3}
+  - {fileID: 8300000, guid: cb3278205868cdc4fa11c1b478bf3d59, type: 3}
+  useSfxVolume: 1
   attachUseVfxToPlayer: 1
   useVfxLocalOffset: {x: 0, y: 3.2, z: 0}
   matchUseVfxRotationToPlayer: 1
@@ -157,6 +162,11 @@ MonoBehaviour:
   itemType: rust gear
   itemDescription: 
   useVfxPrefab: {fileID: 0}
+  useSfxClip: {fileID: 8300000, guid: f6451ecd1655cff41b752fcf1907f52e, type: 3}
+  useSfxClips:
+  - {fileID: 8300000, guid: f6451ecd1655cff41b752fcf1907f52e, type: 3}
+  - {fileID: 8300000, guid: cb3278205868cdc4fa11c1b478bf3d59, type: 3}
+  useSfxVolume: 1
   attachUseVfxToPlayer: 1
   useVfxLocalOffset: {x: 0, y: 0, z: 0}
   matchUseVfxRotationToPlayer: 1
@@ -165,6 +175,11 @@ MonoBehaviour:
   slowMultiplier: 0.2
   slowDuration: 10
   slowVfxPrefab: {fileID: 5566973534206861085, guid: 0805f3b5e52482b44aa87b159dce6675, type: 3}
+  slowSfxClip: {fileID: 8300000, guid: f6451ecd1655cff41b752fcf1907f52e, type: 3}
+  slowSfxClips:
+  - {fileID: 8300000, guid: f6451ecd1655cff41b752fcf1907f52e, type: 3}
+  - {fileID: 8300000, guid: cb3278205868cdc4fa11c1b478bf3d59, type: 3}
+  slowSfxVolume: 1
   debugLogs: 1
   avoidInheritingPlayerScale: 1
   slowVfxLocalOffset: {x: 0, y: 1.2, z: 0}

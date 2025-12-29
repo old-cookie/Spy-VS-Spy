@@ -134,6 +134,9 @@ MonoBehaviour:
   itemType: swap remote
   itemDescription: 
   useVfxPrefab: {fileID: 6722337076884923292, guid: 58bacb894c84efc42a52ff63e50064f8, type: 3}
+  useSfxClip: {fileID: 8300000, guid: 0a155bf86be35314da0460974a714a4d, type: 3}
+  useSfxClips: []
+  useSfxVolume: 1
   attachUseVfxToPlayer: 1
   useVfxLocalOffset: {x: 0, y: 2.3, z: 0}
   matchUseVfxRotationToPlayer: 1
@@ -141,6 +144,9 @@ MonoBehaviour:
   useVfxDestroyAfterSeconds: 2
   range: 0
   swapVfxPrefab: {fileID: 6722337076884923292, guid: 58bacb894c84efc42a52ff63e50064f8, type: 3}
+  swapSfxClip: {fileID: 0}
+  swapSfxClips: []
+  swapSfxVolume: 1
   debugLogs: 0
   avoidInheritingPlayerScale: 1
   swapVfxLocalOffset: {x: 0, y: 2.3, z: 0}

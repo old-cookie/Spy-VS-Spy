@@ -17,6 +17,16 @@ public class PoopProjectile : NetworkBehaviour
     [SerializeField]
     private GameObject hitVfxPrefab;
 
+    [Header("Hit SFX (Shows On Hit Player)")]
+    [SerializeField]
+    private AudioClip hitSfxClip;
+
+    [SerializeField]
+    private AudioClip[] hitSfxClips;
+
+    [SerializeField, Range(0f, 1f)]
+    private float hitSfxVolume = 1f;
+
     [SerializeField]
     private bool debugLogs = false;
 
@@ -234,6 +244,8 @@ public class PoopProjectile : NetworkBehaviour
 
         var worldPos = targetTransform.TransformPoint(hitVfxLocalOffset);
         var worldRot = targetTransform.rotation * Quaternion.Euler(hitVfxLocalEulerOffset);
+
+        VfxSfxUtils.PlaySequenceAtPoint(hitSfxClip, hitSfxClips, worldPos, hitSfxVolume);
 
         GameObject vfx;
         if (avoidInheritingPlayerScale)

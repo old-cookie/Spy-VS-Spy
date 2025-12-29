@@ -134,6 +134,9 @@ MonoBehaviour:
   itemType: poop
   itemDescription: 
   useVfxPrefab: {fileID: 4792314946727229683, guid: 1aa9039129f295c4a80a052cdf14c275, type: 3}
+  useSfxClip: {fileID: 8300000, guid: 23b8ce711dc66d745afaafd06d295f10, type: 3}
+  useSfxClips: []
+  useSfxVolume: 1
   attachUseVfxToPlayer: 1
   useVfxLocalOffset: {x: 0, y: 3.2, z: 0}
   matchUseVfxRotationToPlayer: 1

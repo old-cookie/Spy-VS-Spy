@@ -135,6 +135,9 @@ MonoBehaviour:
   itemType: teleport
   itemDescription: Instantly teleports you back to your spawn point
   useVfxPrefab: {fileID: 5004019269174722963, guid: 2e8d2b4387e2b964493239bb919a2def, type: 3}
+  useSfxClip: {fileID: 8300000, guid: fce779222c587e645be53007033b9a54, type: 3}
+  useSfxClips: []
+  useSfxVolume: 1
   attachUseVfxToPlayer: 1
   useVfxLocalOffset: {x: 0, y: 1.2, z: 0}
   matchUseVfxRotationToPlayer: 1

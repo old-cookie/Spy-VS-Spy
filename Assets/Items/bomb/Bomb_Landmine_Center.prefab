@@ -181,6 +181,8 @@ MonoBehaviour:
   itemType: bomb
   itemDescription: Places a mine that deals damage and explodes when stepped on
   useVfxPrefab: {fileID: 7414423688252830081, guid: 569bd6a001068a443b2cc871af151cab, type: 3}
+  useSfxClip: {fileID: 8300000, guid: cc113d65e72aa2e4db080ee21e852ee5, type: 3}
+  useSfxVolume: 1
   attachUseVfxToPlayer: 1
   useVfxLocalOffset: {x: 0, y: 3.2, z: 0}
   matchUseVfxRotationToPlayer: 1
@@ -204,6 +206,8 @@ MonoBehaviour:
   itemType: bomb
   itemDescription: Places a mine that deals damage and explodes when stepped on
   useVfxPrefab: {fileID: 0}
+  useSfxClip: {fileID: 0}
+  useSfxVolume: 1
   attachUseVfxToPlayer: 1
   useVfxLocalOffset: {x: 0, y: 0, z: 0}
   matchUseVfxRotationToPlayer: 1

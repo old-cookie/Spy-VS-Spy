@@ -188,10 +188,14 @@ MonoBehaviour:
   fadeOutDuration: 1
   playPlacementVfxOnSpawn: 1
   placementVfxPrefab: {fileID: 7432189065929827138, guid: 6a7ce574485b2554f97ae6bd1ee38ee9, type: 3}
+  placementSfxClip: {fileID: 0}
+  placementSfxVolume: 1
   placementVfxLocalOffset: {x: 0, y: 0, z: 0}
   placementVfxLocalEulerOffset: {x: 0, y: 0, z: 0}
   placementVfxDestroyAfterSeconds: 3
   triggerVfxPrefab: {fileID: 2398608829508964987, guid: 76984a92fa3e02e4781bc5b4733206d5, type: 3}
+  triggerSfxClip: {fileID: 8300000, guid: dc915dbe7bf1d9b4fb9e25e45b6bf262, type: 3}
+  triggerSfxVolume: 1
   triggerVfxLocalOffset: {x: 0, y: 0, z: 0}
   triggerVfxLocalEulerOffset: {x: 0, y: 0, z: 0}
   triggerVfxDestroyAfterSeconds: 3

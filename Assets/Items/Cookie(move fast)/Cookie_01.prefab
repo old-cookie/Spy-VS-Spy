@@ -134,6 +134,11 @@ MonoBehaviour:
   itemType: cookie
   itemDescription: Greatly increases movement speed for a short time
   useVfxPrefab: {fileID: 8764043878647920493, guid: 8f0870387335477408303fc437366c31, type: 3}
+  useSfxClip: {fileID: 8300000, guid: f5e5124dff7e5cb469068c45f23c9b68, type: 3}
+  useSfxClips:
+  - {fileID: 8300000, guid: f5e5124dff7e5cb469068c45f23c9b68, type: 3}
+  - {fileID: 8300000, guid: a4d0651ad68cd5e40a2c5b3eadb9913d, type: 3}
+  useSfxVolume: 1
   attachUseVfxToPlayer: 1
   useVfxLocalOffset: {x: 0, y: 0.3, z: 0}
   matchUseVfxRotationToPlayer: 1

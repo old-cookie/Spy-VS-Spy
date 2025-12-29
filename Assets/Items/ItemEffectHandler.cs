@@ -74,6 +74,16 @@ public class ItemEffectHandler : NetworkBehaviour
     [SerializeField]
     private GameObject receivedEffectVfxPrefab;
 
+    [Header("Effect SFX (When Player Is Affected)")]
+    [SerializeField]
+    private AudioClip receivedEffectSfxClip;
+
+    [SerializeField]
+    private AudioClip[] receivedEffectSfxClips;
+
+    [SerializeField, Range(0f, 1f)]
+    private float receivedEffectSfxVolume = 1f;
+
     [SerializeField]
     private bool receivedEffectVfxAttachToPlayer = true;
 
@@ -133,6 +143,8 @@ public class ItemEffectHandler : NetworkBehaviour
         {
             return;
         }
+
+        VfxSfxUtils.PlaySequenceAtPoint(receivedEffectSfxClip, receivedEffectSfxClips, worldPos, receivedEffectSfxVolume);
 
         var ps = go.GetComponentInChildren<ParticleSystem>();
         if (ps != null)

@@ -230,8 +230,16 @@ MonoBehaviour:
   maxPickDistance: 2.5
   playPlacementVfxOnSpawn: 1
   placementVfxPrefab: {fileID: 3432958286849152088, guid: cb8f34474a4e3f2408bd6ec7adf238f8, type: 3}
+  placementSfxClip: {fileID: 0}
+  placementSfxClips: []
+  placementSfxVolume: 1
   placementVfxDestroyAfterSeconds: 3
   triggerVfxPrefab: {fileID: 4266394424014300170, guid: 7c4288529d3884a408f57c63b03497b9, type: 3}
+  triggerSfxClip: {fileID: 8300000, guid: 0a2504ab996012546a4deed0734f7514, type: 3}
+  triggerSfxClips:
+  - {fileID: 8300000, guid: 0a2504ab996012546a4deed0734f7514, type: 3}
+  - {fileID: 8300000, guid: a583e6a82bf0e22478a3945317348dad, type: 3}
+  triggerSfxVolume: 1
   triggerVfxDestroyAfterSeconds: 3
   despawnAfterSeconds: 0
 --- !u!114 &2587882535008686512

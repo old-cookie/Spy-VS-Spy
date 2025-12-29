@@ -25,6 +25,16 @@ public class RustGearItem : Item
     [SerializeField]
     private GameObject slowVfxPrefab;
 
+    [Header("Slow SFX (Shows On Slowed Player)")]
+    [SerializeField]
+    private AudioClip slowSfxClip;
+
+    [SerializeField]
+    private AudioClip[] slowSfxClips;
+
+    [SerializeField, Range(0f, 1f)]
+    private float slowSfxVolume = 1f;
+
     [SerializeField]
     private bool debugLogs = false;
 
@@ -163,6 +173,8 @@ public class RustGearItem : Item
         }
         var worldPos = targetTransform.TransformPoint(slowVfxLocalOffset);
         var worldRot = targetTransform.rotation * Quaternion.Euler(slowVfxLocalEulerOffset);
+
+        VfxSfxUtils.PlaySequenceAtPoint(slowSfxClip, slowSfxClips, worldPos, slowSfxVolume);
 
         GameObject vfx;
         if (avoidInheritingPlayerScale)

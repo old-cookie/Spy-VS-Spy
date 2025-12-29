@@ -62,6 +62,16 @@ public class PlayerEffectVfxBroadcaster : NetworkBehaviour
     [SerializeField, Min(0f)]
     private float destroyAfterSeconds = 2f;
 
+    [Header("Effect SFX")]
+    [SerializeField]
+    private AudioClip effectSfxClip;
+
+    [SerializeField]
+    private AudioClip[] effectSfxClips;
+
+    [SerializeField, Range(0f, 1f)]
+    private float effectSfxVolume = 1f;
+
     [Header("Debug")]
     [SerializeField]
     private bool debugLogs = false;
@@ -263,6 +273,8 @@ public class PlayerEffectVfxBroadcaster : NetworkBehaviour
         var worldPos = transform.TransformPoint(offset);
         var baseRot = matchVfxRotationToPlayer ? transform.rotation : Quaternion.identity;
         var worldRot = baseRot * Quaternion.Euler(euler);
+
+        VfxSfxUtils.PlaySequenceAtPoint(effectSfxClip, effectSfxClips, worldPos, effectSfxVolume);
 
         GameObject go;
         if (attachToPlayer && avoidInheritingPlayerScale)

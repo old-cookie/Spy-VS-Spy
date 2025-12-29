@@ -28,11 +28,29 @@ public class FakeChestTrap : NetworkBehaviour
     [SerializeField]
     private GameObject placementVfxPrefab;
 
+    [SerializeField]
+    private AudioClip placementSfxClip;
+
+    [SerializeField]
+    private AudioClip[] placementSfxClips;
+
+    [SerializeField, Range(0f, 1f)]
+    private float placementSfxVolume = 1f;
+
     [SerializeField, Min(0f)]
     private float placementVfxDestroyAfterSeconds = 3f;
 
     [SerializeField]
     private GameObject triggerVfxPrefab;
+
+    [SerializeField]
+    private AudioClip triggerSfxClip;
+
+    [SerializeField]
+    private AudioClip[] triggerSfxClips;
+
+    [SerializeField, Range(0f, 1f)]
+    private float triggerSfxVolume = 1f;
 
     [SerializeField, Min(0f)]
     private float triggerVfxDestroyAfterSeconds = 3f;
@@ -58,7 +76,7 @@ public class FakeChestTrap : NetworkBehaviour
         // Play placement VFX once when the trap appears (client-side visual only).
         if (IsClient && playPlacementVfxOnSpawn && placementVfxPrefab != null)
         {
-            SpawnLocalVfx(placementVfxPrefab, transform.position, placementVfxDestroyAfterSeconds);
+            SpawnLocalVfx(placementVfxPrefab, placementSfxClip, placementSfxClips, placementSfxVolume, transform.position, placementVfxDestroyAfterSeconds);
         }
     }
 
@@ -166,15 +184,17 @@ public class FakeChestTrap : NetworkBehaviour
             return;
         }
 
-        SpawnLocalVfx(triggerVfxPrefab, worldPosition, triggerVfxDestroyAfterSeconds);
+        SpawnLocalVfx(triggerVfxPrefab, triggerSfxClip, triggerSfxClips, triggerSfxVolume, worldPosition, triggerVfxDestroyAfterSeconds);
     }
 
-    private void SpawnLocalVfx(GameObject vfxPrefab, Vector3 worldPosition, float fallbackDestroyAfterSeconds)
+    private void SpawnLocalVfx(GameObject vfxPrefab, AudioClip sfxClip, AudioClip[] sfxClips, float sfxVolume, Vector3 worldPosition, float fallbackDestroyAfterSeconds)
     {
         if (vfxPrefab == null)
         {
             return;
         }
+
+        VfxSfxUtils.PlaySequenceAtPoint(sfxClip, sfxClips, worldPosition, sfxVolume);
 
         var go = Instantiate(vfxPrefab, worldPosition, Quaternion.identity);
         if (go == null)

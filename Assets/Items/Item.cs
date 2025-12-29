@@ -28,6 +28,16 @@ public class Item : NetworkBehaviour
     [SerializeField]
     private GameObject useVfxPrefab;
 
+    [Header("Use SFX")]
+    [SerializeField]
+    private AudioClip useSfxClip;
+
+    [SerializeField]
+    private AudioClip[] useSfxClips;
+
+    [SerializeField, Range(0f, 1f)]
+    private float useSfxVolume = 1f;
+
     [SerializeField]
     private bool attachUseVfxToPlayer = true;
 
@@ -136,6 +146,8 @@ public class Item : NetworkBehaviour
         {
             return;
         }
+
+        VfxSfxUtils.PlaySequenceAtPoint(useSfxClip, useSfxClips, worldPos, useSfxVolume);
 
         var ps = go.GetComponentInChildren<ParticleSystem>();
         if (ps != null)

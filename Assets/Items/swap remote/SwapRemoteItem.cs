@@ -19,6 +19,16 @@ public class SwapRemoteItem : Item
     [SerializeField]
     private GameObject swapVfxPrefab;
 
+    [Header("Swap SFX (Shows On Swapped Players)")]
+    [SerializeField]
+    private AudioClip swapSfxClip;
+
+    [SerializeField]
+    private AudioClip[] swapSfxClips;
+
+    [SerializeField, Range(0f, 1f)]
+    private float swapSfxVolume = 1f;
+
     [SerializeField]
     private bool debugLogs = false;
 
@@ -293,6 +303,8 @@ public class SwapRemoteItem : Item
 
         var worldPos = targetTransform.TransformPoint(swapVfxLocalOffset);
         var worldRot = targetTransform.rotation * Quaternion.Euler(swapVfxLocalEulerOffset);
+
+        VfxSfxUtils.PlaySequenceAtPoint(swapSfxClip, swapSfxClips, worldPos, swapSfxVolume);
 
         GameObject vfx;
         if (avoidInheritingPlayerScale)

@@ -54,6 +54,15 @@ public class PlacedBomb : NetworkBehaviour
     private GameObject placementVfxPrefab;
 
     [SerializeField]
+    private AudioClip placementSfxClip;
+
+    [SerializeField]
+    private AudioClip[] placementSfxClips;
+
+    [SerializeField, Range(0f, 1f)]
+    private float placementSfxVolume = 1f;
+
+    [SerializeField]
     private Vector3 placementVfxLocalOffset = Vector3.zero;
 
     [SerializeField]
@@ -64,6 +73,15 @@ public class PlacedBomb : NetworkBehaviour
 
     [SerializeField]
     private GameObject triggerVfxPrefab;
+
+    [SerializeField]
+    private AudioClip triggerSfxClip;
+
+    [SerializeField]
+    private AudioClip[] triggerSfxClips;
+
+    [SerializeField, Range(0f, 1f)]
+    private float triggerSfxVolume = 1f;
 
     [SerializeField]
     private Vector3 triggerVfxLocalOffset = Vector3.zero;
@@ -104,7 +122,7 @@ public class PlacedBomb : NetworkBehaviour
         // Placement VFX: runs on every client because this object is network-spawned.
         if (IsClient && playPlacementVfxOnSpawn && placementVfxPrefab != null)
         {
-            SpawnLocalVfx(placementVfxPrefab, placementVfxLocalOffset, placementVfxLocalEulerOffset, placementVfxDestroyAfterSeconds);
+            SpawnLocalVfx(placementVfxPrefab, placementSfxClip, placementSfxClips, placementSfxVolume, placementVfxLocalOffset, placementVfxLocalEulerOffset, placementVfxDestroyAfterSeconds);
         }
     }
 
@@ -240,7 +258,7 @@ public class PlacedBomb : NetworkBehaviour
         // Trigger VFX should show on the bomb itself.
         if (triggerVfxPrefab != null)
         {
-            SpawnLocalVfx(triggerVfxPrefab, triggerVfxLocalOffset, triggerVfxLocalEulerOffset, triggerVfxDestroyAfterSeconds);
+            SpawnLocalVfx(triggerVfxPrefab, triggerSfxClip, triggerSfxClips, triggerSfxVolume, triggerVfxLocalOffset, triggerVfxLocalEulerOffset, triggerVfxDestroyAfterSeconds);
         }
     }
 
@@ -381,7 +399,7 @@ public class PlacedBomb : NetworkBehaviour
         Debug.Log("[PlacedBomb] Explosion effect played");
     }
 
-    private void SpawnLocalVfx(GameObject vfxPrefab, Vector3 localOffset, Vector3 localEulerOffset, float fallbackDestroyAfterSeconds)
+    private void SpawnLocalVfx(GameObject vfxPrefab, AudioClip sfxClip, AudioClip[] sfxClips, float sfxVolume, Vector3 localOffset, Vector3 localEulerOffset, float fallbackDestroyAfterSeconds)
     {
         if (vfxPrefab == null)
         {
@@ -390,6 +408,8 @@ public class PlacedBomb : NetworkBehaviour
 
         var worldPos = transform.TransformPoint(localOffset);
         var worldRot = transform.rotation * Quaternion.Euler(localEulerOffset);
+
+        VfxSfxUtils.PlaySequenceAtPoint(sfxClip, sfxClips, worldPos, sfxVolume);
         var go = Instantiate(vfxPrefab, worldPos, worldRot, transform);
         if (go == null)
         {

@@ -145,6 +145,14 @@ MonoBehaviour:
   rustGearSlowDownMultiplier: 0.2
   rustGearSlowDownDuration: 10
   swapRemoteRange: 0
+  receivedEffectVfxPrefab: {fileID: 0}
+  receivedEffectSfxClip: {fileID: 0}
+  receivedEffectSfxClips: []
+  receivedEffectSfxVolume: 1
+  receivedEffectVfxAttachToPlayer: 1
+  receivedEffectVfxLocalOffset: {x: 0, y: 0, z: 0}
+  receivedEffectVfxLocalEulerOffset: {x: 0, y: 0, z: 0}
+  receivedEffectVfxDestroyAfterSeconds: 2
 --- !u!114 &6022651382086077611
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -161,6 +169,9 @@ MonoBehaviour:
   itemType: super drink
   itemDescription: Briefly increases jump height and aerial mobility
   useVfxPrefab: {fileID: 4597324245859296335, guid: d20be45c9c74f15448186674946c1bc7, type: 3}
+  useSfxClip: {fileID: 8300000, guid: aa6d0fcd629e67b4f9bdfe60088ef0bf, type: 3}
+  useSfxClips: []
+  useSfxVolume: 1
   attachUseVfxToPlayer: 1
   useVfxLocalOffset: {x: 0, y: 0.1, z: 0}
   matchUseVfxRotationToPlayer: 1
