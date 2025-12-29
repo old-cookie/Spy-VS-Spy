@@ -183,8 +183,15 @@ public class PoopProjectile : NetworkBehaviour
                 hitProcessed = true;
                 Debug.Log($"[PoopProjectile] Hit player {player.name} (Owner: {playerNet.OwnerClientId})");
 
-                // Blind only the hit player
-                ApplyBlindClientRpc(blindDuration);
+                // Blind only the hit player (do NOT blind the shooter or spectators)
+                var blindTarget = new ClientRpcParams
+                {
+                    Send = new ClientRpcSendParams
+                    {
+                        TargetClientIds = new ulong[] { playerNet.OwnerClientId }
+                    }
+                };
+                ApplyBlindClientRpc(blindDuration, blindTarget);
 
                 Debug.Log($"[PoopProjectile] Blinded hit player ({playerNet.OwnerClientId})");
 
@@ -209,7 +216,7 @@ public class PoopProjectile : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void ApplyBlindClientRpc(float duration)
+    private void ApplyBlindClientRpc(float duration, ClientRpcParams rpcParams = default)
     {
         Debug.Log($"[PoopProjectile] ApplyBlindClientRpc received. duration={duration}");
         PoopBlindEffect.Show(duration);
