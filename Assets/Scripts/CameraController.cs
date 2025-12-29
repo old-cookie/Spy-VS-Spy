@@ -4,6 +4,7 @@ using Unity.Netcode;
 /// <summary>
 /// Controls camera movement to follow the local player in a networked game.
 /// </summary>
+[RequireComponent(typeof(FreeCamera))]
 public sealed class CameraController : MonoBehaviour
 {
     /// <summary>
@@ -17,6 +18,14 @@ public sealed class CameraController : MonoBehaviour
     [SerializeField] private float smoothSpeed = 5f;
 
     private Transform target;
+    private FreeCamera freeCamera;
+    private bool isFreeCameraActive = false;
+
+    private void Awake()
+    {
+        freeCamera = GetComponent<FreeCamera>();
+        freeCamera.enabled = false;
+    }
 
     private void Start()
     {
@@ -24,9 +33,17 @@ public sealed class CameraController : MonoBehaviour
         InvokeRepeating(nameof(TryFindLocalPlayer), 0.5f, 0.5f);
     }
 
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.F1))
+        {
+            ToggleFreeCamera();
+        }
+    }
+
     private void LateUpdate()
     {
-        if (target == null)
+        if (isFreeCameraActive || target == null)
         {
             return;
         }
@@ -36,6 +53,19 @@ public sealed class CameraController : MonoBehaviour
 
         // Smoothly move camera
         transform.position = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed * Time.deltaTime);
+    }
+
+    private void ToggleFreeCamera()
+    {
+        isFreeCameraActive = !isFreeCameraActive;
+        freeCamera.enabled = isFreeCameraActive;
+
+        if (!isFreeCameraActive && target != null)
+        {
+            // When switching back to follow camera, snap to the correct position and rotation
+            transform.position = target.position + offset;
+            transform.rotation = Quaternion.LookRotation(target.position - transform.position);
+        }
     }
 
     /// <summary>
@@ -65,7 +95,10 @@ public sealed class CameraController : MonoBehaviour
                 CancelInvoke(nameof(TryFindLocalPlayer));
 
                 // Snap to player immediately
-                transform.position = target.position + offset;
+                if (!isFreeCameraActive)
+                {
+                    transform.position = target.position + offset;
+                }
                 return;
             }
         }
@@ -79,7 +112,7 @@ public sealed class CameraController : MonoBehaviour
         target = newTarget;
         CancelInvoke(nameof(TryFindLocalPlayer));
 
-        if (target != null)
+        if (target != null && !isFreeCameraActive)
         {
             transform.position = target.position + offset;
         }

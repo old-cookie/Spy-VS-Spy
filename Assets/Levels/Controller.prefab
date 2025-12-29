@@ -283,6 +283,7 @@ GameObject:
   - component: {fileID: 1072946273171081780}
   - component: {fileID: 1416728671380846787}
   - component: {fileID: 6935653849953465080}
+  - component: {fileID: 4602202698439613042}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -378,6 +379,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   offset: {x: 0, y: 3, z: -10}
   smoothSpeed: 5
+--- !u!114 &4602202698439613042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4699386912956920481}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05de93f9deeb82947b83daf75d1821b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FreeCamera
+  moveSpeed: 10
+  sensitivity: 2
 --- !u!1 &4969185540096302796
 GameObject:
   m_ObjectHideFlags: 0
