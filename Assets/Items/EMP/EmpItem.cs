@@ -151,7 +151,8 @@ public class EmpItem : Item
                 }
             };
 
-                otherPc.ApplyItemUseLockClientRpc(durationParam, rpcTarget);
+            otherPc.ApplyItemUseLockClientRpc(durationParam, rpcTarget);
+            otherPc.PlayEmpHitVfxClientRpc();
             lockedCount++;
         }
 
@@ -160,6 +161,7 @@ public class EmpItem : Item
             Debug.Log($"[EmpItem] Applied EMP lock to {lockedCount} enemy player(s). range={rangeParam} duration={durationParam}", this);
         }
     }
+
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void RequestDespawnAfterDelayServerRpc(float seconds)

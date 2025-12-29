@@ -1347,6 +1347,12 @@ MonoBehaviour:
   floorSnapHeightOffset: 2
   animator: {fileID: 3674305575702069602}
   isLand: 1
+  debugItemUseLockLogs: 0
+  empHitVfxPrefab: {fileID: 9027514048236820045, guid: 91d301abc8c056a4b829427046bb9e57, type: 3}
+  empHitVfxAttachToPlayer: 1
+  empHitVfxLocalOffset: {x: 0, y: 1.2, z: 0}
+  empHitVfxLocalEulerOffset: {x: 0, y: 0, z: 0}
+  empHitVfxDestroyAfterSeconds: 3
 --- !u!114 &1313596987946790375
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1433,6 +1439,9 @@ MonoBehaviour:
   rustGearSlowDownDuration: 10
   swapRemoteRange: 0
   receivedEffectVfxPrefab: {fileID: 0}
+  receivedEffectSfxClip: {fileID: 0}
+  receivedEffectSfxClips: []
+  receivedEffectSfxVolume: 1
   receivedEffectVfxAttachToPlayer: 1
   receivedEffectVfxLocalOffset: {x: 0, y: 0, z: 0}
   receivedEffectVfxLocalEulerOffset: {x: 0, y: 0, z: 0}

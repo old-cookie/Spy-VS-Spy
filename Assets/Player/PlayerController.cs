@@ -172,6 +172,22 @@ public class PlayerController : NetworkBehaviour
     [SerializeField]
     private bool debugItemUseLockLogs = false;
 
+    [Header("EMP Hit VFX (On Affected Player)")]
+    [SerializeField]
+    private GameObject empHitVfxPrefab;
+
+    [SerializeField]
+    private bool empHitVfxAttachToPlayer = true;
+
+    [SerializeField]
+    private Vector3 empHitVfxLocalOffset = Vector3.zero;
+
+    [SerializeField]
+    private Vector3 empHitVfxLocalEulerOffset = Vector3.zero;
+
+    [SerializeField, Min(0f)]
+    private float empHitVfxDestroyAfterSeconds = 2f;
+
     private float itemUseLockTimer;
 
     public bool CanUseItem => itemUseLockTimer <= 0f;
@@ -1018,6 +1034,48 @@ public class PlayerController : NetworkBehaviour
         if (debugItemUseLockLogs)
         {
             Debug.Log($"[PlayerController] Item use locked for {durationSeconds:0.00}s (timer now {itemUseLockTimer:0.00}s).", this);
+        }
+    }
+
+    [ClientRpc]
+    public void PlayEmpHitVfxClientRpc(ClientRpcParams rpcParams = default)
+    {
+        if (empHitVfxPrefab == null)
+        {
+            return;
+        }
+
+        var parent = empHitVfxAttachToPlayer ? transform : null;
+        var worldPos = transform.TransformPoint(empHitVfxLocalOffset);
+        var worldRot = transform.rotation * Quaternion.Euler(empHitVfxLocalEulerOffset);
+
+        var go = Instantiate(empHitVfxPrefab, worldPos, worldRot, parent);
+        if (go == null)
+        {
+            return;
+        }
+
+        var ps = go.GetComponentInChildren<ParticleSystem>();
+        if (ps != null)
+        {
+            var main = ps.main;
+            var lifetime = main.duration;
+            if (main.startLifetime.mode == ParticleSystemCurveMode.Constant)
+            {
+                lifetime += main.startLifetime.constant;
+            }
+            if (lifetime <= 0f)
+            {
+                lifetime = empHitVfxDestroyAfterSeconds;
+            }
+            if (lifetime > 0f)
+            {
+                Destroy(go, lifetime);
+            }
+        }
+        else if (empHitVfxDestroyAfterSeconds > 0f)
+        {
+            Destroy(go, empHitVfxDestroyAfterSeconds);
         }
     }
 

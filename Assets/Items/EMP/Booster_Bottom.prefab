@@ -173,7 +173,7 @@ MonoBehaviour:
   useVfxLocalEulerOffset: {x: 0, y: 0, z: 0}
   useVfxDestroyAfterSeconds: 2
   range: 5
-  disableUseDuration: 3
+  disableUseDuration: 5
   despawnDelaySeconds: 0.1
   debugLogs: 0
 --- !u!114 &1860666547031964374
