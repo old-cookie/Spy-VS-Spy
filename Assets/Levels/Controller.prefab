@@ -519,7 +519,7 @@ MonoBehaviour:
   - {fileID: 2568885382546180211, guid: 9ab998d5b49c5f441909fa1cb918d498, type: 3}
   - {fileID: 489247131040113308, guid: 3083c968036bcef49902bd307cf4bde8, type: 3}
   uiDocument: {fileID: 1494258428907781154}
-  pointsToWin: 1
+  pointsToWin: 3
   chestPrefab: {fileID: 1318005759483055872, guid: eff6c4b209c859c44b327d222a36e1e9, type: 3}
   itemSpawnManagerPrefab: {fileID: 675899913445783819}
   blueFlagPrefab: {fileID: 8744781403516227787, guid: 0328bce4f5661db4c9d7c32a01d69208, type: 3}

@@ -3,7 +3,7 @@
 ; Non-commercial use only
 
 #define MyAppName "Spy V.S. Spy"
-#define MyAppVersion "5.0.0"
+#define MyAppVersion "5.1.0"
 #define MyAppPublisher "University of the West of England"
 #define MyAppURL "https://github.com/old-cookie/Spy-VS-Spy/"
 #define MyAppExeName "Spy V.S. Spy.exe"
