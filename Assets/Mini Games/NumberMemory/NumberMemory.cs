@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
+[RequireComponent(typeof(AudioSource))]
 public class NumberMemory : MiniGame
 {
     private static readonly WaitForSeconds _waitForSeconds1_5 = new(1.5f);
@@ -60,7 +61,7 @@ public class NumberMemory : MiniGame
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
         {
-            Debug.Log("[NumberMemory] 沒有找到 AudioSource，正在創建新的");
+            Debug.Log("[NumberMemory] 沒有找到 AudioSource, 正在創建新的");
             audioSource = gameObject.AddComponent<AudioSource>();
         }
         else
@@ -119,12 +120,12 @@ public class NumberMemory : MiniGame
         // 確保 AudioSource 存在
         if (audioSource == null)
         {
-            Debug.Log("[NumberMemory] audioSource 為 null，重新獲取");
+            Debug.Log("[NumberMemory] audioSource 為 null, 重新獲取");
             audioSource = GetComponent<AudioSource>();
 
             if (audioSource == null)
             {
-                Debug.Log("[NumberMemory] 仍然沒有 AudioSource，創建新的");
+                Debug.Log("[NumberMemory] 仍然沒有 AudioSource, 創建新的");
                 audioSource = gameObject.AddComponent<AudioSource>();
             }
         }
@@ -170,11 +171,11 @@ public class NumberMemory : MiniGame
         {
             if (audioSource == null)
             {
-                Debug.LogError("[NumberMemory] audioSource 為 null！");
+                Debug.LogError("[NumberMemory] audioSource 為 null!");
             }
             if (bgMusic == null)
             {
-                Debug.LogError("[NumberMemory] bgMusic 為 null！");
+                Debug.LogError("[NumberMemory] bgMusic 為 null!");
             }
         }
 
@@ -358,11 +359,11 @@ public class NumberMemory : MiniGame
         {
             if (clip == null)
             {
-                Debug.LogError("[NumberMemory] AudioClip 為 null！");
+                Debug.LogError("[NumberMemory] AudioClip 為 null!");
             }
             if (audioSource == null)
             {
-                Debug.LogError("[NumberMemory] audioSource 為 null！");
+                Debug.LogError("[NumberMemory] audioSource 為 null!");
             }
         }
     }

@@ -13,27 +13,27 @@ public class UPDownLeftRight : MiniGame
 {
     private static readonly WaitForSeconds _waitForSeconds0_2 = new(0.2f);
     private static readonly WaitForSeconds _waitForSeconds1_5 = new(1.5f);
-    
+
     /// <summary>
     /// Four hint texts displaying the directional arrows.
     /// </summary>
     public Text[] directionTexts;
-    
+
     /// <summary>
     /// UI text displaying the current score.
     /// </summary>
     public Text scoreText;
-    
+
     /// <summary>
     /// End text displaying "Finish" or "Fail" at game conclusion.
     /// </summary>
     public Text endText;
-    
+
     /// <summary>
     /// Timer component for managing countdown.
     /// </summary>
     public MiniGameTimer gameTimer;
-    
+
     [Header("Game Settings")]
     /// <summary>
     /// Time limit for completing the game in seconds.
@@ -45,17 +45,17 @@ public class UPDownLeftRight : MiniGame
     /// Background music clip.
     /// </summary>
     public AudioClip bgMusic;
-    
+
     /// <summary>
     /// Sound effect for each correct directional input.
     /// </summary>
     public AudioClip correctDirectionSfx;
-    
+
     /// <summary>
     /// Sound effect when a full sequence is completed.
     /// </summary>
     public AudioClip completeSequenceSfx;
-    
+
     /// <summary>
     /// Sound effect for incorrect directional input.
     /// </summary>
@@ -66,24 +66,24 @@ public class UPDownLeftRight : MiniGame
     /// Background music volume (0.3 = 30%).
     /// </summary>
     public float bgMusicVolume = 0.3f;
-    
+
     /// <summary>
     /// Correct direction sound effect volume.
     /// </summary>
     public float correctVolume = 1.0f;
-    
+
     /// <summary>
     /// Sequence complete sound effect volume.
     /// </summary>
     public float completeVolume = 1.0f;
-    
+
     /// <summary>
     /// Wrong direction sound effect volume.
     /// </summary>
     public float wrongVolume = 1.5f;
 
     private AudioSource audioSource;
-    
+
     private readonly List<int> sequence = new();
     private int playerIndex = 0;
     private int score = 0;

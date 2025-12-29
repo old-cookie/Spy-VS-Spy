@@ -2,6 +2,8 @@ using UnityEngine;
 using Unity.Netcode;
 using System.Collections;
 
+[RequireComponent(typeof(NetworkObject))]
+
 /// <summary>
 /// Swap Remote item: swaps positions with the nearest enemy.
 /// Implemented here (not in ItemEffectHandler) and also plays a VFX on BOTH swapped players.
@@ -36,7 +38,7 @@ public class SwapRemoteItem : Item
     private bool avoidInheritingPlayerScale = true;
 
     [SerializeField]
-    private Vector3 swapVfxLocalOffset = new Vector3(0f, 1.5f, 0f);
+    private Vector3 swapVfxLocalOffset = new(0f, 1.5f, 0f);
 
     [SerializeField]
     private Vector3 swapVfxLocalEulerOffset = Vector3.zero;
@@ -99,7 +101,14 @@ public class SwapRemoteItem : Item
             return;
         }
 
-        var senderPc = senderPlayerObj.GetComponent<PlayerController>() ?? senderPlayerObj.GetComponentInChildren<PlayerController>() ?? senderPlayerObj.GetComponentInParent<PlayerController>();
+        if (!senderPlayerObj.TryGetComponent<PlayerController>(out var senderPc))
+        {
+            senderPc = senderPlayerObj.GetComponentInChildren<PlayerController>();
+        }
+        if (senderPc == null)
+        {
+            senderPc = senderPlayerObj.GetComponentInParent<PlayerController>();
+        }
         if (senderPc == null)
         {
             if (debugLogs)
@@ -109,7 +118,14 @@ public class SwapRemoteItem : Item
             return;
         }
 
-        var myTeamMember = senderPc.GetComponent<TeamMember>() ?? senderPc.GetComponentInChildren<TeamMember>() ?? senderPc.GetComponentInParent<TeamMember>();
+        if (!senderPc.TryGetComponent<TeamMember>(out var myTeamMember))
+        {
+            myTeamMember = senderPc.GetComponentInChildren<TeamMember>();
+        }
+        if (myTeamMember == null)
+        {
+            myTeamMember = senderPc.GetComponentInParent<TeamMember>();
+        }
         if (myTeamMember == null)
         {
             if (debugLogs)
@@ -129,7 +145,7 @@ public class SwapRemoteItem : Item
 
         PlayerController[] allPlayers;
 #if UNITY_2023_1_OR_NEWER
-        allPlayers = Object.FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+        allPlayers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
 #else
         allPlayers = Object.FindObjectsOfType<PlayerController>();
 #endif
@@ -141,7 +157,10 @@ public class SwapRemoteItem : Item
                 continue;
             }
 
-            var otherNet = otherPc.GetComponent<NetworkObject>() ?? otherPc.GetComponentInParent<NetworkObject>();
+            if (!otherPc.TryGetComponent<NetworkObject>(out var otherNet))
+            {
+                otherNet = otherPc.GetComponentInParent<NetworkObject>();
+            }
             if (otherNet == null)
             {
                 continue;
@@ -162,7 +181,14 @@ public class SwapRemoteItem : Item
 
             if (myTeamMember != null && myTeamMember.CurrentTeam != Team.None)
             {
-                var otherTeam = otherPc.GetComponent<TeamMember>() ?? otherPc.GetComponentInChildren<TeamMember>() ?? otherPc.GetComponentInParent<TeamMember>();
+                if (!otherPc.TryGetComponent<TeamMember>(out var otherTeam))
+                {
+                    otherTeam = otherPc.GetComponentInChildren<TeamMember>();
+                }
+                if (otherTeam == null)
+                {
+                    otherTeam = otherPc.GetComponentInParent<TeamMember>();
+                }
                 if (otherTeam == null) continue;
                 if (otherTeam.CurrentTeam == Team.None) continue;
                 if (otherTeam.CurrentTeam == myTeamMember.CurrentTeam) continue;
@@ -185,7 +211,10 @@ public class SwapRemoteItem : Item
             return;
         }
 
-        var targetNetObj = bestTarget.GetComponent<NetworkObject>() ?? bestTarget.GetComponentInParent<NetworkObject>();
+        if (!bestTarget.TryGetComponent<NetworkObject>(out var targetNetObj))
+        {
+            targetNetObj = bestTarget.GetComponentInParent<NetworkObject>();
+        }
         if (targetNetObj == null)
         {
             if (debugLogs)
@@ -231,7 +260,14 @@ public class SwapRemoteItem : Item
 
         if (aTransform != null)
         {
-            var aPc = aTransform.GetComponent<PlayerController>() ?? aTransform.GetComponentInChildren<PlayerController>() ?? aTransform.GetComponentInParent<PlayerController>();
+            if (!aTransform.TryGetComponent<PlayerController>(out var aPc))
+            {
+                aPc = aTransform.GetComponentInChildren<PlayerController>();
+            }
+            if (aPc == null)
+            {
+                aPc = aTransform.GetComponentInParent<PlayerController>();
+            }
             if (aPc != null)
             {
                 aPc.TeleportToPosition(aNewPosition);
@@ -245,7 +281,14 @@ public class SwapRemoteItem : Item
 
         if (bTransform != null)
         {
-            var bPc = bTransform.GetComponent<PlayerController>() ?? bTransform.GetComponentInChildren<PlayerController>() ?? bTransform.GetComponentInParent<PlayerController>();
+            if (!bTransform.TryGetComponent<PlayerController>(out var bPc))
+            {
+                bPc = bTransform.GetComponentInChildren<PlayerController>();
+            }
+            if (bPc == null)
+            {
+                bPc = bTransform.GetComponentInParent<PlayerController>();
+            }
             if (bPc != null)
             {
                 bPc.TeleportToPosition(bNewPosition);
@@ -400,8 +443,7 @@ public class SwapRemoteItem : Item
                 return;
             }
 
-            transform.position = target.TransformPoint(localOffset);
-            transform.rotation = target.rotation * localRotOffset;
+            transform.SetPositionAndRotation(target.TransformPoint(localOffset), target.rotation * localRotOffset);
         }
     }
 }

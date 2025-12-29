@@ -8,6 +8,7 @@ using System.Collections;
 [RequireComponent(typeof(NetworkObject))]
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(Renderer))]
 public class PlacedBomb : NetworkBehaviour
 {
     /// <summary>
@@ -102,6 +103,7 @@ public class PlacedBomb : NetworkBehaviour
     private Renderer bombRenderer;
     private Color originalColor;
     private Collider cachedCollider;
+    private static readonly Collider[] overlapCache = new Collider[100];
 
     private void Awake()
     {
@@ -188,8 +190,7 @@ public class PlacedBomb : NetworkBehaviour
             return;
         }
 
-        var playerController = collision.GetComponent<PlayerController>();
-        if (playerController == null)
+        if (!collision.TryGetComponent<PlayerController>(out var playerController))
         {
             playerController = collision.GetComponentInParent<PlayerController>();
         }
@@ -235,8 +236,7 @@ public class PlacedBomb : NetworkBehaviour
             return;
         }
 
-        var playerController = collision.gameObject.GetComponent<PlayerController>();
-        if (playerController == null)
+        if (!collision.gameObject.TryGetComponent<PlayerController>(out var playerController))
         {
             playerController = collision.gameObject.GetComponentInParent<PlayerController>();
         }
@@ -276,49 +276,51 @@ public class PlacedBomb : NetworkBehaviour
         Debug.Log($"[PlacedBomb] Bomb exploded! Applying force in radius {explosionRadius}");
 
         var hitCount = 0;
-        var colliders = Physics.OverlapSphere(transform.position, explosionRadius);
-        foreach (var col in colliders)
+        var numColliders = Physics.OverlapSphereNonAlloc(transform.position, explosionRadius, overlapCache);
+        for (int i = 0; i < numColliders; i++)
         {
-            var playerController = col.GetComponent<PlayerController>();
-            if (playerController == null)
+            var col = overlapCache[i];
             {
-                playerController = col.GetComponentInParent<PlayerController>();
-            }
-
-            if (playerController == null)
-            {
-                continue;
-            }
-
-            var netObj = playerController.GetComponent<NetworkObject>();
-            if (netObj == null)
-            {
-                continue;
-            }
-
-            hitCount++;
-            Debug.Log($"[PlacedBomb] Scheduling explosion for {playerController.name} (Owner {netObj.OwnerClientId})");
-
-            var rpcParams = new ClientRpcParams
-            {
-                Send = new ClientRpcSendParams
+                if (!col.TryGetComponent<PlayerController>(out var playerController))
                 {
-                    TargetClientIds = new ulong[] { netObj.OwnerClientId }
+                    playerController = col.GetComponentInParent<PlayerController>();
                 }
-            };
-            ApplyExplosionToPlayerClientRpc(netObj.NetworkObjectId, transform.position, explosionForce, explosionRadius, explosionUpforce, rpcParams);
+
+                if (playerController == null)
+                {
+                    continue;
+                }
+
+                var netObj = playerController.GetComponent<NetworkObject>();
+                if (netObj == null)
+                {
+                    continue;
+                }
+
+                hitCount++;
+                Debug.Log($"[PlacedBomb] Scheduling explosion for {playerController.name} (Owner {netObj.OwnerClientId})");
+
+                var rpcParams = new ClientRpcParams
+                {
+                    Send = new ClientRpcSendParams
+                    {
+                        TargetClientIds = new ulong[] { netObj.OwnerClientId }
+                    }
+                };
+                ApplyExplosionToPlayerClientRpc(netObj.NetworkObjectId, transform.position, explosionForce, explosionRadius, explosionUpforce, rpcParams);
+            }
+
+            if (hitCount == 0)
+            {
+                Debug.Log("[PlacedBomb] Explosion hit no players.");
+            }
+
+            // Play explosion effect on all clients
+            PlayExplosionEffectClientRpc();
+
+            // Despawn slightly later so ClientRpcs (including stepped-on VFX) are reliably delivered.
+            ScheduleDespawn();
         }
-
-        if (hitCount == 0)
-        {
-            Debug.Log("[PlacedBomb] Explosion hit no players.");
-        }
-
-        // Play explosion effect on all clients
-        PlayExplosionEffectClientRpc();
-
-        // Despawn slightly later so ClientRpcs (including stepped-on VFX) are reliably delivered.
-        ScheduleDespawn();
     }
 
     private void ScheduleDespawn()
@@ -357,8 +359,7 @@ public class PlacedBomb : NetworkBehaviour
             return;
         }
 
-        var playerController = netObj.GetComponent<PlayerController>();
-        if (playerController == null)
+        if (!netObj.TryGetComponent<PlayerController>(out var playerController))
         {
             return;
         }

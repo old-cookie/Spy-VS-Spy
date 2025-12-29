@@ -89,7 +89,7 @@ public class DemoMiniGame : MiniGame
     protected override void OnGameStart()
     {
         base.OnGameStart();
-        
+
         // Show UI
         if (miniGameCanvas != null)
         {
@@ -102,7 +102,7 @@ public class DemoMiniGame : MiniGame
             timer.SetDisplayVisible(true);
             timer.StartTimer(timeLimit);
         }
-        
+
         Debug.Log($"[DemoMiniGame] Started - Time limit: {timeLimit}s");
     }
 

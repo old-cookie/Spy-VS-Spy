@@ -106,3 +106,5 @@ ProjectSettings/Packages/com.unity.testtools.codecoverage/Settings.json
 ProjectSettings/VirtualProjectsConfig.json
 ProjectSettings/ProjectVersion.txt
 /Assets/_Recovery
+Assets/_Recovery.meta
+/docs

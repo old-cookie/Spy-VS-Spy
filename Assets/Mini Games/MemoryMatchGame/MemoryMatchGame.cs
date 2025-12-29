@@ -91,7 +91,7 @@ public class MemoryMatchGame : MiniGame
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
         {
-            Debug.Log("[MemoryMatchGame] 沒有找到 AudioSource，正在創建新的");
+            Debug.Log("[MemoryMatchGame] 沒有找到 AudioSource, 正在創建新的");
             audioSource = gameObject.AddComponent<AudioSource>();
         }
         else
@@ -126,12 +126,12 @@ public class MemoryMatchGame : MiniGame
         // 重新確保 audioSource 存在
         if (audioSource == null)
         {
-            Debug.Log("[MemoryMatchGame] audioSource 為 null，重新獲取");
+            Debug.Log("[MemoryMatchGame] audioSource 為 null, 重新獲取");
             audioSource = GetComponent<AudioSource>();
 
             if (audioSource == null)
             {
-                Debug.Log("[MemoryMatchGame] 仍然沒有 AudioSource，創建新的");
+                Debug.Log("[MemoryMatchGame] 仍然沒有 AudioSource, 創建新的");
                 audioSource = gameObject.AddComponent<AudioSource>();
             }
         }
@@ -182,11 +182,11 @@ public class MemoryMatchGame : MiniGame
         {
             if (audioSource == null)
             {
-                Debug.LogError("[MemoryMatchGame] audioSource 為 null！");
+                Debug.LogError("[MemoryMatchGame] audioSource 為 null!");
             }
             if (bgMusic == null)
             {
-                Debug.LogWarning("[MemoryMatchGame] bgMusic 為 null！");
+                Debug.LogWarning("[MemoryMatchGame] bgMusic 為 null!");
             }
         }
 
@@ -237,7 +237,7 @@ public class MemoryMatchGame : MiniGame
         // Shuffle order
         for (int i = images.Length - 1; i > 0; i--)
         {
-            int randomIndex = UnityEngine.Random.Range(0, i + 1);
+            int randomIndex = Random.Range(0, i + 1);
             Sprite temp = images[i];
             images[i] = images[randomIndex];
             images[randomIndex] = temp;
@@ -247,15 +247,14 @@ public class MemoryMatchGame : MiniGame
         for (int i = 0; i < images.Length; i++)
         {
             GameObject cardObj = Instantiate(cardPrefab, gameBoard);
-            MemoryCard card = cardObj.GetComponent<MemoryCard>();
 
-            if (card == null)
+            if (!cardObj.TryGetComponent<MemoryCard>(out var card))
             {
                 Debug.LogError($"Card {i} does not have MemoryCard script!");
                 continue;
             }
 
-            card.Initialize(i, images[i], OnCardFlipped);
+            card.Initialize(images[i], OnCardFlipped);
             cards.Add(card);
         }
     }
@@ -395,11 +394,11 @@ public class MemoryMatchGame : MiniGame
         {
             if (clip == null)
             {
-                Debug.LogWarning("[MemoryMatchGame] AudioClip 為 null！");
+                Debug.LogWarning("[MemoryMatchGame] AudioClip 為 null!");
             }
             if (audioSource == null)
             {
-                Debug.LogError("[MemoryMatchGame] audioSource 為 null！");
+                Debug.LogError("[MemoryMatchGame] audioSource 為 null!");
             }
         }
     }

@@ -2,6 +2,8 @@ using UnityEngine;
 using Unity.Netcode;
 using System.Collections;
 
+[RequireComponent(typeof(NetworkObject))]
+
 /// <summary>
 /// Rust Gear item: slows OTHER players and plays a slow VFX on the affected player.
 /// Implemented here so you don't need to put VFX code into ItemEffectHandler.
@@ -104,7 +106,7 @@ public class RustGearItem : Item
         // Slow everyone except the sender.
         PlayerController[] allPlayers;
 #if UNITY_2023_1_OR_NEWER
-        allPlayers = Object.FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+        allPlayers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
 #else
         allPlayers = Object.FindObjectsOfType<PlayerController>();
 #endif
@@ -116,7 +118,10 @@ public class RustGearItem : Item
                 continue;
             }
 
-            var targetNet = pc.GetComponent<NetworkObject>() ?? pc.GetComponentInParent<NetworkObject>();
+            if (!pc.TryGetComponent<NetworkObject>(out var targetNet))
+            {
+                targetNet = pc.GetComponentInParent<NetworkObject>();
+            }
             if (targetNet == null)
             {
                 continue;
@@ -128,8 +133,7 @@ public class RustGearItem : Item
             }
 
             // Apply slow only to that player's owning client.
-            var handler = pc.GetComponent<ItemEffectHandler>();
-            if (handler != null)
+            if (pc.TryGetComponent<ItemEffectHandler>(out var handler))
             {
                 var rpcParamsTarget = new ClientRpcParams
                 {
@@ -305,8 +309,7 @@ public class RustGearItem : Item
                 return;
             }
 
-            transform.position = target.TransformPoint(localOffset);
-            transform.rotation = target.rotation * localRotOffset;
+            transform.SetPositionAndRotation(target.TransformPoint(localOffset), target.rotation * localRotOffset);
         }
     }
 }

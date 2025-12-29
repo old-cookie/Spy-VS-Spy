@@ -22,7 +22,7 @@ public class Bomb : Item
     {
         // Place the bomb at the player's position
         PlaceBombServerRpc();
-        
+
         // Destroy the item after placing
         NotifyOwnerConsumed();
         DespawnItem();
@@ -48,13 +48,12 @@ public class Bomb : Item
         }
 
         var bombPosition = playerTransform.position + Vector3.up * placementHeightOffset;
-        
+
         // Instantiate the placed bomb on the server
         var placedBomb = Instantiate(placedBombPrefab, bombPosition, Quaternion.identity);
-        
+
         // If the placed bomb has a NetworkObject, spawn it on the network
-        var networkObject = placedBomb.GetComponent<NetworkObject>();
-        if (networkObject != null)
+        if (placedBomb.TryGetComponent<NetworkObject>(out var networkObject))
         {
             networkObject.Spawn();
             Debug.Log($"[Bomb] Placed bomb at {bombPosition}");

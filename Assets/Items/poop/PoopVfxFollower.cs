@@ -20,7 +20,6 @@ public sealed class PoopVfxFollower : MonoBehaviour
             return;
         }
 
-        transform.position = target.TransformPoint(localOffset);
-        transform.rotation = target.rotation * localRotOffset;
+        transform.SetPositionAndRotation(target.TransformPoint(localOffset), target.rotation * localRotOffset);
     }
 }

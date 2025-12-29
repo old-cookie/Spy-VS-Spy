@@ -54,7 +54,7 @@ public class FlagTrigger : MonoBehaviour
             {
                 // Capture reference for the callback
                 var teamMember = currentTeamMember;
-                
+
                 // Only pick up flag if mini game is completed successfully (result = 1)
                 MiniGameManager.Instance.StartRandomMiniGame(currentPlayerController, () =>
                 {

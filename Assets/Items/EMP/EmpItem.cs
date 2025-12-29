@@ -2,6 +2,8 @@ using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
+[RequireComponent(typeof(NetworkObject))]
+
 /// <summary>
 /// EMP item: disables enemy players from using their held item for a short duration.
 /// Server-authoritative: server finds nearby enemies and sends them a targeted ClientRpc lock.
@@ -82,7 +84,14 @@ public class EmpItem : Item
             return;
         }
 
-        var senderPc = senderPlayerObj.GetComponent<PlayerController>() ?? senderPlayerObj.GetComponentInChildren<PlayerController>() ?? senderPlayerObj.GetComponentInParent<PlayerController>();
+        if (!senderPlayerObj.TryGetComponent<PlayerController>(out var senderPc))
+        {
+            senderPc = senderPlayerObj.GetComponentInChildren<PlayerController>();
+        }
+        if (senderPc == null)
+        {
+            senderPc = senderPlayerObj.GetComponentInParent<PlayerController>();
+        }
         if (senderPc == null)
         {
             if (debugLogs)
@@ -92,7 +101,14 @@ public class EmpItem : Item
             return;
         }
 
-        var senderTeamMember = senderPc.GetComponent<TeamMember>() ?? senderPc.GetComponentInChildren<TeamMember>() ?? senderPc.GetComponentInParent<TeamMember>();
+        if (!senderPc.TryGetComponent<TeamMember>(out var senderTeamMember))
+        {
+            senderTeamMember = senderPc.GetComponentInChildren<TeamMember>();
+        }
+        if (senderTeamMember == null)
+        {
+            senderTeamMember = senderPc.GetComponentInParent<TeamMember>();
+        }
         if (senderTeamMember == null || senderTeamMember.CurrentTeam == Team.None)
         {
             if (debugLogs)
@@ -107,7 +123,7 @@ public class EmpItem : Item
 
         PlayerController[] allPlayers;
 #if UNITY_2023_1_OR_NEWER
-        allPlayers = Object.FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+        allPlayers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
 #else
         allPlayers = Object.FindObjectsOfType<PlayerController>();
 #endif
@@ -120,13 +136,23 @@ public class EmpItem : Item
                 continue;
             }
 
-            var otherNet = otherPc.GetComponent<NetworkObject>() ?? otherPc.GetComponentInParent<NetworkObject>();
+            if (!otherPc.TryGetComponent<NetworkObject>(out var otherNet))
+            {
+                otherNet = otherPc.GetComponentInParent<NetworkObject>();
+            }
             if (otherNet == null)
             {
                 continue;
             }
 
-            var otherTeam = otherPc.GetComponent<TeamMember>() ?? otherPc.GetComponentInChildren<TeamMember>() ?? otherPc.GetComponentInParent<TeamMember>();
+            if (!otherPc.TryGetComponent<TeamMember>(out var otherTeam))
+            {
+                otherTeam = otherPc.GetComponentInChildren<TeamMember>();
+            }
+            if (otherTeam == null)
+            {
+                otherTeam = otherPc.GetComponentInParent<TeamMember>();
+            }
             if (otherTeam == null || otherTeam.CurrentTeam == Team.None)
             {
                 continue;

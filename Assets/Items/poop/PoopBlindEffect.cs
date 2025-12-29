@@ -45,8 +45,7 @@ public class PoopBlindEffect : MonoBehaviour
 
         canvas.gameObject.AddComponent<CanvasScaler>();
         canvas.gameObject.AddComponent<GraphicRaycaster>();
-
-        var rt = canvas.transform as RectTransform;
+        _ = canvas.transform as RectTransform;
         overlay = new GameObject("Overlay").AddComponent<RawImage>();
         overlay.transform.SetParent(canvas.transform, false);
         var ort = overlay.rectTransform;
@@ -56,7 +55,7 @@ public class PoopBlindEffect : MonoBehaviour
         ort.offsetMax = Vector2.zero;
 
         overlay.uvRect = new Rect(0, 0, 1, 1);
-        
+
         EnsureBlindSprite();
 
         // Prefer explicit Texture2D, else use Sprite's underlying texture
@@ -65,7 +64,7 @@ public class PoopBlindEffect : MonoBehaviour
         {
             tex = blindImage.texture;
         }
-        
+
         // Set image texture and make it transparent initially
         if (tex != null)
         {
@@ -80,7 +79,7 @@ public class PoopBlindEffect : MonoBehaviour
             overlay.texture = Texture2D.whiteTexture;
             overlay.color = new Color(0.05f, 0.02f, 0.01f, 0f);
         }
-        
+
         overlay.raycastTarget = false;
         overlay.enabled = false;
     }
@@ -119,7 +118,7 @@ public class PoopBlindEffect : MonoBehaviour
     {
         // Prefer a scene-placed instance so you can assign the sprite in the Inspector.
 #if UNITY_2023_1_OR_NEWER
-        var found = Object.FindFirstObjectByType<PoopBlindEffect>(FindObjectsInactive.Include);
+        var found = FindFirstObjectByType<PoopBlindEffect>(FindObjectsInactive.Include);
         return found;
 #else
         // Unity 2022+: FindObjectsOfType(includeInactive: true)

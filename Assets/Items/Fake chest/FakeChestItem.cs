@@ -70,8 +70,7 @@ public class FakeChestItem : Item
         var rot = Quaternion.Euler(0f, playerTransform.eulerAngles.y + 0f, 0f);
         var go = Instantiate(fakeChestPrefab, pos, rot);
 
-        var netObj = go.GetComponent<NetworkObject>();
-        if (netObj != null)
+        if (go.TryGetComponent<NetworkObject>(out var netObj))
         {
             netObj.Spawn();
             Debug.Log($"[FakeChestItem] Placed fake chest at {pos}");

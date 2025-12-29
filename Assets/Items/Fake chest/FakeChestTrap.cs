@@ -128,15 +128,13 @@ public class FakeChestTrap : NetworkBehaviour
             return;
         }
 
-        var pickerPc = pickerObj.GetComponent<PlayerController>();
-        if (pickerPc == null)
+        if (!pickerObj.TryGetComponent<PlayerController>(out var pickerPc))
         {
             triggered = false;
             return;
         }
 
-        var pickerNet = pickerObj.GetComponent<NetworkObject>();
-        if (pickerNet == null)
+        if (!pickerObj.TryGetComponent<NetworkObject>(out var pickerNet))
         {
             triggered = false;
             return;
@@ -152,8 +150,7 @@ public class FakeChestTrap : NetworkBehaviour
             }
         }
 
-        var handler = pickerPc.GetComponent<ItemEffectHandler>();
-        if (handler != null)
+        if (pickerPc.TryGetComponent<ItemEffectHandler>(out var handler))
         {
             var rpcParams = new ClientRpcParams
             {

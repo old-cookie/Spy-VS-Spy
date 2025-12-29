@@ -91,11 +91,11 @@ public class WhackAMole : MiniGame
     void Start()
     {
         Debug.Log("[WhackAMole] Start() 被調用");
-        
+
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
         {
-            Debug.Log("[WhackAMole] 沒有找到 AudioSource，正在創建新的");
+            Debug.Log("[WhackAMole] 沒有找到 AudioSource, 正在創建新的");
             audioSource = gameObject.AddComponent<AudioSource>();
         }
         else
@@ -144,20 +144,20 @@ public class WhackAMole : MiniGame
     protected override void OnGameStart()
     {
         Debug.Log("[WhackAMole] OnGameStart() 被調用");
-        
+
         // 重新確保 audioSource 存在
         if (audioSource == null)
         {
-            Debug.Log("[WhackAMole] audioSource 為 null，重新獲取");
+            Debug.Log("[WhackAMole] audioSource 為 null, 重新獲取");
             audioSource = GetComponent<AudioSource>();
-            
+
             if (audioSource == null)
             {
-                Debug.Log("[WhackAMole] 仍然沒有 AudioSource，創建新的");
+                Debug.Log("[WhackAMole] 仍然沒有 AudioSource, 創建新的");
                 audioSource = gameObject.AddComponent<AudioSource>();
             }
         }
-        
+
         currentScore = 0;
         remainingTime = timeLimit;
         gameRunning = true;
@@ -171,7 +171,7 @@ public class WhackAMole : MiniGame
         if (audioSource != null)
         {
             Debug.Log("[WhackAMole] audioSource 不為 null");
-            
+
             if (bgMusic != null)
             {
                 Debug.Log($"[WhackAMole] 開始播放背景音樂: {bgMusic.name}");
@@ -184,12 +184,12 @@ public class WhackAMole : MiniGame
             }
             else
             {
-                Debug.LogError("[WhackAMole] bgMusic 為 null！");
+                Debug.LogError("[WhackAMole] bgMusic 為 null!");
             }
         }
         else
         {
-            Debug.LogError("[WhackAMole] audioSource 仍為 null！");
+            Debug.LogError("[WhackAMole] audioSource 仍為 null!");
         }
 
         if (timerText != null)
@@ -284,7 +284,7 @@ public class WhackAMole : MiniGame
             minY = maxY = center;
         }
 
-        List<Vector2> placedPositions = new List<Vector2>();
+        List<Vector2> placedPositions = new();
         int spawnCount = Mathf.Max(1, molesToSpawnPerTurn);
 
         for (int i = 0; i < spawnCount; i++)
@@ -431,7 +431,7 @@ public class WhackAMole : MiniGame
     void CompleteGame(bool success)
     {
         Debug.Log("[WhackAMole] CompleteGame() 被調用");
-        
+
         gameRunning = false;
         gameFinished = true;
 

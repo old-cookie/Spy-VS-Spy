@@ -171,30 +171,21 @@ public class PoopProjectile : NetworkBehaviour
         if (hitObject == null) return;
         if (hitProcessed) return;
 
-        var player = hitObject.GetComponent<PlayerController>();
-        if (player == null)
+        if (!hitObject.TryGetComponent<PlayerController>(out var player))
         {
             player = hitObject.GetComponentInParent<PlayerController>();
         }
 
         if (player != null)
         {
-            var playerNet = player.GetComponent<NetworkObject>();
-            if (playerNet != null)
+            if (player.TryGetComponent<NetworkObject>(out var playerNet))
             {
                 hitProcessed = true;
                 Debug.Log($"[PoopProjectile] Hit player {player.name} (Owner: {playerNet.OwnerClientId})");
-                
+
                 // Blind only the hit player
-                var hitRpcParams = new ClientRpcParams
-                {
-                    Send = new ClientRpcSendParams
-                    {
-                        TargetClientIds = new ulong[] { playerNet.OwnerClientId }
-                    }
-                };
-                ApplyBlindClientRpc(playerNet.NetworkObjectId, blindDuration, hitRpcParams);
-                
+                ApplyBlindClientRpc(blindDuration);
+
                 Debug.Log($"[PoopProjectile] Blinded hit player ({playerNet.OwnerClientId})");
 
                 // Show hit VFX on the hit player for everyone.
@@ -218,7 +209,7 @@ public class PoopProjectile : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void ApplyBlindClientRpc(ulong playerNetworkObjectId, float duration, ClientRpcParams rpcParams = default)
+    private void ApplyBlindClientRpc(float duration)
     {
         Debug.Log($"[PoopProjectile] ApplyBlindClientRpc received. duration={duration}");
         PoopBlindEffect.Show(duration);
@@ -251,8 +242,7 @@ public class PoopProjectile : NetworkBehaviour
         if (avoidInheritingPlayerScale)
         {
             vfx = Instantiate(hitVfxPrefab, worldPos, worldRot);
-            var follower = vfx.GetComponent<PoopVfxFollower>();
-            if (follower == null)
+            if (!vfx.TryGetComponent<PoopVfxFollower>(out var follower))
             {
                 follower = vfx.AddComponent<PoopVfxFollower>();
             }

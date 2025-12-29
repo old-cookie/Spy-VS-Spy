@@ -248,10 +248,10 @@ public class PlayerController : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-        
+
         // Store the spawn position for teleportation
         spawnPosition = transform.position;
-        
+
         CacheFacingRotations();
         IgnorePlayerCollisions();
         CacheTeamMember();
@@ -288,7 +288,7 @@ public class PlayerController : NetworkBehaviour
     private void IgnorePlayerCollisions()
     {
         var players = GameObject.FindGameObjectsWithTag("Player");
-        
+
         if (!TryGetComponent<Collider>(out var myCollider))
         {
             return;
@@ -621,9 +621,9 @@ public class PlayerController : NetworkBehaviour
         {
             animator.SetTrigger("Pick");
         }
-        
+
         StartPickLock();
-        
+
         Item newItem = null;
         if (currentFakeChest != null)
         {
@@ -1704,7 +1704,7 @@ public class PlayerController : NetworkBehaviour
         // Transfer the item from this player to the stealer
         var stolenItem = heldItem;
         var stolenItemNetworkObjectId = stolenItem.GetComponent<NetworkObject>().NetworkObjectId;
-        
+
         heldItem = null;
         heldItemType = null;
 
@@ -1788,7 +1788,7 @@ public class PlayerController : NetworkBehaviour
             // Teleport the player to spawn position
             playerRigidbody.linearVelocity = Vector3.zero;
             transform.position = spawnPosition;
-            
+
             Debug.Log($"[PlayerController] Player teleported to spawn position: {spawnPosition}");
         }
         else

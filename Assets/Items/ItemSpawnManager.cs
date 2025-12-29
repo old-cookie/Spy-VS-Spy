@@ -108,7 +108,7 @@ public class ItemSpawnManager : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         base.OnNetworkDespawn();
-        
+
         // Stop all coroutines when despawning
         foreach (var coroutine in activeItemCoroutines.Values)
         {
@@ -267,8 +267,7 @@ public class ItemSpawnManager : NetworkBehaviour
         var localPlayer = NetworkManager.Singleton.LocalClient?.PlayerObject;
         if (localPlayer != null)
         {
-            var playerController = localPlayer.GetComponent<PlayerController>();
-            if (playerController != null)
+            if (localPlayer.TryGetComponent<PlayerController>(out var playerController))
             {
                 playerController.RegisterHeldItemFromNetwork(item);
             }
